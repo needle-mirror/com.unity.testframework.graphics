@@ -38,7 +38,9 @@ namespace UnityEditor.TestTools.Graphics
         public IEnumerable<GraphicsTestCase> GetTestCases()
         {
             var allImages = CollectReferenceImagePathsFor(string.IsNullOrEmpty(m_ReferenceImagePath) ? ReferenceImagesRoot : m_ReferenceImagePath, QualitySettings.activeColorSpace, Application.platform,
-                SystemInfo.graphicsDeviceType);
+                SystemInfo.graphicsDeviceType, UseGraphicsTestCasesAttribute.LoadedXRDevice);
+
+            Utils.SetupReferenceImageImportSettings(allImages.Values);
 
             var scenes = GetTestScenePaths();
             foreach (var scenePath in scenes)

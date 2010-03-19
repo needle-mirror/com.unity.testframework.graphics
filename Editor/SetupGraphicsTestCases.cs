@@ -66,36 +66,39 @@ namespace UnityEditor.TestTools.Graphics
 
             if (PlayerSettings.virtualRealitySupported == true)
             {
-                if ((PlayerSettings.GetVirtualRealitySDKs(BuildPipeline.GetBuildTargetGroup(buildPlatform)).Length == 0) && (IsBuildingForEditorPlaymode == true))
+                string[] VrSDKs;
+
+                // The NoTarget build target used here when we're in editor mode won't return any xr sdks
+                // So just using the Standalone one since that should be what the editor is using.
+                if(IsBuildingForEditorPlaymode)
                 {
-                    xrsdk = "None";
-                }
-                else if ((PlayerSettings.GetVirtualRealitySDKs(BuildPipeline.GetBuildTargetGroup(buildPlatform)).Length == 0) && (IsBuildingForEditorPlaymode == false))
-                {
-                    xrsdk = "MockHMD";
+                    VrSDKs = PlayerSettings.GetVirtualRealitySDKs(BuildTargetGroup.Standalone);
                 }
                 else
                 {
-                    xrsdk = PlayerSettings.GetVirtualRealitySDKs(BuildPipeline.GetBuildTargetGroup(buildPlatform)).First();
+                    VrSDKs = PlayerSettings.GetVirtualRealitySDKs(BuildPipeline.GetBuildTargetGroup(buildPlatform));
                 }
+
+                // VR can be enabled and no VR platforms listed in the UI.  In that case it will use the non-xr rendering.
+                xrsdk = VrSDKs.Length == 0 ? "None" : VrSDKs.First();
             }
             
-            var settings = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildPipeline.GetBuildTargetGroup(buildPlatform));
+            var xrsettings = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildPipeline.GetBuildTargetGroup(buildPlatform));
 
             // Since the settings are null when using NoTarget for the BuildTargetGroup which editor playmode seems to do
             // just use Standalone settings instead.
             if (IsBuildingForEditorPlaymode)
-                settings = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.Standalone);
+                xrsettings = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.Standalone);
 
-            if (settings != null && settings.InitManagerOnStart)
+            if (xrsettings != null && xrsettings.InitManagerOnStart)
             {
-                if (settings.AssignedSettings.loaders.Count > 0)
+                if (xrsettings.AssignedSettings.loaders.Count > 0)
                 {
                     // since we don't really know which runtime loader will actually be used at runtime,
                     // just take the first one assuming it will work and if it isn't loaded the
                     // tests should fail since the reference images bundle will be named
                     // with a loader that isn't active at runtime.
-                    var firstLoader = settings.AssignedSettings.loaders.First();
+                    var firstLoader = xrsettings.AssignedSettings.loaders.First();
 
                     if(firstLoader != null)
                     {
@@ -108,21 +111,21 @@ namespace UnityEditor.TestTools.Graphics
 
             var bundleBuilds = new List<AssetBundleBuild>();
 
-            foreach (var api in graphicsDevices)
+            if (!IsBuildingForEditorPlaymode)
             {
-                var images = EditorGraphicsTestCaseProvider.CollectReferenceImagePathsFor(rootImageTemplatePath, colorSpace, runtimePlatform, api, xrsdk);
-
-                Utils.SetupReferenceImageImportSettings(images.Values);
-
-                if (buildPlatform == BuildTarget.NoTarget)
-                    continue;
-
-                bundleBuilds.Add(new AssetBundleBuild
+                foreach (var api in graphicsDevices)
                 {
-                    assetBundleName = string.Format("referenceimages-{0}-{1}-{2}-{3}", colorSpace, runtimePlatform, api, xrsdk),
-                    addressableNames = images.Keys.ToArray(),
-                    assetNames = images.Values.ToArray()
-                });
+                    var images = EditorGraphicsTestCaseProvider.CollectReferenceImagePathsFor(rootImageTemplatePath, colorSpace, runtimePlatform, api, xrsdk);
+
+                    Utils.SetupReferenceImageImportSettings(images.Values);
+
+                    bundleBuilds.Add(new AssetBundleBuild
+                    {
+                        assetBundleName = string.Format("referenceimages-{0}-{1}-{2}-{3}", colorSpace, runtimePlatform, api, xrsdk),
+                        addressableNames = images.Keys.ToArray(),
+                        assetNames = images.Values.ToArray()
+                    });
+                }
             }
 
             if (bundleBuilds.Count > 0)
@@ -184,14 +187,14 @@ namespace UnityEditor.TestTools.Graphics
                             enableScene = false;
 
                             // non vr filter matched
-                            if ((!PlayerSettings.virtualRealitySupported || !(settings != null && settings.InitManagerOnStart)) &&
+                            if ((!PlayerSettings.virtualRealitySupported || !(xrsettings != null && xrsettings.InitManagerOnStart)) &&
                                 (string.IsNullOrEmpty(filter.XrSdk) || string.Compare(filter.XrSdk, "None", true) == 0) &&
                                 filter.StereoModes == StereoRenderingModeFlags.None)
                             {
                                 enableScene = false;
                             }
                             // if VR is enabled then the VR specific filters need to match the filter too
-                            else if ((PlayerSettings.virtualRealitySupported || (settings != null && settings.InitManagerOnStart)) &&
+                            else if ((PlayerSettings.virtualRealitySupported || (xrsettings != null && xrsettings.InitManagerOnStart)) &&
                                 (filter.StereoModes == StereoRenderingModeFlags.None || (filter.StereoModes & stereoModeFlag) == stereoModeFlag) &&
                                 (filter.XrSdk == xrsdk || string.IsNullOrEmpty(filter.XrSdk)))
                             {
