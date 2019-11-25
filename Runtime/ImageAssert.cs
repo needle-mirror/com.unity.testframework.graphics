@@ -13,6 +13,7 @@ using Is = UnityEngine.TestTools.Constraints.Is;
 using UnityEngine.Networking.PlayerConnection;
 using UnityEngine;
 using UnityEngine.Profiling;
+using UnityEngine.Experimental.Rendering;
 
 namespace UnityEngine.TestTools.Graphics
 {
@@ -207,19 +208,30 @@ namespace UnityEngine.TestTools.Graphics
         /// <param name="camera">The camera to render from.</param>
         /// <param name="width"> width of the image to be rendered</param>
         /// <param name="height"> height of the image to be rendered</param>
-        public static void AllocatesMemory(Camera camera, int width, int height)
+        public static void AllocatesMemory(Camera camera, ImageComparisonSettings settings = null, int gcAllocThreshold = 2)
         {
             if (camera == null)
                 throw new ArgumentNullException(nameof(camera));
 
-            var rt = RenderTexture.GetTemporary(width, height, 24);
+            if (settings == null)
+                settings = new ImageComparisonSettings();
+
+            int width = settings.TargetWidth;
+            int height = settings.TargetHeight;
+
+            var defaultFormat = (settings.UseHDR) ? SystemInfo.GetGraphicsFormat(DefaultFormat.HDR) : SystemInfo.GetGraphicsFormat(DefaultFormat.LDR);
+            RenderTextureDescriptor desc = new RenderTextureDescriptor(width, height, defaultFormat, 24);
+
+            var rt = RenderTexture.GetTemporary(desc);
             try
             {
                 camera.targetTexture = rt;
-                var gcAllocRecorder = Recorder.Get("GC.Alloc");
 
                 // Render the first frame at this resolution (Alloc are allowed here)
                 camera.Render();
+
+                var gcAllocRecorder = Recorder.Get("GC.Alloc");
+                gcAllocRecorder.FilterToCurrentThread();
 
                 Profiler.BeginSample("GraphicTests_GC_Alloc_Check");
                 {
@@ -231,7 +243,7 @@ namespace UnityEngine.TestTools.Graphics
 
                 // Note: Currently there are some allocs between the Camera.Render and the begining of the render pipeline rendering.
                 // Because of that, we can't enable this test.
-                int allocationCountOfRenderPipeline = gcAllocRecorder.sampleBlockCount;
+                int allocationCountOfRenderPipeline = gcAllocRecorder.sampleBlockCount - gcAllocThreshold;
 
                 if (allocationCountOfRenderPipeline > 0)
                     throw new Exception($"Memory allocation test failed, {allocationCountOfRenderPipeline} allocations detected. Look for GraphicTests_GC_Alloc_Check in the profiler for more details");
