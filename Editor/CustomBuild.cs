@@ -16,7 +16,7 @@ public static class CustomBuild
         BuildOptions buildOptions = BuildOptions.None;
 
         GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.OpenGLES2 };
-        BuildScenes(path, graphicsAPIs[0].ToString(), buildTarget, buildOptions, graphicsAPIs);
+        BuildScenes(path, graphicsAPIs[0].ToString(), buildTarget);
     }
 
     [MenuItem("Tools/Build Android (Vulkan)")]
@@ -28,7 +28,7 @@ public static class CustomBuild
         BuildOptions buildOptions = BuildOptions.None;
 
         GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.Vulkan };
-        BuildScenes(path, graphicsAPIs[0].ToString(), buildTarget, buildOptions, graphicsAPIs);
+        BuildScenes(path, graphicsAPIs[0].ToString(), buildTarget);
     }
     
     [MenuItem("Tools/Build Android (GLES3)")]
@@ -40,7 +40,7 @@ public static class CustomBuild
         BuildOptions buildOptions = BuildOptions.None;
 
         GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.OpenGLES3 };
-        BuildScenes(path, graphicsAPIs[0].ToString(), buildTarget, buildOptions, graphicsAPIs);
+        BuildScenes(path, graphicsAPIs[0].ToString(), buildTarget);
     }
 
     [MenuItem("Tools/Build iOS (Metal)")]
@@ -52,7 +52,7 @@ public static class CustomBuild
         BuildOptions buildOptions = BuildOptions.None;
 
         GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.Metal };
-        BuildScenes(path, graphicsAPIs[0].ToString(), buildTarget, buildOptions, graphicsAPIs);        
+        BuildScenes(path, graphicsAPIs[0].ToString(), buildTarget);        
     }
 
     [MenuItem("Tools/Build OSX (Metal)")]
@@ -63,7 +63,7 @@ public static class CustomBuild
         BuildOptions buildOptions = BuildOptions.None;
 
         GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.Metal };
-        BuildScenes(".", graphicsAPIs[0].ToString(), buildTarget, buildOptions, graphicsAPIs);        
+        BuildScenes(".", graphicsAPIs[0].ToString(), buildTarget);        
     }
 
     static void BuildWindowsVulkan()
@@ -73,7 +73,7 @@ public static class CustomBuild
         BuildOptions buildOptions = BuildOptions.None;
 
         GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.Vulkan };
-        BuildScenes(".", graphicsAPIs[0].ToString(), buildTarget, buildOptions, graphicsAPIs);
+        BuildScenes(".", graphicsAPIs[0].ToString(), buildTarget);
     }
 
     static void BuildLinuxVulkan()
@@ -83,7 +83,7 @@ public static class CustomBuild
         BuildOptions buildOptions = BuildOptions.None;
 
         GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.Vulkan };
-        BuildScenes(".", graphicsAPIs[0].ToString(), buildTarget, buildOptions, graphicsAPIs);
+        BuildScenes(".", graphicsAPIs[0].ToString(), buildTarget);
     }
 
     static void BuildLinuxOpenGLCore()
@@ -93,7 +93,7 @@ public static class CustomBuild
         BuildOptions buildOptions = BuildOptions.None;
 
         GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.OpenGLCore };
-        BuildScenes(".", graphicsAPIs[0].ToString(), buildTarget, buildOptions, graphicsAPIs);
+        BuildScenes(".", graphicsAPIs[0].ToString(), buildTarget);
     }
 
     static void BuildWindowsDX11()
@@ -103,7 +103,7 @@ public static class CustomBuild
         BuildOptions buildOptions = BuildOptions.None;
 
         GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.Direct3D11 };
-        BuildScenes(".", graphicsAPIs[0].ToString(), buildTarget, buildOptions, graphicsAPIs);
+        BuildScenes(".", graphicsAPIs[0].ToString(), buildTarget);
     }
 
     static void BuildWindowsDX12()
@@ -113,14 +113,14 @@ public static class CustomBuild
         BuildOptions buildOptions = BuildOptions.None;
 
         GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.Direct3D12 };
-        BuildScenes(".", graphicsAPIs[0].ToString(), buildTarget, buildOptions, graphicsAPIs);
+        BuildScenes(".", graphicsAPIs[0].ToString(), buildTarget);
     }
 
-    static void BuildScenes(string path, string name, BuildTarget buildTarget, BuildOptions buildOptions, GraphicsDeviceType[] graphicsAPIs)
+    public static void BuildScenes(string path, string name, BuildTarget buildTarget)
     {
         string buildName = string.Format("{0}{1}", "TestScenes", name);
 
-        PlayerSettings.SetGraphicsAPIs(buildTarget, graphicsAPIs);
+        //PlayerSettings.SetGraphicsAPIs(buildTarget, graphicsAPIs);
         PlayerSettings.productName = buildName;
         PlayerSettings.applicationIdentifier = string.Format("com.unity.{0}", buildName);
         PlayerSettings.fullScreenMode = FullScreenMode.Windowed;
@@ -134,6 +134,10 @@ public static class CustomBuild
                 scenesToBuild.Add(scene.path);
         
         string suffix = (buildTarget == BuildTarget.Android) ? ".apk" : "";
+        BuildOptions buildOptions = new BuildOptions();
+#if UNITY_2020_1_OR_NEWER        
+        //buildOptions = BuildOptions.DetailedBuildReport;
+#endif        
 
         BuildPipeline.BuildPlayer(scenesToBuild.ToArray(), string.Format("{0}/{1}{2}", path, buildName, suffix), buildTarget, buildOptions);
     }

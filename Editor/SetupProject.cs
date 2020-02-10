@@ -34,12 +34,18 @@ public static class SetupProject
         };
 
         var args = Environment.GetCommandLineArgs();
+        string apiName = "";
         foreach (var arg in args)
         {
             Action action;
             if (options.TryGetValue(arg, out action))
+            {
+                apiName = arg;
                 action();
+            }
         }
+
+        CustomBuild.BuildScenes(".", apiName, EditorUserBuildSettings.activeBuildTarget);
     }
 
     static void SetGraphicsAPI(GraphicsDeviceType api)
@@ -47,4 +53,5 @@ public static class SetupProject
         var currentTarget = EditorUserBuildSettings.activeBuildTarget;
         PlayerSettings.SetGraphicsAPIs(currentTarget, new [] { api } );
     }
+
 }
