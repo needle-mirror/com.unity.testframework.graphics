@@ -1,11 +1,14 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using UnityEditor.XR.Management;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.TestTools;
 using UnityEngine.SceneManagement;
-using UnityEngine.XR.Management;
+using System.Reflection;
+
+using UnityEditor;
 using EditorSceneManagement = UnityEditor.SceneManagement;
 
 namespace UnityEditor.TestTools.Graphics
@@ -15,9 +18,9 @@ namespace UnityEditor.TestTools.Graphics
     /// player.
     /// Will also build Lightmaps for specially labelled scenes.
     /// </summary>
-    public static class SetupGraphicsTestCases
+    public class SetupGraphicsTestCases
     {
-        static readonly string bakeLabel = "TestRunnerBake";
+        static string bakeLabel = "TestRunnerBake";
 
         private static bool IsBuildingForEditorPlaymode
         {
@@ -32,15 +35,17 @@ namespace UnityEditor.TestTools.Graphics
             }
         }
 
-        public static void Setup(
-            string rootImageTemplatePath = EditorGraphicsTestCaseProvider.ReferenceImagesRoot, string imageResultsPath = "")
+        public void Setup()
+        {
+            Setup(EditorGraphicsTestCaseProvider.ReferenceImagesRoot);
+        }
+
+        public void Setup(string rootImageTemplatePath)
         {
             ColorSpace colorSpace;
             BuildTarget buildPlatform;
             RuntimePlatform runtimePlatform;
             GraphicsDeviceType[] graphicsDevices;
-
-            string xrsdk = "None";
 
             UnityEditor.EditorPrefs.SetBool("AsynchronousShaderCompilation", false);
 
@@ -50,7 +55,7 @@ namespace UnityEditor.TestTools.Graphics
                 colorSpace = QualitySettings.activeColorSpace;
                 buildPlatform = BuildTarget.NoTarget;
                 runtimePlatform = Application.platform;
-                graphicsDevices = new[] { SystemInfo.graphicsDeviceType };
+                graphicsDevices = new[] {SystemInfo.graphicsDeviceType};
             }
             else
             {
@@ -60,42 +65,11 @@ namespace UnityEditor.TestTools.Graphics
                 graphicsDevices = PlayerSettings.GetGraphicsAPIs(buildPlatform);
             }
 
-            if (PlayerSettings.virtualRealitySupported == true)
-            {
-                xrsdk = PlayerSettings.GetVirtualRealitySDKs(BuildPipeline.GetBuildTargetGroup(buildPlatform)).First();
-            }
-            
-            var settings = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildPipeline.GetBuildTargetGroup(buildPlatform));
-
-            // Since the settings are null when using NoTarget for the BuildTargetGroup which editor playmode seems to do
-            // just use Standalone settings instead.
-            if (IsBuildingForEditorPlaymode)
-                settings = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.Standalone);
-
-            if (settings != null && settings.InitManagerOnStart)
-            {
-                if (settings.AssignedSettings.loaders.Count > 0)
-                {
-                    // since we don't really know which runtime loader will actually be used at runtime,
-                    // just take the first one assuming it will work and if it isn't loaded the
-                    // tests should fail since the reference images bundle will be named
-                    // with a loader that isn't active at runtime.
-                    var firstLoader = settings.AssignedSettings.loaders.First();
-
-                    if(firstLoader != null)
-                    {
-                        xrsdk = firstLoader.name;
-                    }
-                }
-            }
-
-            ImageHandler.instance.ImageResultsPath = imageResultsPath;
-
             var bundleBuilds = new List<AssetBundleBuild>();
 
             foreach (var api in graphicsDevices)
             {
-                var images = EditorGraphicsTestCaseProvider.CollectReferenceImagePathsFor(rootImageTemplatePath, colorSpace, runtimePlatform, api, xrsdk);
+                var images = EditorGraphicsTestCaseProvider.CollectReferenceImagePathsFor(rootImageTemplatePath, colorSpace, runtimePlatform, api);
 
                 Utils.SetupReferenceImageImportSettings(images.Values);
 
@@ -104,7 +78,7 @@ namespace UnityEditor.TestTools.Graphics
 
                 bundleBuilds.Add(new AssetBundleBuild
                 {
-                    assetBundleName = string.Format("referenceimages-{0}-{1}-{2}-{3}", colorSpace, runtimePlatform, api, xrsdk),
+                    assetBundleName = string.Format("referenceimages-{0}-{1}-{2}", colorSpace, runtimePlatform, api),
                     addressableNames = images.Keys.ToArray(),
                     assetNames = images.Values.ToArray()
                 });
@@ -117,116 +91,135 @@ namespace UnityEditor.TestTools.Graphics
 
                 foreach (var bundle in bundleBuilds)
                 {
-                    BuildPipeline.BuildAssetBundles("Assets/StreamingAssets", new[] { bundle }, BuildAssetBundleOptions.None,
+                    BuildPipeline.BuildAssetBundles("Assets/StreamingAssets", new [] { bundle }, BuildAssetBundleOptions.None,
                         buildPlatform);
                 }
             }
 
-            var buildSettingsScenes = EditorBuildSettings.scenes;
+
+            // For each scene in the build settings, force build of the lightmaps if it has "DoLightmap" label.
+            // Note that in the PreBuildSetup stage, TestRunner has already created a new scene with its testing monobehaviours
+
+            Scene trScene = EditorSceneManagement.EditorSceneManager.GetSceneAt(0);
+
+            string[] selectedScenes = GetSelectedScenes();
+
             var sceneIndex = 0;
+            var totalScenes = EditorBuildSettings.scenes.Length;
 
-            var filterGuid = AssetDatabase.FindAssets("t: TestFilters");
+            string[] filterGUIDs = AssetDatabase.FindAssets("t:TestFilters");
 
-            var filters = AssetDatabase.LoadAssetAtPath<TestFilters>(
-                AssetDatabase.GUIDToAssetPath(filterGuid.FirstOrDefault()));
-
-            var filterTest = Resources.Load<TestFilters>("TestCaseFilters");
-
-            foreach (var scene in buildSettingsScenes)
+            List<TestFilters> filters = new List<TestFilters>();
+            foreach (var filterGUID in filterGUIDs)
             {
-                // enable all scenes and let the filters disable them as needed
-                scene.enabled = true;
+                string filterPath = AssetDatabase.GUIDToAssetPath(filterGUID);
+                filters.Add(AssetDatabase.LoadAssetAtPath(filterPath, typeof(TestFilters)) as TestFilters);
+            }
+            // Disabling scenes directly in EditorBuildSettings.scenes does not work
+            // As a solution - disabling scenes in temporary variable and then assigning it back to EditorBuildSettings.scenes
+            EditorBuildSettingsScene[] scenes = EditorBuildSettings.scenes;
 
-                if (filters != null)
+            foreach ( EditorBuildSettingsScene scene in scenes)
+            {
+                if (!scene.enabled) continue;
+
+                if (filters.Count > 0)
                 {
-                    var filtersForScene = filters.filters.Where(f => AssetDatabase.GetAssetPath(f.FilteredScene) == scene.path);
+                    // Right now leaving only single filter available per project.
+                    var filtersForScene = filters.First().filters.Where(f => AssetDatabase.GetAssetPath(f.FilteredScene) == scene.path);
+                    bool enableScene = true;
+                    string filterReasons = "";
 
                     foreach (var filter in filtersForScene)
                     {
-                        StereoRenderingModeFlags stereoModeFlag = 0;
-                        bool enableScene = true;
-
-                        switch (PlayerSettings.stereoRenderingPath)
-                        {
-                            case StereoRenderingPath.MultiPass:
-                                stereoModeFlag |= StereoRenderingModeFlags.MultiPass;
-                                break;
-                            case StereoRenderingPath.SinglePass:
-                                stereoModeFlag |= StereoRenderingModeFlags.SinglePass;
-                                break;
-                            case StereoRenderingPath.Instancing:
-                                stereoModeFlag |= StereoRenderingModeFlags.Instancing;
-                                break;
-                        }
-
                         if ((filter.BuildPlatform == buildPlatform || filter.BuildPlatform == BuildTarget.NoTarget) &&
                             (filter.GraphicsDevice == graphicsDevices.First() || filter.GraphicsDevice == GraphicsDeviceType.Null) &&
                             (filter.ColorSpace == colorSpace || filter.ColorSpace == ColorSpace.Uninitialized))
                         {
-
-                            // non vr filter matched
-                            if ((!PlayerSettings.virtualRealitySupported || !(settings != null && settings.InitManagerOnStart)) &&
-                                (string.IsNullOrEmpty(filter.XrSdk) || string.Compare(filter.XrSdk, "None", true) == 0) &&
-                                filter.StereoModes == StereoRenderingModeFlags.None)
-                            {
-                                enableScene = false;
-                            }
-                            // if VR is enabled then the VR specific filters need to match the filter too
-                            else if ((PlayerSettings.virtualRealitySupported || (settings != null && settings.InitManagerOnStart)) &&
-                                (filter.StereoModes == StereoRenderingModeFlags.None || (filter.StereoModes & stereoModeFlag) == stereoModeFlag) &&
-                                (filter.XrSdk == xrsdk || string.IsNullOrEmpty(filter.XrSdk)))
-                            {
-                                enableScene = false;
-                            }
-
-                            scene.enabled = enableScene;
-                            if (!enableScene)
-                                Debug.Log(string.Format("Removed scene {0} from build settings because {1}", Path.GetFileNameWithoutExtension(scene.path), filter.Reason));
+                            // Adding reasons in case when same test is ignored several times
+                            filterReasons += filter.Reason + "\n";
+                            enableScene = false;
                         }
+                    }
+                    scene.enabled = enableScene;
+                    if (!enableScene)
+                    {
+                        Debug.Log(string.Format("Removed scene {0} from build settings because {1}", Path.GetFileNameWithoutExtension(scene.path), filterReasons));
+                        continue;
                     }
                 }
 
+
                 SceneAsset sceneAsset = AssetDatabase.LoadAssetAtPath<SceneAsset>(scene.path);
-
                 var labels = new System.Collections.Generic.List<string>(AssetDatabase.GetLabels(sceneAsset));
+                
+                // if we successfully retrieved the names of the selected scenes, we filter using this list
+                if (selectedScenes.Length > 0 && !selectedScenes.Contains(sceneAsset.name))
+                    continue;
 
-                // For each scene in the build settings, force build of the lightmaps if it has "DoLightmap" label.
-                // Note that in the PreBuildSetup stage, TestRunner has already created a new scene with its testing monobehaviours
-                if (scene.enabled == true && labels.Contains(bakeLabel))
+                if ( labels.Contains(bakeLabel) )
                 {
-                    Scene trScene = EditorSceneManagement.EditorSceneManager.GetSceneAt(0);
-
                     EditorSceneManagement.EditorSceneManager.OpenScene(scene.path, EditorSceneManagement.OpenSceneMode.Additive);
 
                     Scene currentScene = EditorSceneManagement.EditorSceneManager.GetSceneAt(1);
 
                     EditorSceneManagement.EditorSceneManager.SetActiveScene(currentScene);
-
+#pragma warning disable 618
                     Lightmapping.giWorkflowMode = Lightmapping.GIWorkflowMode.OnDemand;
-
-                    EditorUtility.DisplayProgressBar($"Baking Test Scenes {(sceneIndex + 1).ToString()}/{buildSettingsScenes.Length.ToString()}", $"Baking {sceneAsset.name}", ((float)sceneIndex / buildSettingsScenes.Length));
+#pragma warning restore 618
+                    EditorUtility.DisplayProgressBar($"Baking Test Scenes {(sceneIndex + 1).ToString()}/{totalScenes.ToString()}", $"Baking {sceneAsset.name}", ((float)sceneIndex / totalScenes));
 
                     Lightmapping.Bake();
 
-                    // disk cache needs to be cleared to prevent bug 742012 where duplicate lights are double baked
-                    Lightmapping.ClearDiskCache();
-
-                    EditorSceneManagement.EditorSceneManager.SaveScene(currentScene);
+                    EditorSceneManagement.EditorSceneManager.SaveScene( currentScene );
 
                     EditorSceneManagement.EditorSceneManager.SetActiveScene(trScene);
 
                     EditorSceneManagement.EditorSceneManager.CloseScene(currentScene, true);
                 }
+
                 sceneIndex++;
             }
-
-            // set the scene list in the build settings window.  Only updating the array will do this.
-            EditorBuildSettings.scenes = buildSettingsScenes.Where(s => s.enabled).ToArray();
-
+            
             EditorUtility.ClearProgressBar();
+            EditorBuildSettings.scenes = scenes;
 
             if (!IsBuildingForEditorPlaymode)
                 new CreateSceneListFileFromBuildSettings().Setup();
+        }
+
+        string[] GetSelectedScenes()
+        {
+            try {
+                var testRunnerWindowType = Type.GetType("UnityEditor.TestTools.TestRunner.TestRunnerWindow, UnityEditor.TestRunner, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"); // type: TestRunnerWindow
+                var testRunnerWindow = EditorWindow.GetWindow(testRunnerWindowType);
+                var playModeListGUI = testRunnerWindowType.GetField("m_PlayModeTestListGUI", BindingFlags.NonPublic | BindingFlags.Instance); // type: PlayModeTestListGUI
+                var testListTree = playModeListGUI.FieldType.BaseType.GetField("m_TestListTree", BindingFlags.NonPublic | BindingFlags.Instance); // type: TreeViewController
+
+                // internal treeview GetSelection:
+                var getSelectionMethod = testListTree.FieldType.GetMethod("GetSelection", BindingFlags.Public | BindingFlags.Instance); // int[] GetSelection();
+                var playModeListGUIValue = playModeListGUI.GetValue(testRunnerWindow);
+                var testListTreeValue = testListTree.GetValue(playModeListGUIValue);
+
+                var selectedItems = getSelectionMethod.Invoke(testListTreeValue, null);
+
+                var getSelectedTestsAsFilterMethod = playModeListGUI.FieldType.BaseType.GetMethod(
+                    "GetSelectedTestsAsFilter",
+                    BindingFlags.NonPublic | BindingFlags.Instance
+                );
+
+                dynamic testRunnerFilterArray = getSelectedTestsAsFilterMethod.Invoke(playModeListGUIValue, new object[] { selectedItems });
+                
+                var testNamesField = testRunnerFilterArray[0].GetType().GetField("testNames", BindingFlags.Instance | BindingFlags.Public);
+
+                List< string > testNames = new List<string>();
+                foreach (dynamic testRunnerFilter in testRunnerFilterArray)
+                    testNames.AddRange(testNamesField.GetValue(testRunnerFilter));
+
+                return testNames.Select(name => name.Substring(name.LastIndexOf('.') + 1)).ToArray();
+            } catch (Exception) {
+                return new string[] {}; // Ignore error and return an empty array
+            }
         }
 
         static string lightmapDataGitIgnore = @"Lightmap-*_comp*
@@ -246,7 +239,7 @@ ReflectionProbe-*";
                 List<string> labels = new System.Collections.Generic.List<string>(AssetDatabase.GetLabels(sceneAsset));
 
                 string scenePath = AssetDatabase.GetAssetPath(sceneAsset);
-                string gitIgnorePath = Path.Combine(Path.Combine(Application.dataPath.Substring(0, Application.dataPath.Length - 6), scenePath.Substring(0, scenePath.Length - 6)), ".gitignore");
+                string gitIgnorePath = Path.Combine( Path.Combine( Application.dataPath.Substring(0, Application.dataPath.Length-6), scenePath.Substring(0, scenePath.Length-6) ) , ".gitignore" );
 
                 if (labels.Contains(bakeLabel))
                 {
@@ -257,19 +250,21 @@ ReflectionProbe-*";
                 {
                     labels.Add(bakeLabel);
 
-                    string sceneLightingDataFolder = Path.Combine(Path.GetDirectoryName(scenePath), Path.GetFileNameWithoutExtension(scenePath));
-                    if (!AssetDatabase.IsValidFolder(sceneLightingDataFolder))
-                        AssetDatabase.CreateFolder(Path.GetDirectoryName(scenePath), Path.GetFileNameWithoutExtension(scenePath));
+                    string sceneLightingDataFolder = Path.Combine( Path.GetDirectoryName(scenePath), Path.GetFileNameWithoutExtension(scenePath) );
+                    if ( !AssetDatabase.IsValidFolder(sceneLightingDataFolder) )
+                        AssetDatabase.CreateFolder( Path.GetDirectoryName(scenePath), Path.GetFileNameWithoutExtension(scenePath) );
 
                     File.WriteAllText(gitIgnorePath, lightmapDataGitIgnore);
 
                     EditorSceneManagement.EditorSceneManager.OpenScene(scenePath, EditorSceneManagement.OpenSceneMode.Single);
-                    EditorSceneManagement.EditorSceneManager.SetActiveScene(EditorSceneManagement.EditorSceneManager.GetSceneAt(0));
+                    EditorSceneManagement.EditorSceneManager.SetActiveScene( EditorSceneManagement.EditorSceneManager.GetSceneAt(0) );
+#pragma warning disable 618
                     Lightmapping.giWorkflowMode = Lightmapping.GIWorkflowMode.OnDemand;
-                    EditorSceneManagement.EditorSceneManager.SaveScene(EditorSceneManagement.EditorSceneManager.GetSceneAt(0));
+#pragma warning restore 618
+                    EditorSceneManagement.EditorSceneManager.SaveScene( EditorSceneManagement.EditorSceneManager.GetSceneAt(0) );
                 }
 
-                AssetDatabase.SetLabels(sceneAsset, labels.ToArray());
+                AssetDatabase.SetLabels( sceneAsset, labels.ToArray() );
             }
             AssetDatabase.Refresh();
 

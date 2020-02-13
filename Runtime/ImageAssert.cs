@@ -35,7 +35,7 @@ namespace UnityEngine.TestTools.Graphics
             if (camera == null)
                 throw new ArgumentNullException(nameof(camera));
 
-            AreEqual(expected, new List<Camera> { camera }, settings);
+            AreEqual(expected, new List<Camera>{camera}, settings);
         }
 
         /// <summary>
@@ -62,14 +62,14 @@ namespace UnityEngine.TestTools.Graphics
             // This PR adds a dummy rendered frame before doing the real rendering and compare images ( test already has frame delay, but there is no rendering )
             int dummyRenderedFrameCount = 1;
 
-            RenderTextureDescriptor desc = new RenderTextureDescriptor(width, height, settings.UseHDR ? RenderTextureFormat.DefaultHDR : RenderTextureFormat.Default, 24);
-            desc.sRGB = QualitySettings.activeColorSpace == ColorSpace.Linear;
+            var defaultFormat = (settings.UseHDR) ? SystemInfo.GetGraphicsFormat(DefaultFormat.HDR) : SystemInfo.GetGraphicsFormat(DefaultFormat.LDR);
+            RenderTextureDescriptor desc = new RenderTextureDescriptor(width, height, defaultFormat, 24);
 
             var rt = RenderTexture.GetTemporary(desc);
             Texture2D actual = null;
             try
             {
-                for (int i = 0; i < dummyRenderedFrameCount + 1; i++)        // x frame delay + the last one is the one really tested ( ie 5 frames delay means 6 frames are rendered )
+                for (int i=0;i< dummyRenderedFrameCount+1;i++)        // x frame delay + the last one is the one really tested ( ie 5 frames delay means 6 frames are rendered )
                 {
                     foreach (var camera in cameras)
                     {
@@ -78,32 +78,31 @@ namespace UnityEngine.TestTools.Graphics
                         camera.targetTexture = null;
                     }
 
-                    // only proceed the test on the last rendered frame
-                    if (dummyRenderedFrameCount == i)
-                    {
+					// only proceed the test on the last rendered frame
+					if (dummyRenderedFrameCount == i)
+					{
                         actual = new Texture2D(width, height, format, false);
                         RenderTexture dummy = null;
 
                         if (settings.UseHDR)
                         {
-                            desc.colorFormat = RenderTextureFormat.Default;
+                            desc.graphicsFormat = SystemInfo.GetGraphicsFormat(DefaultFormat.LDR);
                             dummy = RenderTexture.GetTemporary(desc);
                             UnityEngine.Graphics.Blit(rt, dummy);
                         }
                         else
                             RenderTexture.active = rt;
 
-
-                        actual.ReadPixels(new Rect(0, 0, width, height), 0, 0);
-                        RenderTexture.active = null;
+						actual.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+						RenderTexture.active = null;
 
                         if (dummy != null)
                             RenderTexture.ReleaseTemporary(dummy);
 
-                        actual.Apply();
+						actual.Apply();
 
-                        AreEqual(expected, actual, settings);
-                    }
+						AreEqual(expected, actual, settings);
+					}
                 }
 
             }
@@ -126,12 +125,7 @@ namespace UnityEngine.TestTools.Graphics
             if (actual == null)
                 throw new ArgumentNullException(nameof(actual));
 
-            var dirName = Path.Combine("Assets/ActualImages", string.Format("{0}/{1}/{2}/{3}",
-                UseGraphicsTestCasesAttribute.ColorSpace,
-                UseGraphicsTestCasesAttribute.Platform,
-                UseGraphicsTestCasesAttribute.GraphicsDevice,
-                UseGraphicsTestCasesAttribute.LoadedXRDevice));
-
+            var dirName = Path.Combine("Assets/ActualImages", string.Format("{0}/{1}/{2}", UseGraphicsTestCasesAttribute.ColorSpace, UseGraphicsTestCasesAttribute.Platform, UseGraphicsTestCasesAttribute.GraphicsDevice));
             var failedImageMessage = new FailedImageMessage
             {
                 PathName = dirName,
@@ -184,6 +178,8 @@ namespace UnityEngine.TestTools.Graphics
                         diffImage.SetPixels32(diffPixelsArray, 0);
                         diffImage.Apply(false);
 
+                        TestContext.CurrentContext.Test.Properties.Set("DiffImage", Convert.ToBase64String(diffImage.EncodeToPNG()) );
+
                         failedImageMessage.DiffImage = diffImage.EncodeToPNG();
                         failedImageMessage.ExpectedImage = expected.EncodeToPNG();
                         throw;
@@ -198,6 +194,7 @@ namespace UnityEngine.TestTools.Graphics
 #else
                 PlayerConnection.instance.Send(FailedImageMessage.MessageId, failedImageMessage.Serialize());
 #endif
+                TestContext.CurrentContext.Test.Properties.Set("Image", Convert.ToBase64String(actual.EncodeToPNG()));
                 throw;
             }
         }
@@ -212,7 +209,7 @@ namespace UnityEngine.TestTools.Graphics
         {
             if (camera == null)
                 throw new ArgumentNullException(nameof(camera));
-
+            
             if (settings == null)
                 settings = new ImageComparisonSettings();
 
@@ -241,8 +238,7 @@ namespace UnityEngine.TestTools.Graphics
                 }
                 Profiler.EndSample();
 
-                // Note: Currently there are some allocs between the Camera.Render and the begining of the render pipeline rendering.
-                // Because of that, we can't enable this test.
+                // There are 2 GC.Alloc overhead for calling Camera.CustomRender
                 int allocationCountOfRenderPipeline = gcAllocRecorder.sampleBlockCount - gcAllocThreshold;
 
                 if (allocationCountOfRenderPipeline > 0)
@@ -299,14 +295,14 @@ namespace UnityEngine.TestTools.Graphics
         {
             var xyz = RGBtoXYZ(color.linear);
 
-            const float kB = 1.15f;
-            const float kG = 0.66f;
+            const float kB  = 1.15f;
+            const float kG  = 0.66f;
             const float kC1 = 0.8359375f;        // 3424 / 2^12
             const float kC2 = 18.8515625f;       // 2413 / 2^7
             const float kC3 = 18.6875f;          // 2392 / 2^7
-            const float kN = 0.15930175781f;    // 2610 / 2^14
-            const float kP = 134.034375f;       // 1.7 * 2523 / 2^5
-            const float kD = -0.56f;
+            const float kN  = 0.15930175781f;    // 2610 / 2^14
+            const float kP  = 134.034375f;       // 1.7 * 2523 / 2^5
+            const float kD  = -0.56f;
             const float kD0 = 1.6295499532821566E-11f;
 
             float x2 = kB * xyz.x - (kB - 1f) * xyz.z;
@@ -358,7 +354,6 @@ namespace UnityEngine.TestTools.Graphics
 #if UNITY_EDITOR
 public class ImageHandler : ScriptableSingleton<ImageHandler>
 {
-    public string ImageResultsPath;
     public void HandleFailedImageEvent(MessageEventArgs messageEventArgs)
     {
         var failedImageMessage = FailedImageMessage.Deserialize(messageEventArgs.data);
@@ -367,25 +362,23 @@ public class ImageHandler : ScriptableSingleton<ImageHandler>
 
     public void SaveImage(FailedImageMessage failedImageMessage)
     {
-        var saveDir = string.IsNullOrEmpty(ImageResultsPath) ? failedImageMessage.PathName : ImageResultsPath;
-
-        if (!Directory.Exists(saveDir))
+        if (!Directory.Exists(failedImageMessage.PathName))
         {
-            Directory.CreateDirectory(saveDir);
+            Directory.CreateDirectory(failedImageMessage.PathName);
         }
 
-        var actualImagePath = Path.Combine(saveDir, $"{failedImageMessage.ImageName}.png");
+        var actualImagePath = Path.Combine(failedImageMessage.PathName, $"{failedImageMessage.ImageName}.png");
         File.WriteAllBytes(actualImagePath, failedImageMessage.ActualImage);
         ReportArtifact(actualImagePath);
 
         if (failedImageMessage.DiffImage != null)
         {
-            var diffImagePath = Path.Combine(saveDir, $"{failedImageMessage.ImageName}.diff.png");
+            var diffImagePath = Path.Combine(failedImageMessage.PathName, $"{failedImageMessage.ImageName}.diff.png");
             File.WriteAllBytes(diffImagePath, failedImageMessage.DiffImage);
             ReportArtifact(diffImagePath);
 
             var expectedImagesPath =
-                Path.Combine(saveDir, $"{failedImageMessage.ImageName}.expected.png");
+                Path.Combine(failedImageMessage.PathName, $"{failedImageMessage.ImageName}.expected.png");
             File.WriteAllBytes(expectedImagesPath, failedImageMessage.ExpectedImage);
             ReportArtifact(expectedImagesPath);
         }

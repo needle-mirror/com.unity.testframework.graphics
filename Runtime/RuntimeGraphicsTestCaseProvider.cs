@@ -11,12 +11,11 @@ namespace UnityEngine.TestTools.Graphics
         {
             AssetBundle referenceImagesBundle = null;
             string[] scenePaths;
-            // apparently unity automatically saves the asset bundle as all lower case
-            var referenceImagesBundlePath = string.Format("referenceimages-{0}-{1}-{2}-{3}", 
-                UseGraphicsTestCasesAttribute.ColorSpace, 
-                UseGraphicsTestCasesAttribute.Platform, 
-                UseGraphicsTestCasesAttribute.GraphicsDevice,
-                UseGraphicsTestCasesAttribute.LoadedXRDevice).ToLower();
+            var referenceImagesBundlePath = string.Format("{0}/referenceimages-{1}-{2}-{3}",
+                Application.streamingAssetsPath,
+                UseGraphicsTestCasesAttribute.ColorSpace.ToString().ToLower(),
+                UseGraphicsTestCasesAttribute.Platform.ToString().ToLower(),
+                UseGraphicsTestCasesAttribute.GraphicsDevice.ToString().ToLower());
 
 #if UNITY_ANDROID
             // Unlike standalone where you can use File.Read methods and pass the path to the file,
@@ -55,7 +54,8 @@ namespace UnityEngine.TestTools.Graphics
 
             AssetBundle referenceImagesBundle = null;
 
-                var referenceImagesBundlePath = string.Format("{0}/referenceimages-{1}-{2}-{3}", Application.streamingAssetsPath, UseGraphicsTestCasesAttribute.ColorSpace.ToString().ToLower(), UseGraphicsTestCasesAttribute.Platform.ToString().ToLower(), UseGraphicsTestCasesAttribute.GraphicsDevice.ToString().ToLower());            if (File.Exists(referenceImagesBundlePath))
+            var referenceImagesBundlePath = string.Format("{0}/referenceimages-{1}-{2}-{3}", Application.streamingAssetsPath, UseGraphicsTestCasesAttribute.ColorSpace.ToString().ToLower(), UseGraphicsTestCasesAttribute.Platform.ToString().ToLower(), UseGraphicsTestCasesAttribute.GraphicsDevice.ToString().ToLower());
+            if (File.Exists(referenceImagesBundlePath))
                 referenceImagesBundle = AssetBundle.LoadFromFile(referenceImagesBundlePath);
 
             var imagePath = Path.GetFileNameWithoutExtension(scenePath);

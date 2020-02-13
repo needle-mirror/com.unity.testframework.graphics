@@ -1,4 +1,4 @@
-﻿#if UNITY_EDITOR
+#if UNITY_EDITOR
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,7 +10,7 @@ using UnityEngine;
 public class TestFilters : ScriptableObject
 {
     public TestFilterConfig[] filters;
-    
+
     public TestFilters()
     {
         filters = new TestFilterConfig[1];
@@ -18,8 +18,8 @@ public class TestFilters : ScriptableObject
 
     public void SortBySceneName()
     {
-        Array.Sort(filters, 
-            (a,b) => a.FilteredScene == null ? 1 : b.FilteredScene == null ? -1 : a.FilteredScene.name.CompareTo(b.FilteredScene.name));
+        Array.Sort(filters,
+            (a, b) => a.FilteredScene == null ? 1 : b.FilteredScene == null ? -1 : a.FilteredScene.name.CompareTo(b.FilteredScene.name));
     }
 }
 #endif
