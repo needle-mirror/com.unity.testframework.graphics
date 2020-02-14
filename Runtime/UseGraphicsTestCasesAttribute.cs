@@ -5,6 +5,7 @@ using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
 using NUnit.Framework.Internal.Builders;
 using UnityEngine.Rendering;
+using UnityEngine.XR.Management;
 using Attribute = System.Attribute;
 
 namespace UnityEngine.TestTools.Graphics
@@ -65,6 +66,20 @@ namespace UnityEngine.TestTools.Graphics
             }
         }
 
+        public static string LoadedXRDevice
+        {
+            get
+            {
+                if (!XR.XRSettings.enabled)
+                    return "None";
+
+                if (XRGeneralSettings.Instance?.Manager?.activeLoader != null)
+                    return XRGeneralSettings.Instance.Manager.activeLoader.name;
+
+                return XR.XRSettings.loadedDeviceName == "" ? "None" : XR.XRSettings.loadedDeviceName;
+            }
+        }
+
 
         IEnumerable<TestMethod> ITestBuilder.BuildFrom(IMethodInfo method, Test suite)
         {
@@ -101,6 +116,7 @@ namespace UnityEngine.TestTools.Graphics
             suite.Properties.Set("ColorSpace", ColorSpace);
             suite.Properties.Set("RuntimePlatform", Platform);
             suite.Properties.Set("GraphicsDevice", GraphicsDevice);
+            suite.Properties.Set("LoadedXRDevice", LoadedXRDevice);
 
             Console.WriteLine("Generated {0} graphics test cases.", results.Count);
             return results;

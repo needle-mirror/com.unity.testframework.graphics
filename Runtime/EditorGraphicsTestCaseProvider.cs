@@ -76,14 +76,14 @@ namespace UnityEditor.TestTools.Graphics
         public const string ReferenceImagesRoot = "Assets/ReferenceImages";
 
         public static Dictionary<string, string> CollectReferenceImagePathsFor(string referenceImageRoot, ColorSpace colorSpace, RuntimePlatform runtimePlatform,
-            GraphicsDeviceType graphicsApi)
+            GraphicsDeviceType graphicsApi, string xrsdk = "None")
         {
             var result = new Dictionary<string, string>();
 
             if (!Directory.Exists(referenceImageRoot))
                 return result;
 
-            var fullPathPrefix = string.Format("{0}/{1}/{2}/{3}/", referenceImageRoot, colorSpace, runtimePlatform, graphicsApi);
+            var fullPathPrefix = string.Format("{0}/{1}/{2}/{3}/{4}/", referenceImageRoot, colorSpace, runtimePlatform, graphicsApi, xrsdk);
 
             foreach (var assetPath in AssetDatabase.GetAllAssetPaths()
                 .Where(p => p.StartsWith(fullPathPrefix, StringComparison.OrdinalIgnoreCase))

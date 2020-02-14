@@ -125,7 +125,12 @@ namespace UnityEngine.TestTools.Graphics
             if (actual == null)
                 throw new ArgumentNullException(nameof(actual));
 
-            var dirName = Path.Combine("Assets/ActualImages", string.Format("{0}/{1}/{2}", UseGraphicsTestCasesAttribute.ColorSpace, UseGraphicsTestCasesAttribute.Platform, UseGraphicsTestCasesAttribute.GraphicsDevice));
+            var dirName = Path.Combine("Assets/ActualImages", string.Format("{0}/{1}/{2}/{3}",
+                UseGraphicsTestCasesAttribute.ColorSpace,
+                UseGraphicsTestCasesAttribute.Platform,
+                UseGraphicsTestCasesAttribute.GraphicsDevice,
+                UseGraphicsTestCasesAttribute.LoadedXRDevice));
+
             var failedImageMessage = new FailedImageMessage
             {
                 PathName = dirName,
@@ -178,8 +183,6 @@ namespace UnityEngine.TestTools.Graphics
                         diffImage.SetPixels32(diffPixelsArray, 0);
                         diffImage.Apply(false);
 
-                        TestContext.CurrentContext.Test.Properties.Set("DiffImage", Convert.ToBase64String(diffImage.EncodeToPNG()) );
-
                         failedImageMessage.DiffImage = diffImage.EncodeToPNG();
                         failedImageMessage.ExpectedImage = expected.EncodeToPNG();
                         throw;
@@ -194,7 +197,6 @@ namespace UnityEngine.TestTools.Graphics
 #else
                 PlayerConnection.instance.Send(FailedImageMessage.MessageId, failedImageMessage.Serialize());
 #endif
-                TestContext.CurrentContext.Test.Properties.Set("Image", Convert.ToBase64String(actual.EncodeToPNG()));
                 throw;
             }
         }
@@ -354,6 +356,7 @@ namespace UnityEngine.TestTools.Graphics
 #if UNITY_EDITOR
 public class ImageHandler : ScriptableSingleton<ImageHandler>
 {
+    public string ImageResultsPath;
     public void HandleFailedImageEvent(MessageEventArgs messageEventArgs)
     {
         var failedImageMessage = FailedImageMessage.Deserialize(messageEventArgs.data);
@@ -362,23 +365,25 @@ public class ImageHandler : ScriptableSingleton<ImageHandler>
 
     public void SaveImage(FailedImageMessage failedImageMessage)
     {
-        if (!Directory.Exists(failedImageMessage.PathName))
+        var saveDir = string.IsNullOrEmpty(ImageResultsPath) ? failedImageMessage.PathName : ImageResultsPath;
+
+        if (!Directory.Exists(saveDir))
         {
-            Directory.CreateDirectory(failedImageMessage.PathName);
+            Directory.CreateDirectory(saveDir);
         }
 
-        var actualImagePath = Path.Combine(failedImageMessage.PathName, $"{failedImageMessage.ImageName}.png");
+        var actualImagePath = Path.Combine(saveDir, $"{failedImageMessage.ImageName}.png");
         File.WriteAllBytes(actualImagePath, failedImageMessage.ActualImage);
         ReportArtifact(actualImagePath);
 
         if (failedImageMessage.DiffImage != null)
         {
-            var diffImagePath = Path.Combine(failedImageMessage.PathName, $"{failedImageMessage.ImageName}.diff.png");
+            var diffImagePath = Path.Combine(saveDir, $"{failedImageMessage.ImageName}.diff.png");
             File.WriteAllBytes(diffImagePath, failedImageMessage.DiffImage);
             ReportArtifact(diffImagePath);
 
             var expectedImagesPath =
-                Path.Combine(failedImageMessage.PathName, $"{failedImageMessage.ImageName}.expected.png");
+                Path.Combine(saveDir, $"{failedImageMessage.ImageName}.expected.png");
             File.WriteAllBytes(expectedImagesPath, failedImageMessage.ExpectedImage);
             ReportArtifact(expectedImagesPath);
         }

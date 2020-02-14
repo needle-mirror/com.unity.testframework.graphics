@@ -87,7 +87,12 @@ namespace UnityEditor.TestTools.Graphics
                   test.Properties.ContainsKey("DiffImage")))
                 return;
             
-            var dirName = Path.Combine(ActualImagesRoot, string.Format("{0}/{1}/{2}", UseGraphicsTestCasesAttribute.ColorSpace, UseGraphicsTestCasesAttribute.Platform, UseGraphicsTestCasesAttribute.GraphicsDevice));
+            var dirName = Path.Combine(ActualImagesRoot, string.Format("{0}/{1}/{2}/{3}",
+                UseGraphicsTestCasesAttribute.ColorSpace,
+                UseGraphicsTestCasesAttribute.Platform,
+                UseGraphicsTestCasesAttribute.GraphicsDevice,
+                UseGraphicsTestCasesAttribute.LoadedXRDevice));
+
             if (!Directory.Exists(dirName))
                 Directory.CreateDirectory(dirName);
 

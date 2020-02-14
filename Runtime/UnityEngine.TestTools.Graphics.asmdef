@@ -2,7 +2,8 @@
     "name": "UnityEngine.TestTools.Graphics",
     "references": [
         "GUID:27619889b8ba8c24980f49ee34dbb44a",
-        "GUID:0acc523941302664db1f4e527237feb3"
+        "GUID:0acc523941302664db1f4e527237feb3",
+        "GUID:e40ba710768534012815d3193fa296cb"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -10,12 +11,13 @@
     "overrideReferences": true,
     "precompiledReferences": [
         "nunit.framework.dll",
-        "Unity.TestProtocol.dll",
-        "Newtonsoft.Json.dll"
+		"NewtonsoftJson.dll",
+		"Unity.TestProtocol.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [
         "UNITY_INCLUDE_TESTS"
     ],
-    "versionDefines": []
+    "versionDefines": [],
+    "noEngineReferences": false
 }

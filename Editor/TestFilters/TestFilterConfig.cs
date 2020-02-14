@@ -9,5 +9,15 @@ public class TestFilterConfig
     public ColorSpace ColorSpace = ColorSpace.Uninitialized;
     public BuildTarget BuildPlatform = BuildTarget.NoTarget;
     public GraphicsDeviceType GraphicsDevice = GraphicsDeviceType.Null;
+    public string XrSdk;
+    public StereoRenderingModeFlags StereoModes;
     public string Reason;
+}
+
+public enum StereoRenderingModeFlags
+{
+    None = 0,
+    MultiPass = 1,
+    SinglePass = 2,
+    Instancing = 4
 }
