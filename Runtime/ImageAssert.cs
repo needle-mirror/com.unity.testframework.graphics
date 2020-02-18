@@ -307,7 +307,8 @@ namespace UnityEngine.TestTools.Graphics
             var rt = RenderTexture.GetTemporary(desc);
             try
             {
-                camera.targetTexture = rt;
+                if (!settings.UseBackBuffer && !RuntimeSettings.reuseTestsForXR)
+                    camera.targetTexture = rt;
 
                 // Render the first frame at this resolution (Alloc are allowed here)
                 camera.Render();
