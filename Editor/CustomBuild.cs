@@ -13,7 +13,7 @@ public static class CustomBuild
         string path = EditorUtility.SaveFolderPanel("Choose Location of Build", "", "");
         //PlayerSettings.colorSpace = ColorSpace.Gamma;
         BuildTarget buildTarget = BuildTarget.Android;
-        BuildOptions buildOptions = BuildOptions.None;
+        // BuildOptions buildOptions = BuildOptions.None;
 
         GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.OpenGLES2 };
         BuildScenes(path, graphicsAPIs[0].ToString(), buildTarget);
@@ -25,7 +25,7 @@ public static class CustomBuild
         string path = EditorUtility.SaveFolderPanel("Choose Location of Build", "", "");
         //PlayerSettings.colorSpace = ColorSpace.Linear;
         BuildTarget buildTarget = BuildTarget.Android;
-        BuildOptions buildOptions = BuildOptions.None;
+        // BuildOptions buildOptions = BuildOptions.None;
 
         GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.Vulkan };
         BuildScenes(path, graphicsAPIs[0].ToString(), buildTarget);
@@ -37,7 +37,7 @@ public static class CustomBuild
         string path = EditorUtility.SaveFolderPanel("Choose Location of Build", "", "");
         //PlayerSettings.colorSpace = ColorSpace.Linear;
         BuildTarget buildTarget = BuildTarget.Android;
-        BuildOptions buildOptions = BuildOptions.None;
+        // BuildOptions buildOptions = BuildOptions.None;
 
         GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.OpenGLES3 };
         BuildScenes(path, graphicsAPIs[0].ToString(), buildTarget);
@@ -49,7 +49,7 @@ public static class CustomBuild
         string path = EditorUtility.SaveFolderPanel("Choose Location of Build", "", "");
         //PlayerSettings.colorSpace = ColorSpace.Linear;
         BuildTarget buildTarget = BuildTarget.iOS;
-        BuildOptions buildOptions = BuildOptions.None;
+        // BuildOptions buildOptions = BuildOptions.None;
 
         GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.Metal };
         BuildScenes(path, graphicsAPIs[0].ToString(), buildTarget);        
@@ -60,7 +60,7 @@ public static class CustomBuild
     {
         //PlayerSettings.colorSpace = ColorSpace.Linear;
         BuildTarget buildTarget = BuildTarget.StandaloneOSX;
-        BuildOptions buildOptions = BuildOptions.None;
+        // BuildOptions buildOptions = BuildOptions.None;
 
         GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.Metal };
         BuildScenes(".", graphicsAPIs[0].ToString(), buildTarget);        
@@ -70,7 +70,7 @@ public static class CustomBuild
     {
         PlayerSettings.colorSpace = ColorSpace.Linear;
         BuildTarget buildTarget = BuildTarget.StandaloneWindows64;
-        BuildOptions buildOptions = BuildOptions.None;
+        // BuildOptions buildOptions = BuildOptions.None;
 
         GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.Vulkan };
         BuildScenes(".", graphicsAPIs[0].ToString(), buildTarget);
@@ -80,7 +80,7 @@ public static class CustomBuild
     {
         //PlayerSettings.colorSpace = ColorSpace.Linear;
         BuildTarget buildTarget = BuildTarget.StandaloneLinux64;
-        BuildOptions buildOptions = BuildOptions.None;
+        // BuildOptions buildOptions = BuildOptions.None;
 
         GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.Vulkan };
         BuildScenes(".", graphicsAPIs[0].ToString(), buildTarget);
@@ -90,7 +90,7 @@ public static class CustomBuild
     {
         //PlayerSettings.colorSpace = ColorSpace.Linear;
         BuildTarget buildTarget = BuildTarget.StandaloneLinux64;
-        BuildOptions buildOptions = BuildOptions.None;
+        // BuildOptions buildOptions = BuildOptions.None;
 
         GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.OpenGLCore };
         BuildScenes(".", graphicsAPIs[0].ToString(), buildTarget);
@@ -100,7 +100,7 @@ public static class CustomBuild
     {
         //PlayerSettings.colorSpace = ColorSpace.Linear;
         BuildTarget buildTarget = BuildTarget.StandaloneWindows64;
-        BuildOptions buildOptions = BuildOptions.None;
+        // BuildOptions buildOptions = BuildOptions.None;
 
         GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.Direct3D11 };
         BuildScenes(".", graphicsAPIs[0].ToString(), buildTarget);
@@ -110,7 +110,7 @@ public static class CustomBuild
     {
         //PlayerSettings.colorSpace = ColorSpace.Linear;
         BuildTarget buildTarget = BuildTarget.StandaloneWindows64;
-        BuildOptions buildOptions = BuildOptions.None;
+        // BuildOptions buildOptions = BuildOptions.None;
 
         GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.Direct3D12 };
         BuildScenes(".", graphicsAPIs[0].ToString(), buildTarget);

@@ -85,7 +85,7 @@ namespace UnityEditor.TestTools.Graphics
             if (!Directory.Exists(referenceImageRoot))
                 return result;
 
-            var fullPathPrefix = string.Format("{0}/{1}/{2}/{3}/{4}/", referenceImageRoot, colorSpace, runtimePlatform, graphicsApi, xrsdk);
+            var fullPathPrefix = string.Format("{0}/{1}/{2}/{3}/{4}/", referenceImageRoot, colorSpace, runtimePlatform.ToUniqueString(), graphicsApi, xrsdk);
 
             foreach (var assetPath in AssetDatabase.GetAllAssetPaths()
                 .Where(p => p.StartsWith(fullPathPrefix, StringComparison.OrdinalIgnoreCase))

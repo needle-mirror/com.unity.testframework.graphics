@@ -15,7 +15,7 @@ namespace UnityEngine.TestTools.Graphics
             // apparently unity automatically saves the asset bundle as all lower case
             var referenceImagesBundlePath = string.Format("referenceimages-{0}-{1}-{2}-{3}", 
                 UseGraphicsTestCasesAttribute.ColorSpace, 
-                UseGraphicsTestCasesAttribute.Platform, 
+                UseGraphicsTestCasesAttribute.Platform.ToUniqueString(),
                 UseGraphicsTestCasesAttribute.GraphicsDevice,
                 UseGraphicsTestCasesAttribute.LoadedXRDevice).ToLower();
 
@@ -60,7 +60,7 @@ namespace UnityEngine.TestTools.Graphics
 
             var referenceImagesBundlePath = string.Format("referenceimages-{0}-{1}-{2}-{3}", 
                 UseGraphicsTestCasesAttribute.ColorSpace, 
-                UseGraphicsTestCasesAttribute.Platform, 
+                UseGraphicsTestCasesAttribute.Platform.ToUniqueString(),
                 UseGraphicsTestCasesAttribute.GraphicsDevice,
                 UseGraphicsTestCasesAttribute.LoadedXRDevice).ToLower();
 

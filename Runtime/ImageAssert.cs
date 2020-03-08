@@ -183,7 +183,7 @@ namespace UnityEngine.TestTools.Graphics
 
             var dirName = Path.Combine("Assets/ActualImages", string.Format("{0}/{1}/{2}/{3}",
                 UseGraphicsTestCasesAttribute.ColorSpace,
-                UseGraphicsTestCasesAttribute.Platform,
+                UseGraphicsTestCasesAttribute.Platform.ToUniqueString(),
                 UseGraphicsTestCasesAttribute.GraphicsDevice,
                 UseGraphicsTestCasesAttribute.LoadedXRDevice));
 
@@ -326,7 +326,7 @@ namespace UnityEngine.TestTools.Graphics
                 if (allocationCountOfRenderPipeline > 0)
                     throw new Exception(
                         $@"Memory allocation test failed, {allocationCountOfRenderPipeline} allocations detected. Steps to find where your allocation is:
-                        - Open the profiler window (ctrl-7) and enabled deep profiling.
+                        - Open the profiler window (ctrl-7) and enable deep profiling.
                         - Run your the test that fails and wait (it can take much longer because deep profiling is enabled).
                         - In the CPU section of the profiler, select on Hierarchy and search for the 'GraphicTests_GC_Alloc_Check' marker.
                         - This should give you one result, click on it and press f to go to the frame where it hapended.
