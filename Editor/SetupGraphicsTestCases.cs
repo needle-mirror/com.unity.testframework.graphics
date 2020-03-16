@@ -1,11 +1,16 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using UnityEditor.XR.Management;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.TestTools;
 using UnityEngine.SceneManagement;
+using System.Reflection;
+using UnityEditor.XR.Management;
 using UnityEngine.XR.Management;
+
+using UnityEditor;
 using EditorSceneManagement = UnityEditor.SceneManagement;
 
 namespace UnityEditor.TestTools.Graphics
@@ -61,7 +66,14 @@ namespace UnityEditor.TestTools.Graphics
 
             if (PlayerSettings.virtualRealitySupported == true)
             {
-                xrsdk = PlayerSettings.GetVirtualRealitySDKs(BuildPipeline.GetBuildTargetGroup(buildPlatform)).First();
+                if (PlayerSettings.GetVirtualRealitySDKs(BuildPipeline.GetBuildTargetGroup(buildPlatform)).Length == 0)
+                {
+                    xrsdk = "MockHMD";
+                }
+                else
+                {
+                    xrsdk = PlayerSettings.GetVirtualRealitySDKs(BuildPipeline.GetBuildTargetGroup(buildPlatform)).First();
+                }
             }
             
             var settings = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildPipeline.GetBuildTargetGroup(buildPlatform));
@@ -133,17 +145,18 @@ namespace UnityEditor.TestTools.Graphics
 
             foreach (var scene in buildSettingsScenes)
             {
-                // enable all scenes and let the filters disable them as needed
-                scene.enabled = true;
+                if (!scene.enabled) continue;
 
                 if (filters != null)
                 {
-                    var filtersForScene = filters.filters.Where(f => AssetDatabase.GetAssetPath(f.FilteredScene) == scene.path);
 
+                    // Right now only single TestFilter.asset file will be processed
+                    var filtersForScene = filters.filters.Where(f => AssetDatabase.GetAssetPath(f.FilteredScene) == scene.path);
+                    bool enableScene = true;
+                    string filterReasons = "";
                     foreach (var filter in filtersForScene)
                     {
                         StereoRenderingModeFlags stereoModeFlag = 0;
-                        bool enableScene = true;
 
                         switch (PlayerSettings.stereoRenderingPath)
                         {
@@ -162,6 +175,9 @@ namespace UnityEditor.TestTools.Graphics
                             (filter.GraphicsDevice == graphicsDevices.First() || filter.GraphicsDevice == GraphicsDeviceType.Null) &&
                             (filter.ColorSpace == colorSpace || filter.ColorSpace == ColorSpace.Uninitialized))
                         {
+                            // Adding reasons in case when same test is ignored several times
+                            filterReasons += filter.Reason + "\n";
+                            enableScene = false;
 
                             // non vr filter matched
                             if ((!PlayerSettings.virtualRealitySupported || !(settings != null && settings.InitManagerOnStart)) &&

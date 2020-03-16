@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.1.6-preview] - 2020-03-16
+* Improved messaging in GC Alloc
+* Test filters no longer override disabled tests in build settings
+* Adds a check so if vr is supported and that array is empty, set xrsdk to MockHMD
+
 ## [7.1.5-preview] - 2020-02-14
 * Fixing issues where Standalone tests wouldn't work for some projects
 
