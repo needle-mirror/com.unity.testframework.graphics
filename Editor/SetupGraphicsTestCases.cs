@@ -66,7 +66,11 @@ namespace UnityEditor.TestTools.Graphics
 
             if (PlayerSettings.virtualRealitySupported == true)
             {
-                if (PlayerSettings.GetVirtualRealitySDKs(BuildPipeline.GetBuildTargetGroup(buildPlatform)).Length == 0)
+                if ((PlayerSettings.GetVirtualRealitySDKs(BuildPipeline.GetBuildTargetGroup(buildPlatform)).Length == 0) && (IsBuildingForEditorPlaymode == true))
+                {
+                    xrsdk = "None";
+                }
+                else if ((PlayerSettings.GetVirtualRealitySDKs(BuildPipeline.GetBuildTargetGroup(buildPlatform)).Length == 0) && (IsBuildingForEditorPlaymode == false))
                 {
                     xrsdk = "MockHMD";
                 }
