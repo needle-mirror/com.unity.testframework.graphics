@@ -293,8 +293,9 @@ namespace UnityEngine.Experimental.Rendering
             var colorSpace = UseGraphicsTestCasesAttribute.ColorSpace;
             var platform = UseGraphicsTestCasesAttribute.Platform;
             var graphicsDevice = UseGraphicsTestCasesAttribute.GraphicsDevice;
+            var xrsdk = UseGraphicsTestCasesAttribute.LoadedXRDevice;
 
-            var actualImagesDir = Path.Combine(ActualImagesRoot, string.Format("{0}/{1}/{2}", colorSpace, platform, graphicsDevice));
+            var actualImagesDir = Path.Combine(ActualImagesRoot, string.Format("{0}/{1}/{2}/{3}", colorSpace, platform, graphicsDevice, xrsdk));
 
             var sceneName = Path.GetFileNameWithoutExtension( tCase.ScenePath );
 
