@@ -57,13 +57,12 @@ public static class CustomBuild
     [MenuItem("Tools/Build OSX (Metal)")]
     static void BuildOSXMetal()
     {
-        string path = EditorUtility.SaveFolderPanel("Choose Location of Build", "", "");
         PlayerSettings.colorSpace = ColorSpace.Linear;
         BuildTarget buildTarget = BuildTarget.StandaloneOSX;
         BuildOptions buildOptions = BuildOptions.None;
 
         GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.Metal };
-        BuildScenes(path, graphicsAPIs[0].ToString(), buildTarget, buildOptions, graphicsAPIs);        
+        BuildScenes(".", graphicsAPIs[0].ToString(), buildTarget, buildOptions, graphicsAPIs);        
     }
 
     static void BuildWindowsVulkanLinear()
