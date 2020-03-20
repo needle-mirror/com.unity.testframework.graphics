@@ -54,6 +54,18 @@ public static class CustomBuild
         BuildScenes(path, graphicsAPIs[0].ToString(), buildTarget, buildOptions, graphicsAPIs);        
     }
 
+    [MenuItem("Tools/Build OSX (Metal)")]
+    static void BuildOSXMetal()
+    {
+        string path = EditorUtility.SaveFolderPanel("Choose Location of Build", "", "");
+        PlayerSettings.colorSpace = ColorSpace.Linear;
+        BuildTarget buildTarget = BuildTarget.StandaloneOSX;
+        BuildOptions buildOptions = BuildOptions.None;
+
+        GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.Metal };
+        BuildScenes(path, graphicsAPIs[0].ToString(), buildTarget, buildOptions, graphicsAPIs);        
+    }
+
     static void BuildWindowsVulkanLinear()
     {
         PlayerSettings.colorSpace = ColorSpace.Linear;
@@ -91,6 +103,16 @@ public static class CustomBuild
         BuildOptions buildOptions = BuildOptions.None;
 
         GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.Direct3D11 };
+        BuildScenes(".", graphicsAPIs[0].ToString(), buildTarget, buildOptions, graphicsAPIs);
+    }
+
+    static void BuildWindowsDX12Linear()
+    {
+        PlayerSettings.colorSpace = ColorSpace.Linear;
+        BuildTarget buildTarget = BuildTarget.StandaloneWindows64;
+        BuildOptions buildOptions = BuildOptions.None;
+
+        GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.Direct3D12 };
         BuildScenes(".", graphicsAPIs[0].ToString(), buildTarget, buildOptions, graphicsAPIs);
     }
 
