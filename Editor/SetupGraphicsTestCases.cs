@@ -140,8 +140,16 @@ namespace UnityEditor.TestTools.Graphics
                 }
             }
 
-            var buildSettingsScenes = EditorBuildSettings.scenes;
+// For each scene in the build settings, force build of the lightmaps if it has "DoLightmap" label.
+            // Note that in the PreBuildSetup stage, TestRunner has already created a new scene with its testing monobehaviours
+
+            Scene trScene = EditorSceneManagement.EditorSceneManager.GetSceneAt(0);
+
+            string[] selectedScenes = GetSelectedScenes();
+
             var sceneIndex = 0;
+            var buildSettingsScenes = EditorBuildSettings.scenes;
+            var totalScenes = EditorBuildSettings.scenes.Length;
 
             var filterGuid = AssetDatabase.FindAssets("t: TestFilters");
 
@@ -156,11 +164,11 @@ namespace UnityEditor.TestTools.Graphics
 
                 if (filters != null)
                 {
-
                     // Right now only single TestFilter.asset file will be processed
                     var filtersForScene = filters.filters.Where(f => AssetDatabase.GetAssetPath(f.FilteredScene) == scene.path);
                     bool enableScene = true;
                     string filterReasons = "";
+
                     foreach (var filter in filtersForScene)
                     {
                         StereoRenderingModeFlags stereoModeFlag = 0;
@@ -208,34 +216,32 @@ namespace UnityEditor.TestTools.Graphics
                     }
                 }
 
+
                 SceneAsset sceneAsset = AssetDatabase.LoadAssetAtPath<SceneAsset>(scene.path);
-
                 var labels = new System.Collections.Generic.List<string>(AssetDatabase.GetLabels(sceneAsset));
+                
+                // if we successfully retrieved the names of the selected scenes, we filter using this list
+                if (selectedScenes.Length > 0 && !selectedScenes.Contains(sceneAsset.name))
+                    continue;
 
-
-            // For each scene in the build settings, force build of the lightmaps if it has "DoLightmap" label.
-            // Note that in the PreBuildSetup stage, TestRunner has already created a new scene with its testing monobehaviours
-            if (scene.enabled == true && labels.Contains(bakeLabel))
+                if ( labels.Contains(bakeLabel) )
                 {
-
-                    Scene trScene = EditorSceneManagement.EditorSceneManager.GetSceneAt(0);
-
                     EditorSceneManagement.EditorSceneManager.OpenScene(scene.path, EditorSceneManagement.OpenSceneMode.Additive);
 
                     Scene currentScene = EditorSceneManagement.EditorSceneManager.GetSceneAt(1);
 
                     EditorSceneManagement.EditorSceneManager.SetActiveScene(currentScene);
-
+#pragma warning disable 618
                     Lightmapping.giWorkflowMode = Lightmapping.GIWorkflowMode.OnDemand;
-
-                    EditorUtility.DisplayProgressBar($"Baking Test Scenes {(sceneIndex + 1).ToString()}/{buildSettingsScenes.Length.ToString()}", $"Baking {sceneAsset.name}", ((float)sceneIndex / buildSettingsScenes.Length));
-
-                    Lightmapping.Bake();
+#pragma warning restore 618
+                    //EditorUtility.DisplayProgressBar($"Baking Test Scenes {(sceneIndex + 1).ToString()}/{totalScenes.ToString()}", $"Baking {sceneAsset.name}", ((float)sceneIndex / totalScenes));
 
                     // disk cache needs to be cleared to prevent bug 742012 where duplicate lights are double baked
                     Lightmapping.ClearDiskCache();
 
-                    EditorSceneManagement.EditorSceneManager.SaveScene(currentScene);
+                    Lightmapping.Bake();
+
+                    EditorSceneManagement.EditorSceneManager.SaveScene( currentScene );
 
                     EditorSceneManagement.EditorSceneManager.SetActiveScene(trScene);
 
@@ -247,10 +253,44 @@ namespace UnityEditor.TestTools.Graphics
             // set the scene list in the build settings window.  Only updating the array will do this.
             EditorBuildSettings.scenes = buildSettingsScenes.Where(s => s.enabled).ToArray();
 
-            EditorUtility.ClearProgressBar();
+            //EditorUtility.ClearProgressBar();
 
             if (!IsBuildingForEditorPlaymode)
                 new CreateSceneListFileFromBuildSettings().Setup();
+        }
+
+        static string[] GetSelectedScenes()
+        {
+            try {
+                var testRunnerWindowType = Type.GetType("UnityEditor.TestTools.TestRunner.TestRunnerWindow, UnityEditor.TestRunner, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"); // type: TestRunnerWindow
+                var testRunnerWindow = EditorWindow.GetWindow(testRunnerWindowType);
+                var playModeListGUI = testRunnerWindowType.GetField("m_PlayModeTestListGUI", BindingFlags.NonPublic | BindingFlags.Instance); // type: PlayModeTestListGUI
+                var testListTree = playModeListGUI.FieldType.BaseType.GetField("m_TestListTree", BindingFlags.NonPublic | BindingFlags.Instance); // type: TreeViewController
+
+                // internal treeview GetSelection:
+                var getSelectionMethod = testListTree.FieldType.GetMethod("GetSelection", BindingFlags.Public | BindingFlags.Instance); // int[] GetSelection();
+                var playModeListGUIValue = playModeListGUI.GetValue(testRunnerWindow);
+                var testListTreeValue = testListTree.GetValue(playModeListGUIValue);
+
+                var selectedItems = getSelectionMethod.Invoke(testListTreeValue, null);
+
+                var getSelectedTestsAsFilterMethod = playModeListGUI.FieldType.BaseType.GetMethod(
+                    "GetSelectedTestsAsFilter",
+                    BindingFlags.NonPublic | BindingFlags.Instance
+                );
+
+                dynamic testRunnerFilterArray = getSelectedTestsAsFilterMethod.Invoke(playModeListGUIValue, new object[] { selectedItems });
+                
+                var testNamesField = testRunnerFilterArray[0].GetType().GetField("testNames", BindingFlags.Instance | BindingFlags.Public);
+
+                List< string > testNames = new List<string>();
+                foreach (dynamic testRunnerFilter in testRunnerFilterArray)
+                    testNames.AddRange(testNamesField.GetValue(testRunnerFilter));
+
+                return testNames.Select(name => name.Substring(name.LastIndexOf('.') + 1)).ToArray();
+            } catch (Exception) {
+                return new string[] {}; // Ignore error and return an empty array
+            }
         }
 
         static string lightmapDataGitIgnore = @"Lightmap-*_comp*
