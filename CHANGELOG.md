@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.1.4-preview.7] - 2020-04-02
+* Update dependencies
+
 ## [7.1.4-preview.6] - 2020-02-13
 * Adding GC Alloc changes for HDRP
 
