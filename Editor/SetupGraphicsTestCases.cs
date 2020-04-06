@@ -209,9 +209,15 @@ namespace UnityEditor.TestTools.Graphics
                                 enableScene = false;
                             }
 
-                            scene.enabled = enableScene;
                             if (!enableScene)
+                            {
+                                scene.enabled = enableScene;
                                 Debug.Log(string.Format("Removed scene {0} from build settings because {1}", Path.GetFileNameWithoutExtension(scene.path), filter.Reason));
+
+                                // if the scene has found a filter to disable it we can stop looking
+                                break;
+                            }
+                                
                         }
                     }
                 }

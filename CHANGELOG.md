@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.1.13-preview] - 2020-04-06
+* Update reference versions of json and utp
+
 ## [7.1.12-preview] - 2020-03-24
 * Bug fix for where all scenes would be baked when only one was selected.
 * Bug fix for Xbox where tests would fail due to XR APIs
