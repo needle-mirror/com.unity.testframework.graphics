@@ -71,16 +71,17 @@ namespace UnityEngine.TestTools.Graphics
             get
             {
 #if ENABLE_VR || ENABLE_AR
-                if (!XR.XRSettings.enabled)
-                    return "None";
+                // XR SDK path
+                var activeLoader = XRGeneralSettings.Instance?.Manager?.activeLoader;
+                if (activeLoader != null)
+                    return activeLoader.name;
 
-                if (XRGeneralSettings.Instance?.Manager?.activeLoader != null)
-                    return XRGeneralSettings.Instance.Manager.activeLoader.name;
+                // Legacy VR path
+                if (XR.XRSettings.enabled && XR.XRSettings.loadedDeviceName.Length > 0)
+                    return XR.XRSettings.loadedDeviceName;
 
-                return XR.XRSettings.loadedDeviceName == "" ? "None" : XR.XRSettings.loadedDeviceName;
-#else
-                return "None";
 #endif
+                return "None";
             }
         }
 

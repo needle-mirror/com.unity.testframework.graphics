@@ -44,5 +44,25 @@ namespace UnityEngine.TestTools.Graphics
         /// </summary>
         [Tooltip("If enabled, render textures will be created with DefaultHDR format.")]
         public bool UseHDR = false;
+
+        /// <summary>
+        /// Use back buffer capture
+        /// </summary>
+        [Tooltip("If enabled, tests will use the back buffer, as opposed to a render texture.")]
+        public bool UseBackBuffer = false;
+
+        /// <summary>
+        /// If using Back Buffer, reference images need to be 16:9 aspect ratio
+        /// </summary>
+        [Tooltip("If using Back Buffer, reference images need to be in one of these resolutions.")]
+        public Resolution ImageResolution;
+        public enum Resolution
+        {
+            w1920h1080,
+            w1600h900,
+            w1280h720,
+            w960h540,
+            w640h360
+        }
     }
 }

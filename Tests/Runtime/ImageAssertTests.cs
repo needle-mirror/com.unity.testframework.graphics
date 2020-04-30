@@ -72,5 +72,41 @@ namespace UnityEngine.TestTools.Graphics.Tests
 
             Assert.That(() => ImageAssert.AreEqual(expected, actual), Throws.InstanceOf<AssertionException>());
         }
+
+        [Test]
+        public void AreEqual_DestinationTextureResolution()
+        {
+            Texture2D source = new Texture2D(1920, 1080);
+
+            Texture2D destination = new Texture2D(640, 360);
+
+            Texture2D newDestination = ImageAssert.ResizeInto(source, destination);
+
+            Assert.AreEqual(destination.height, newDestination.height);
+            Assert.AreEqual(destination.width, newDestination.width);
+        }
+
+        [Test]
+        public void AreEqual_TexturesAfterResize()
+        {
+            var sourceImage = new Texture2D(1920, 1080);
+            var pixels = new Color32[1920 * 1080];
+            for (int i = 0; i < pixels.Length; ++i)
+                pixels[i] = i % 2 == 1 ? Color.magenta : Color.black;
+            sourceImage.SetPixels32(pixels);
+            sourceImage.Apply(false);
+
+            var expected = new Texture2D(640, 360);
+            var pixels2 = new Color32[640 * 360];
+            for (int i = 0; i < pixels2.Length; ++i)
+                pixels2[i] = i % 2 == 1 ? Color.magenta : Color.black;
+            expected.SetPixels32(pixels2);
+            expected.Apply(false);
+
+            Texture2D actual;
+            actual = ImageAssert.ResizeInto(sourceImage, expected);
+
+            Assert.That(() => ImageAssert.AreEqual(expected, actual), Throws.Nothing);
+        }
     }
 }

@@ -9,6 +9,8 @@ using UnityEngine.SceneManagement;
 using System.Reflection;
 using UnityEditor.XR.Management;
 using UnityEngine.XR.Management;
+using UnityEditorInternal;
+using UnityEngine.TestTools.Graphics;
 
 using UnityEditor;
 using EditorSceneManagement = UnityEditor.SceneManagement;
@@ -55,6 +57,8 @@ namespace UnityEditor.TestTools.Graphics
                 buildPlatform = BuildTarget.NoTarget;
                 runtimePlatform = Application.platform;
                 graphicsDevices = new[] {SystemInfo.graphicsDeviceType};
+
+                SetGameViewSize(ImageAssert.kBackBufferWidth, ImageAssert.kBackBufferHeight);
             }
             else
             {
@@ -140,7 +144,7 @@ namespace UnityEditor.TestTools.Graphics
                 }
             }
 
-// For each scene in the build settings, force build of the lightmaps if it has "DoLightmap" label.
+            // For each scene in the build settings, force build of the lightmaps if it has "DoLightmap" label.
             // Note that in the PreBuildSetup stage, TestRunner has already created a new scene with its testing monobehaviours
 
             Scene trScene = EditorSceneManagement.EditorSceneManager.GetSceneAt(0);
@@ -298,6 +302,15 @@ namespace UnityEditor.TestTools.Graphics
                 return new string[] {}; // Ignore error and return an empty array
             }
         }
+
+        /// <summary>
+        /// Set the Game View size to match the desired width and height at runtime
+        /// </summary>
+        public static void SetGameViewSize(int width, int height)
+         {
+            object size = GameViewSize.SetCustomSize(width, height);
+            GameViewSize.SelectSize(size);
+         }
 
         static string lightmapDataGitIgnore = @"Lightmap-*_comp*
 LightingData.*

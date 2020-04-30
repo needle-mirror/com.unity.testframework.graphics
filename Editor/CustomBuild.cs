@@ -2,6 +2,7 @@ using UnityEditor;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.TestTools.Graphics;
 
 public static class CustomBuild
 {
@@ -122,13 +123,19 @@ public static class CustomBuild
         PlayerSettings.SetGraphicsAPIs(buildTarget, graphicsAPIs);
         PlayerSettings.productName = buildName;
         PlayerSettings.applicationIdentifier = string.Format("com.unity.{0}", buildName);
-        
+        PlayerSettings.fullScreenMode = FullScreenMode.Windowed;
+        PlayerSettings.defaultScreenHeight = ImageAssert.kBackBufferHeight;
+        PlayerSettings.defaultScreenWidth = ImageAssert.kBackBufferWidth;
+        PlayerSettings.SetAspectRatio(AspectRatio.Aspect16by9, true);
+
         List<string> scenesToBuild = new List<string>();
         foreach (EditorBuildSettingsScene scene in EditorBuildSettings.scenes)
-        	if (scene.enabled)
+            if (scene.enabled)
                 scenesToBuild.Add(scene.path);
         
         string suffix = (buildTarget == BuildTarget.Android) ? ".apk" : "";
+
         BuildPipeline.BuildPlayer(scenesToBuild.ToArray(), string.Format("{0}/{1}{2}", path, buildName, suffix), buildTarget, buildOptions);
     }
 }
+
