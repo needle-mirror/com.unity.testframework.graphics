@@ -67,7 +67,7 @@ namespace UnityEditor.TestTools.Graphics
                 colorSpace = PlayerSettings.colorSpace;
                 graphicsDevices = PlayerSettings.GetGraphicsAPIs(buildPlatform);
             }
-
+#pragma warning disable 0618
             if (PlayerSettings.virtualRealitySupported == true)
             {
                 string[] VrSDKs;
@@ -225,7 +225,7 @@ namespace UnityEditor.TestTools.Graphics
                         }
                     }
                 }
-
+#pragma warning restore 0618
 
                 SceneAsset sceneAsset = AssetDatabase.LoadAssetAtPath<SceneAsset>(scene.path);
                 var labels = new System.Collections.Generic.List<string>(AssetDatabase.GetLabels(sceneAsset));
