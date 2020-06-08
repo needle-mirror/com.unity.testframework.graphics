@@ -103,7 +103,7 @@ public class TestFiltersEditor : Editor
             EditorGUILayout.EndHorizontal();
         }
 
-        if(GUILayout.Button(new GUIContent("New Filter", "Add new filter"), EditorStyles.miniButtonMid))
+        if(GUILayout.Button(new GUIContent("New Filter", "Add new filter")))
         {
             filters.arraySize += 1;
             var lastFilter = filters.GetArrayElementAtIndex(filters.arraySize - 1);

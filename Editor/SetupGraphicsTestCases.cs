@@ -67,7 +67,9 @@ namespace UnityEditor.TestTools.Graphics
                 colorSpace = PlayerSettings.colorSpace;
                 graphicsDevices = PlayerSettings.GetGraphicsAPIs(buildPlatform);
             }
+
 #pragma warning disable 0618
+#if !UNITY_2020_2_OR_NEWER
             if (PlayerSettings.virtualRealitySupported == true)
             {
                 string[] VrSDKs;
@@ -86,7 +88,8 @@ namespace UnityEditor.TestTools.Graphics
                 // VR can be enabled and no VR platforms listed in the UI.  In that case it will use the non-xr rendering.
                 xrsdk = VrSDKs.Length == 0 ? "None" : VrSDKs.First();
             }
-            
+#endif
+
             var xrsettings = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildPipeline.GetBuildTargetGroup(buildPlatform));
 
             // Since the settings are null when using NoTarget for the BuildTargetGroup which editor playmode seems to do
@@ -168,10 +171,12 @@ namespace UnityEditor.TestTools.Graphics
 
                 if (filters != null)
                 {
+
                     // Right now only single TestFilter.asset file will be processed
                     var filtersForScene = filters.filters.Where(f => AssetDatabase.GetAssetPath(f.FilteredScene) == scene.path);
-                    bool enableScene = true;
-                    string filterReasons = "";
+
+                    // In case more than one filter match the scene, display all the reasons in the output.
+                    string filterReasons = string.Empty;
 
                     foreach (var filter in filtersForScene)
                     {
@@ -194,35 +199,28 @@ namespace UnityEditor.TestTools.Graphics
                             (filter.GraphicsDevice == graphicsDevices.First() || filter.GraphicsDevice == GraphicsDeviceType.Null) &&
                             (filter.ColorSpace == colorSpace || filter.ColorSpace == ColorSpace.Uninitialized))
                         {
-                            // Adding reasons in case when same test is ignored several times
-                            filterReasons += filter.Reason + "\n";
-                            enableScene = false;
-
-                            // non vr filter matched
+                            // Non vr filter matched if none of the VR settings are present.
                             if ((!PlayerSettings.virtualRealitySupported || !(xrsettings != null && xrsettings.InitManagerOnStart)) &&
                                 (string.IsNullOrEmpty(filter.XrSdk) || string.Compare(filter.XrSdk, "None", true) == 0) &&
                                 filter.StereoModes == StereoRenderingModeFlags.None)
                             {
-                                enableScene = false;
+                                scene.enabled = false;
+                                filterReasons += filter.Reason + "\n";
                             }
-                            // if VR is enabled then the VR specific filters need to match the filter too
+                            // If VR is enabled then the VR specific filters need to match the filter too.
                             else if ((PlayerSettings.virtualRealitySupported || (xrsettings != null && xrsettings.InitManagerOnStart)) &&
                                 (filter.StereoModes == StereoRenderingModeFlags.None || (filter.StereoModes & stereoModeFlag) == stereoModeFlag) &&
                                 (filter.XrSdk == xrsdk || string.IsNullOrEmpty(filter.XrSdk)))
                             {
-                                enableScene = false;
+                                scene.enabled = false;
+                                filterReasons += filter.Reason + "\n";
                             }
-
-                            if (!enableScene)
-                            {
-                                scene.enabled = enableScene;
-                                Debug.Log(string.Format("Removed scene {0} from build settings because {1}", Path.GetFileNameWithoutExtension(scene.path), filter.Reason));
-
-                                // if the scene has found a filter to disable it we can stop looking
-                                break;
-                            }
-                                
                         }
+                    }                       
+                    
+                    if (!scene.enabled)
+                    {
+                        Debug.Log(string.Format("Removed scene {0} from build settings because:\n{1}", Path.GetFileNameWithoutExtension(scene.path), filterReasons));
                     }
                 }
 #pragma warning restore 0618

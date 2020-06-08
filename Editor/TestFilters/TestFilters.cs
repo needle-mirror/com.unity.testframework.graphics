@@ -6,7 +6,8 @@ using System.Linq;
 using UnityEngine;
 
 [System.Serializable]
-[CreateAssetMenu(fileName = "TestCaseFilters", menuName = "Test Filter ScriptableObject", order = 1)]
+
+[CreateAssetMenu(fileName = "TestCaseFilters", menuName = "Testing/Test Filter ScriptableObject", order = 100)]
 public class TestFilters : ScriptableObject
 {
     public TestFilterConfig[] filters;
