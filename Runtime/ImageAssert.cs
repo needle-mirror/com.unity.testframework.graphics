@@ -38,6 +38,8 @@ namespace UnityEngine.TestTools.Graphics
         public const int kBackBufferHeight = 1080;
         public const int kBackBufferWidth = 1920;
 
+        static Recorder gcAllocRecorder;
+
         /// <summary>
         /// Render an image from the given camera and compare it to the reference image.
         /// </summary>
@@ -237,7 +239,7 @@ namespace UnityEngine.TestTools.Graphics
         /// <param name="camera">The camera to render from.</param>
         /// <param name="width"> width of the image to be rendered</param>
         /// <param name="height"> height of the image to be rendered</param>
-        public static void AllocatesMemory(Camera camera, ImageComparisonSettings settings = null, int gcAllocThreshold = 2)
+        public static void AllocatesMemory(Camera camera, ImageComparisonSettings settings = null, int gcAllocThreshold = 0)
         {
             if (camera == null)
                 throw new ArgumentNullException(nameof(camera));
@@ -251,6 +253,13 @@ namespace UnityEngine.TestTools.Graphics
             var defaultFormat = (settings.UseHDR) ? SystemInfo.GetGraphicsFormat(DefaultFormat.HDR) : SystemInfo.GetGraphicsFormat(DefaultFormat.LDR);
             RenderTextureDescriptor desc = new RenderTextureDescriptor(width, height, defaultFormat, 24);
 
+            if (gcAllocRecorder == null)
+            {
+                gcAllocRecorder = Recorder.Get("GC.Alloc");
+                gcAllocRecorder.FilterToCurrentThread();
+                gcAllocRecorder.enabled = false;
+            }
+
             var rt = RenderTexture.GetTemporary(desc);
             try
             {
@@ -258,9 +267,6 @@ namespace UnityEngine.TestTools.Graphics
 
                 // Render the first frame at this resolution (Alloc are allowed here)
                 camera.Render();
-
-                var gcAllocRecorder = Recorder.Get("GC.Alloc");
-                gcAllocRecorder.FilterToCurrentThread();
 
                 Profiler.BeginSample("GraphicTests_GC_Alloc_Check");
                 {
@@ -270,7 +276,6 @@ namespace UnityEngine.TestTools.Graphics
                 }
                 Profiler.EndSample();
 
-                // There are 2 GC.Alloc overhead for calling Camera.CustomRender
                 int allocationCountOfRenderPipeline = gcAllocRecorder.sampleBlockCount - gcAllocThreshold;
 
                 if (allocationCountOfRenderPipeline > 0)
@@ -278,7 +283,7 @@ namespace UnityEngine.TestTools.Graphics
                         $@"Memory allocation test failed, {allocationCountOfRenderPipeline} allocations detected. Steps to find where your allocation is:
                         - Open the profiler window (ctrl-7) and enabled deep profiling.
                         - Run your the test that fails and wait (it can take much longer because deep profiling is enabled).
-                        - In the CPU section of the profiler search for the 'GraphicTests_GC_Alloc_Check' marker.
+                        - In the CPU section of the profiler, select on Hierarchy and search for the 'GraphicTests_GC_Alloc_Check' marker.
                         - This should give you one result, click on it and press f to go to the frame where it hapended.
                         - Click on the GC Alloc column to sort by allocation and unfold the hierarchy under the 'GraphicTests_GC_Alloc_Check' marker."
                     );

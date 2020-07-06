@@ -1,8 +1,7 @@
 #if UNITY_EDITOR
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.ExceptionServices;
 using UnityEngine;
 
 [System.Serializable]
@@ -11,16 +10,20 @@ using UnityEngine;
 public class TestFilters : ScriptableObject
 {
     public TestFilterConfig[] filters;
-    
-    public TestFilters()
-    {
-        filters = new TestFilterConfig[1];
-    }
 
     public void SortBySceneName()
     {
-        Array.Sort(filters, 
-            (a,b) => a.FilteredScene == null ? 1 : b.FilteredScene == null ? -1 : a.FilteredScene.name.CompareTo(b.FilteredScene.name));
+        for (int i = 0; i < filters.Length; i++)
+        {
+            Array.Sort(filters[i].FilteredScenes,
+                (a, b) => a == null ? 1 : b == null ? -1 : a.name.CompareTo(b.name));
+        }
+
+        Array.Sort(filters,
+            (a, b) =>
+            a.FilteredScenes.FirstOrDefault() == null ? 1 :
+            b.FilteredScenes.FirstOrDefault() == null ? -1 :
+            a.FilteredScenes.FirstOrDefault().name.CompareTo(b.FilteredScenes.FirstOrDefault().name));
     }
 }
 #endif

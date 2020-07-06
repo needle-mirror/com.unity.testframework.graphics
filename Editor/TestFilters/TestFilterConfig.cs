@@ -1,11 +1,13 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEditor;
+using System.Collections.Generic;
 
 [System.Serializable]
 public class TestFilterConfig
 {
     public SceneAsset FilteredScene;
+    public SceneAsset[] FilteredScenes;
     public ColorSpace ColorSpace = ColorSpace.Uninitialized;
     public BuildTarget BuildPlatform = BuildTarget.NoTarget;
     public GraphicsDeviceType GraphicsDevice = GraphicsDeviceType.Null;

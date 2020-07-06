@@ -4,15 +4,10 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.TestTools;
 using UnityEngine.SceneManagement;
 using System.Reflection;
 using UnityEditor.XR.Management;
-using UnityEngine.XR.Management;
-using UnityEditorInternal;
 using UnityEngine.TestTools.Graphics;
-
-using UnityEditor;
 using EditorSceneManagement = UnityEditor.SceneManagement;
 
 namespace UnityEditor.TestTools.Graphics
@@ -160,7 +155,7 @@ namespace UnityEditor.TestTools.Graphics
 
             var filterGuid = AssetDatabase.FindAssets("t: TestFilters");
 
-            var filters = AssetDatabase.LoadAssetAtPath<TestFilters>(
+            var filterConfigs = AssetDatabase.LoadAssetAtPath<TestFilters>(
                 AssetDatabase.GUIDToAssetPath(filterGuid.FirstOrDefault()));
 
             var filterTest = Resources.Load<TestFilters>("TestCaseFilters");
@@ -169,11 +164,39 @@ namespace UnityEditor.TestTools.Graphics
             {
                 if (!scene.enabled) continue;
 
-                if (filters != null)
+                if (filterConfigs != null)
                 {
+                    var filtersForScene = new List<TestFilterConfig>();
 
                     // Right now only single TestFilter.asset file will be processed
-                    var filtersForScene = filters.filters.Where(f => AssetDatabase.GetAssetPath(f.FilteredScene) == scene.path);
+                    foreach(var testFilter in filterConfigs.filters)
+                    {
+                        // legacy support for when test filters only supported one scene.
+                        if (testFilter.FilteredScene != null && (testFilter.FilteredScenes == null || !testFilter.FilteredScenes.Any(
+                            s => AssetDatabase.GetAssetPath(s) == AssetDatabase.GetAssetPath(testFilter.FilteredScene))))
+                        {
+                            if (testFilter.FilteredScenes == null)
+                            {
+                                testFilter.FilteredScenes = new SceneAsset[] { testFilter.FilteredScene };
+                            }
+                            else
+                            {
+                                testFilter.FilteredScenes.Concat(new[] { testFilter.FilteredScene }).ToArray();
+                            }
+                            
+                        }
+
+                        foreach(var filteredScene in testFilter.FilteredScenes)
+                        {
+                            if (AssetDatabase.GetAssetPath(filteredScene) == scene.path)
+                            {
+                                filtersForScene.Add(testFilter);
+
+                                // If duplicates scenes match we don't need to duplicate the filter in the list.
+                                break;
+                            }
+                        }
+                    }
 
                     // In case more than one filter match the scene, display all the reasons in the output.
                     string filterReasons = string.Empty;

@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.2.3-preview] - 2020-07-06
+* Enable multiple scenes per test filter and clean up UI a bit.
+* Fixes a memory allocation in the Profiler.Get function that was counted as memory allocation in the render loop of SRP.
+
 ## [7.2.2-preview] - 2020-06-08
 * Wrap built in xr checks in 2020_2_OR_NEWER due to built in xr deprecation in 2020.2 and higher.
 * Test filter fixes for multiple matching filters
