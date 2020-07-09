@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.3.0-preview] - 2020-07-09
+* Added optional callback on ImageAssert triggered after all cameras are rendered.
+
 ## [7.2.3-preview] - 2020-07-06
 * Enable multiple scenes per test filter and clean up UI a bit.
 * Fixes a memory allocation in the Profiler.Get function that was counted as memory allocation in the render loop of SRP.

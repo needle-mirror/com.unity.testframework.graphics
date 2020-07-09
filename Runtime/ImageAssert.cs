@@ -40,6 +40,8 @@ namespace UnityEngine.TestTools.Graphics
 
         static Recorder gcAllocRecorder;
 
+        public static Action<RenderTexture> onAllCamerasRendered;
+
         /// <summary>
         /// Render an image from the given camera and compare it to the reference image.
         /// </summary>
@@ -102,6 +104,9 @@ namespace UnityEngine.TestTools.Graphics
                             camera.Render();
                             camera.targetTexture = null;
                         }
+
+                        if (onAllCamerasRendered != null)
+                            onAllCamerasRendered(rt);
 
                         // only proceed the test on the last rendered frame
                         if (dummyRenderedFrameCount == i)
