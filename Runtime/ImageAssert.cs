@@ -193,9 +193,17 @@ namespace UnityEngine.TestTools.Graphics
                 using (var actualPixels = new NativeArray<Color32>(actual.GetPixels32(0), Allocator.TempJob))
                 using (var diffPixels = new NativeArray<Color32>(expectedPixels.Length, Allocator.TempJob))
                 using (var sumOverThreshold = new NativeArray<float>(Mathf.CeilToInt(expectedPixels.Length / (float)k_BatchSize), Allocator.TempJob))
+                using (var badPixels = new NativeArray<int>(sumOverThreshold.Length, Allocator.TempJob))
                 {
                     if (settings == null)
                         settings = new ImageComparisonSettings();
+
+                    // Extract flags
+                    bool testAverageDeltaE = settings.ActiveImageTests.HasFlag(ImageComparisonSettings.ImageTests.AverageDeltaE);
+                    bool testBadPixelsCount = settings.ActiveImageTests.HasFlag(ImageComparisonSettings.ImageTests.IncorrectPixelsCount);
+                    bool countBadDeltaE = testBadPixelsCount && settings.ActivePixelTests.HasFlag(ImageComparisonSettings.PixelTests.DeltaE);
+                    bool countBadGamma = testBadPixelsCount && settings.ActivePixelTests.HasFlag(ImageComparisonSettings.PixelTests.DeltaGamma);
+                    bool countBadAlpha = testBadPixelsCount && settings.ActivePixelTests.HasFlag(ImageComparisonSettings.PixelTests.DeltaAlpha);
 
                     new ComputeDiffJob
                     {
@@ -203,14 +211,26 @@ namespace UnityEngine.TestTools.Graphics
                         actual = actualPixels,
                         diff = diffPixels,
                         sumOverThreshold = sumOverThreshold,
-                        pixelThreshold = settings.PerPixelCorrectnessThreshold
+                        badPixels = badPixels,
+                        deltaEThreshold = settings.PerPixelCorrectnessThreshold,
+                        gammaThreshold = settings.PerPixelGammaThreshold,
+                        alphaThreshold = settings.PerPixelAlphaThreshold,
+                        addDeltaE = testAverageDeltaE,
+                        countBadDeltaE = countBadDeltaE,
+                        countBadGamma = countBadGamma,
+                        countBadAlpha = countBadAlpha
                     }.Schedule(expectedPixels.Length, k_BatchSize).Complete();
 
-                    float averageDeltaE = sumOverThreshold.Sum() / (expected.width * expected.height);
+                    int pixelCount = expected.width * expected.height;
+                    float averageDeltaE = sumOverThreshold.Sum() / pixelCount;
+                    float badPixelsCount = (badPixels.Sum() - 0.1f) / pixelCount;
 
                     try
                     {
-                        Assert.That(averageDeltaE, Is.LessThanOrEqualTo(settings.AverageCorrectnessThreshold));
+                        if (testAverageDeltaE)
+                            Assert.That(averageDeltaE, Is.LessThanOrEqualTo(settings.AverageCorrectnessThreshold));
+                        if (testBadPixelsCount)
+                            Assert.That(badPixelsCount, Is.LessThanOrEqualTo(settings.IncorrectPixelsThreshold));
                     }
                     catch (AssertionException)
                     {
@@ -322,24 +342,65 @@ namespace UnityEngine.TestTools.Graphics
             [ReadOnly] public NativeArray<Color32> expected;
             [ReadOnly] public NativeArray<Color32> actual;
             public NativeArray<Color32> diff;
-            public float pixelThreshold;
+
+            public float deltaEThreshold;
+            public float gammaThreshold;
+            public float alphaThreshold;
+
+            public bool addDeltaE;
+
+            public bool countBadDeltaE;
+            public bool countBadGamma;
+            public bool countBadAlpha;
 
             [NativeDisableParallelForRestriction]
             public NativeArray<float> sumOverThreshold;
 
+            [NativeDisableParallelForRestriction]
+            public NativeArray<int> badPixels;
+
             public void Execute(int index)
             {
-                var exp = RGBtoJAB(expected[index]);
-                var act = RGBtoJAB(actual[index]);
-
-                float deltaE = JABDeltaE(exp, act);
-                float overThreshold = Mathf.Max(0f, deltaE - pixelThreshold);
+                Color32 exp = expected[index];
+                Color32 act = actual[index];
                 int batch = index / k_BatchSize;
-                sumOverThreshold[batch] = sumOverThreshold[batch] + overThreshold;
+
+                float deltaE = 0;
+                float deltaGamma = 0;
+                float deltaAlpha = 0;
+                bool pixelIsCorrect = true;
+
+                if (addDeltaE || countBadDeltaE)
+                {
+                    deltaE = JABDeltaE(RGBtoJAB(exp), RGBtoJAB(act));
+                    float deltaEOverThreshold = Mathf.Max(0f, deltaE - deltaEThreshold);
+                    sumOverThreshold[batch] = sumOverThreshold[batch] + deltaEOverThreshold;
+                    if (countBadDeltaE)
+                        pixelIsCorrect &= deltaEOverThreshold <= 0;
+                }
+
+                if (countBadGamma)
+                {
+                    float deltaR = Mathf.Abs(exp.r - act.r);
+                    float deltaG = Mathf.Abs(exp.g - act.g);
+                    float deltaB = Mathf.Abs(exp.b - act.b);
+
+                    deltaGamma = Mathf.Max(Mathf.Max(deltaR, deltaG), deltaB) / 255f;
+                    pixelIsCorrect &= deltaGamma <= gammaThreshold;
+                }
+
+                if (countBadAlpha)
+                {
+                    deltaAlpha = Mathf.Abs(exp.a - act.a) / 255f;
+                    pixelIsCorrect &= deltaAlpha <= alphaThreshold;
+                }
+
+                badPixels[batch] += pixelIsCorrect ? 0 : 1;
 
                 // deltaE is linear, convert it to sRGB for easier debugging
                 deltaE = Mathf.LinearToGammaSpace(deltaE);
-                var colorResult = new Color(deltaE, deltaE, deltaE, 1f);
+                float result = Mathf.Max(Mathf.Max(deltaE, deltaAlpha), deltaGamma);
+                var colorResult = new Color(result, result, result, 1f);
                 diff[index] = colorResult;
             }
         }
