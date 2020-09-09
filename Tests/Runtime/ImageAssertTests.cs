@@ -111,6 +111,8 @@ namespace UnityEngine.TestTools.Graphics.Tests
             Assert.That(() => ImageAssert.AreEqual(expected, actual), Throws.Nothing);
         }
 
+// TestCaseSource may not be supported on some devices.
+#if UNITY_EDITOR
         public class PerPixelTestSource
         {
             const int k_Size = 64;
@@ -239,5 +241,6 @@ namespace UnityEngine.TestTools.Graphics.Tests
                 Object.DestroyImmediate(act);
             }
         }
+#endif // UNITY_EDITOR
     }
 }
