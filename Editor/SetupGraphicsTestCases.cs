@@ -9,6 +9,7 @@ using System.Reflection;
 using UnityEditor.XR.Management;
 using UnityEngine.TestTools.Graphics;
 using EditorSceneManagement = UnityEditor.SceneManagement;
+using UnityEditor.TestTools.TestRunner.Api;
 
 namespace UnityEditor.TestTools.Graphics
 {
@@ -25,12 +26,20 @@ namespace UnityEditor.TestTools.Graphics
         {
             get
             {
-                var playmodeLauncher =
+                #if TEST_FRAMEWORK_1_2_0_OR_NEWER
+                    return TestRunnerApi.GetActiveRunGuids().Any(guid =>
+                    {
+                        var settings = TestRunnerApi.GetExecutionSettings(guid);
+                        return settings.filters[0].targetPlatform != null;
+                    });
+                #else
+                    var playmodeLauncher =
                     typeof(RequirePlatformSupportAttribute).Assembly.GetType(
                         "UnityEditor.TestTools.TestRunner.PlaymodeLauncher");
-                var isRunningField = playmodeLauncher.GetField("IsRunning");
+                    var isRunningField = playmodeLauncher.GetField("IsRunning");
 
-                return (bool)isRunningField.GetValue(null);
+                    return (bool)isRunningField.GetValue(null);
+                #endif
             }
         }
 

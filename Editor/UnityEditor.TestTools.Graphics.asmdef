@@ -20,6 +20,12 @@
     "defineConstraints": [
         "UNITY_INCLUDE_TESTS"
     ],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.test-framework",
+            "expression": "1.2",
+            "define": "TEST_FRAMEWORK_1_2_0_OR_NEWER"
+        }
+    ],
     "noEngineReferences": false
 }
