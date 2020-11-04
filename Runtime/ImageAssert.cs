@@ -150,6 +150,18 @@ namespace UnityEngine.TestTools.Graphics
                 }
             }
         }
+        
+        private static string StripParametricTestCharacters(string name)
+        {
+            string illegal = "\"";
+            int found = name.IndexOf(illegal);
+            while (found >= 0)
+            {
+                name = name.Remove(found, 1);
+                found = name.IndexOf(illegal);
+            }
+            return name;
+        }
 
         /// <summary>
         /// Compares an image to a 'reference' image to see if it looks correct.
@@ -171,7 +183,7 @@ namespace UnityEngine.TestTools.Graphics
             var failedImageMessage = new FailedImageMessage
             {
                 PathName = dirName,
-                ImageName = TestContext.CurrentContext.Test.Name,
+                ImageName = StripParametricTestCharacters(TestContext.CurrentContext.Test.Name),
             };
 
             try
