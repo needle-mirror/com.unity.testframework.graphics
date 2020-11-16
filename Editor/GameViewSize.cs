@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace UnityEditor.TestTools.Graphics
 {
-    static class GameViewSize
+    static public class GameViewSize
     {
         static object s_InitialSizeObj;
 

@@ -87,7 +87,14 @@ namespace UnityEngine.TestTools.Graphics
             Texture2D actual = null;
             try
             {
-                if (settings.UseBackBuffer)
+                if (RuntimeSettings.reuseTestsForXR)
+                {
+                    GetImageResolution(settings, out int w, out int h);
+                    actual = new Texture2D(w, h, format, false);
+                    actual.ReadPixels(new Rect(0, 0, w, h), 0, 0, false);
+                    actual.Apply();
+                }
+                else if (settings.UseBackBuffer)
                 {
                     actual = BackBufferCapture(expected, cameras, settings);
                     actual.Apply();
@@ -280,7 +287,7 @@ namespace UnityEngine.TestTools.Graphics
         {
             if (camera == null)
                 throw new ArgumentNullException(nameof(camera));
-            
+
             if (settings == null)
                 settings = new ImageComparisonSettings();
 
@@ -347,6 +354,20 @@ namespace UnityEngine.TestTools.Graphics
             resizeActual = ResizeInto(actual, resizeActual);
             UnityEngine.Object.Destroy(actual);
             return resizeActual;
+        }
+
+        public static void GetImageResolution(ImageComparisonSettings settings, out int width, out int height)
+        {
+            if (settings.UseBackBuffer && backBufferResolutions.TryGetValue(settings.ImageResolution, out var resolution))
+            {
+                width = resolution.Item1;
+                height = resolution.Item2;
+            }
+            else
+            {
+                width = settings.TargetWidth;
+                height = settings.TargetHeight;
+            }
         }
 
         struct ComputeDiffJob : IJobParallelFor

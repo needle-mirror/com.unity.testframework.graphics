@@ -71,6 +71,10 @@ namespace UnityEngine.TestTools.Graphics
             get
             {
 #if ENABLE_VR || ENABLE_AR
+                // Reuse standard (non-VR) reference images
+                if (RuntimeSettings.reuseTestsForXR)
+                    return "None";
+
                 // XR SDK path
                 var activeLoader = XRGeneralSettings.Instance?.Manager?.activeLoader;
                 if (activeLoader != null)

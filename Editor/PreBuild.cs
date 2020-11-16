@@ -11,7 +11,7 @@ namespace UnityEditor.TestTools.Graphics
 {
     /// <summary>
     /// Set the player aspect ratio and resolution before the build
-    /// </summary>    
+    /// </summary>
     public class PreBuild : IPreprocessBuildWithReport
     {
         public int callbackOrder { get { return 0; } }
@@ -21,7 +21,6 @@ namespace UnityEditor.TestTools.Graphics
             PlayerSettings.SetAspectRatio(AspectRatio.Aspect16by9, true);
             PlayerSettings.defaultScreenHeight = ImageAssert.kBackBufferHeight;
             PlayerSettings.defaultScreenWidth = ImageAssert.kBackBufferWidth;
-            
         }
     }
 }
