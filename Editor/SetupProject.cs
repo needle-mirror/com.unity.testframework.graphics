@@ -21,7 +21,8 @@ public static class SetupProject
             { "gles3", () => SetGraphicsAPI(GraphicsDeviceType.OpenGLES3) },
             { "gles2", () => SetGraphicsAPI(GraphicsDeviceType.OpenGLES2) },
             { "ps4", () => SetGraphicsAPI(GraphicsDeviceType.PlayStation4) },
-            { "xb1", () => SetGraphicsAPI(GraphicsDeviceType.XboxOne) },
+            { "xb1d3d11", () => SetGraphicsAPI(GraphicsDeviceType.XboxOne) },
+            { "xb1d3d12", () => SetGraphicsAPI(GraphicsDeviceType.XboxOneD3D12) },
             { "switch", () => SetGraphicsAPI(GraphicsDeviceType.Switch) }
         };
 
