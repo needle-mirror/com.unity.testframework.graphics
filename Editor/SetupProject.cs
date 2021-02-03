@@ -21,8 +21,15 @@ public static class SetupProject
             { "gles3", () => SetGraphicsAPI(GraphicsDeviceType.OpenGLES3) },
             { "gles2", () => SetGraphicsAPI(GraphicsDeviceType.OpenGLES2) },
             { "ps4", () => SetGraphicsAPI(GraphicsDeviceType.PlayStation4) },
+#if UNITY_PS5
+            { "ps5", () => SetGraphicsAPI(GraphicsDeviceType.PlayStation5) },
+#endif
             { "xb1d3d11", () => SetGraphicsAPI(GraphicsDeviceType.XboxOne) },
             { "xb1d3d12", () => SetGraphicsAPI(GraphicsDeviceType.XboxOneD3D12) },
+#if UNITY_GAMECORE
+            { "gamecorexboxone", () => SetGraphicsAPI(GraphicsDeviceType.GameCoreXboxOne) },
+            { "gamecorescarlett", () => SetGraphicsAPI(GraphicsDeviceType.GameCoreScarlett) },
+#endif
             { "switch", () => SetGraphicsAPI(GraphicsDeviceType.Switch) }
         };
 

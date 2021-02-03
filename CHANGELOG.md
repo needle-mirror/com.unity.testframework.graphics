@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.8.3-preview] - 2021-02-03
+* Add support for new console platforms
+* Fixes for the CHANGELOG.md validation
+* NDA platform validator configuration added
+
 ## [7.8.2-preview] - 2021-01-29
 * Disable AreEqual_WidthDifferentSizeImages_ThrowsAssertionException
 
@@ -121,11 +126,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [4.0.0-preview] - 2019-09-21
 
-## [3.3.0]
+## [3.3.0] - 2018-08-03
 
-## [3.2.0]
+## [3.2.0] - 2018-07-30
 
-## [3.1.0]
+## [3.1.0] - 2018-07-26
 
 ## [0.1.0] - 2018-05-04
 

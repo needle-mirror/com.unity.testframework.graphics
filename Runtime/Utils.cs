@@ -46,6 +46,16 @@ namespace UnityEditor.TestTools.Graphics
                 case BuildTarget.Stadia:
                     return RuntimePlatform.Stadia;
 #endif
+#if UNITY_GAMECORE
+                case BuildTarget.GameCoreScarlett:
+                    return RuntimePlatform.GameCoreScarlett;
+                case BuildTarget.GameCoreXboxOne:
+                    return RuntimePlatform.GameCoreXboxOne;
+#endif
+#if UNITY_PS5
+                case BuildTarget.PS5:
+                    return RuntimePlatform.PS5;
+#endif
             }
 
             throw new ArgumentOutOfRangeException("target", target, "Unknown BuildTarget");
