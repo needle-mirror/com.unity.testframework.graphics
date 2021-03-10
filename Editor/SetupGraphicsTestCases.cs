@@ -276,9 +276,6 @@ namespace UnityEditor.TestTools.Graphics
 #pragma warning restore 618
                     //EditorUtility.DisplayProgressBar($"Baking Test Scenes {(sceneIndex + 1).ToString()}/{totalScenes.ToString()}", $"Baking {sceneAsset.name}", ((float)sceneIndex / totalScenes));
 
-                    // disk cache needs to be cleared to prevent bug 742012 where duplicate lights are double baked
-                    Lightmapping.ClearDiskCache();
-
                     Lightmapping.Bake();
 
                     EditorSceneManagement.EditorSceneManager.SaveScene( currentScene );

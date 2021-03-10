@@ -16,8 +16,6 @@ namespace UnityEngine.TestTools.Graphics
                     return "MetroPlayerX64";
                 case RuntimePlatform.WSAPlayerARM: //duplicate RuntimePlatform.MetroPlayerARM
                     return "MetroPlayerARM";
-                case RuntimePlatform.BlackBerryPlayer: //duplicate RuntimePlatform.BB10Player
-                    return "BlackBerryPlayer";
                 default:
                     return platform.ToString();
             }
