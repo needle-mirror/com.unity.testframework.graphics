@@ -60,7 +60,6 @@ namespace UnityEngine.TestTools.Graphics.Tests
         }
 
         [Test]
-        [Ignore("Unstable: Issue 78")]
         public void AreEqual_WidthDifferentSizeImages_ThrowsAssertionException()
         {
             var c = Color.black;
