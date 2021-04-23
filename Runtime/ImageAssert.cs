@@ -160,12 +160,18 @@ namespace UnityEngine.TestTools.Graphics
         
         private static string StripParametricTestCharacters(string name)
         {
-            string illegal = "\"";
-            int found = name.IndexOf(illegal);
-            while (found >= 0)
             {
-                name = name.Remove(found, 1);
-                found = name.IndexOf(illegal);
+                string illegal = "\"";
+                int found = name.IndexOf(illegal);
+                while (found >= 0)
+                {
+                    name = name.Remove(found, 1);
+                    found = name.IndexOf(illegal);
+                }
+            }
+            {
+                string illegal = ",";
+                name = name.Replace(illegal, "_");
             }
             return name;
         }

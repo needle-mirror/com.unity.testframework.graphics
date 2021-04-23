@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.8.9-preview] - 2021-04-23
+* Make <code>StripParametricTestCharacters</code> replace "," with "_".
+
 ## [7.8.8-preview] - 2021-04-08
 * Reenable AreEqual_WidthDifferentSizeImages_ThrowsAssertionException (was removed in 7.8.2-preview)
 * Bump com.unity.addressables from 1.16.15 to 1.17.15
