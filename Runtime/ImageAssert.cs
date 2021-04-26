@@ -171,6 +171,14 @@ namespace UnityEngine.TestTools.Graphics
             }
             {
                 string illegal = ",";
+                name = name.Replace(illegal, "-");
+            }
+            {
+                string illegal = "(";
+                name = name.Replace(illegal, "_");
+            }
+            {
+                string illegal = ")";
                 name = name.Replace(illegal, "_");
             }
             return name;
