@@ -101,7 +101,7 @@ namespace UnityEditor.TestTools.Graphics
             if (IsBuildingForEditorPlaymode)
                 xrsettings = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.Standalone);
 
-            if (xrsettings != null && xrsettings.InitManagerOnStart)
+            if (xrsettings != null && xrsettings.InitManagerOnStart && !RuntimeSettings.reuseTestsForXR)
             {
                 if (xrsettings.AssignedSettings.loaders.Count > 0)
                 {

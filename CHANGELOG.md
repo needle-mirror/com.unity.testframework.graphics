@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.8.12-preview] - 2021-05-26
+* Fix issue with test filter and XR reusable tests
+
 ## [7.8.11-preview] - 2021-05-11
 * Bump com.unity.xr.management from 3.2.15 to 4.0.5
 
