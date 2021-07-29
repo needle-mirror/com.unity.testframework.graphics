@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.8.15-preview] - 2021-07-29
+
+- Add [RequiresPlayMode] tags to the tests intended for PlayMode, allowing them to still run in PlayMode in the newest UTF versions.
+- Change the logic in SetupGraphicsTestCases to draw the targetPlatform from the settings directly, rather than from the filter.
+
 ## [7.8.14-preview] - 2021-07-23
 * Add "GlobalResolutionSetter" component that lets you set different device resolution per platform
 

@@ -30,7 +30,7 @@ namespace UnityEditor.TestTools.Graphics
                     return TestRunnerApi.GetActiveRunGuids().Any(guid =>
                     {
                         var settings = TestRunnerApi.GetExecutionSettings(guid);
-                        return settings.filters[0].targetPlatform != null;
+                        return settings.targetPlatform != null;
                     });
                 #else
                     var playmodeLauncher =
