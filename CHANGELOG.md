@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.8.16-preview] - 2021-08-06
+- Fixed an issue where the framework would build asset bundles for standalone when running in the editor, when using 1.2 version of Unity Test Framework package.
+
 ## [7.8.15-preview] - 2021-07-29
 
 - Add [RequiresPlayMode] tags to the tests intended for PlayMode, allowing them to still run in PlayMode in the newest UTF versions.
