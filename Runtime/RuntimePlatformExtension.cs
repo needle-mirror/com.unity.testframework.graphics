@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using UnityEngine;
 
 namespace UnityEngine.TestTools.Graphics
@@ -10,6 +11,26 @@ namespace UnityEngine.TestTools.Graphics
         {
             switch (platform)
             {
+                case RuntimePlatform.OSXPlayer:
+
+                    if (CultureInfo.InvariantCulture.CompareInfo.IndexOf(SystemInfo.processorType, "Apple M1", CompareOptions.IgnoreCase) >= 0)
+                    {
+                        return "OSXPlayer_AppleSilicon";
+                    }
+                    else
+                    {
+                        return platform.ToString();
+                    }
+                case RuntimePlatform.OSXEditor:
+
+                    if (CultureInfo.InvariantCulture.CompareInfo.IndexOf(SystemInfo.processorType, "Apple M1", CompareOptions.IgnoreCase) >= 0)
+                    {
+                        return "OSXEditor_AppleSilicon";
+                    }
+                    else
+                    {
+                        return platform.ToString();
+                    }
                 case RuntimePlatform.WSAPlayerX86: //duplicate RuntimePlatform.MetroPlayerX86
                     return "MetroPlayerX86";
                 case RuntimePlatform.WSAPlayerX64: //duplicate RuntimePlatform.MetroPlayerX64
