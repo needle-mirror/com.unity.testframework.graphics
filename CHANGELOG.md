@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.8.17-exp.2] - 2022-01-28
+- Fixed a missing clear in UTR framework in order to make Gamecore pass correctly the Graphic Compositor test.
+
 ## [7.8.17-exp.1] - 2021-11-18
 - Add support for tests on Apple Silicon (M1) devices.
 - Moves reference images for M1 macs under OSXPlayer_AppleSilicon and OSXEditor_AppleSilicon.

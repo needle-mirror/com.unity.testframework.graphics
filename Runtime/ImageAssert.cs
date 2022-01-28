@@ -84,6 +84,11 @@ namespace UnityEngine.TestTools.Graphics
             RenderTextureDescriptor desc = new RenderTextureDescriptor(width, height, defaultFormat, 24);
 
             var rt = RenderTexture.GetTemporary(desc);
+            UnityEngine.Graphics.SetRenderTarget(rt);
+            UnityEngine.GL.Clear(true, true, UnityEngine.Color.black);
+            UnityEngine.Graphics.SetRenderTarget(null);
+
+
             Texture2D actual = null;
             try
             {
