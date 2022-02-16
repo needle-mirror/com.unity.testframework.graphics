@@ -7,9 +7,9 @@ using UnityEngine.Rendering;
 
 public static class SetupProject
 {
-    public static void ApplySettings()
-    {
-        var options = new Dictionary<string, Action>
+  public static void ApplySettings()
+  {
+    var options = new Dictionary<string, Action>
         {
             { "gamma", () => PlayerSettings.colorSpace = ColorSpace.Gamma },
             { "linear", () => PlayerSettings.colorSpace = ColorSpace.Linear },
@@ -28,30 +28,30 @@ public static class SetupProject
             { "xb1d3d12", () => SetGraphicsAPI(GraphicsDeviceType.XboxOneD3D12) },
 #if UNITY_GAMECORE
             { "gamecorexboxone", () => SetGraphicsAPI(GraphicsDeviceType.GameCoreXboxOne) },
-            { "gamecorescarlett", () => SetGraphicsAPI(GraphicsDeviceType.GameCoreScarlett) },
+            { "gamecorexboxseries", () => SetGraphicsAPI(GraphicsDeviceType.GameCoreXboxSeries) },
 #endif
             { "switch", () => SetGraphicsAPI(GraphicsDeviceType.Switch) }
         };
 
-        var args = Environment.GetCommandLineArgs();
-        string apiName = "";
-        foreach (var arg in args)
-        {
-            Action action;
-            if (options.TryGetValue(arg, out action))
-            {
-                apiName = arg;
-                action();
-            }
-        }
-
-        CustomBuild.BuildScenes(".", apiName, EditorUserBuildSettings.activeBuildTarget);
-    }
-
-    static void SetGraphicsAPI(GraphicsDeviceType api)
+    var args = Environment.GetCommandLineArgs();
+    string apiName = "";
+    foreach (var arg in args)
     {
-        var currentTarget = EditorUserBuildSettings.activeBuildTarget;
-        PlayerSettings.SetGraphicsAPIs(currentTarget, new [] { api } );
+      Action action;
+      if (options.TryGetValue(arg, out action))
+      {
+        apiName = arg;
+        action();
+      }
     }
+
+    CustomBuild.BuildScenes(".", apiName, EditorUserBuildSettings.activeBuildTarget);
+  }
+
+  static void SetGraphicsAPI(GraphicsDeviceType api)
+  {
+    var currentTarget = EditorUserBuildSettings.activeBuildTarget;
+    PlayerSettings.SetGraphicsAPIs(currentTarget, new[] { api });
+  }
 
 }

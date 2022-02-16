@@ -47,8 +47,8 @@ namespace UnityEditor.TestTools.Graphics
                     return RuntimePlatform.Stadia;
 #endif
 #if UNITY_GAMECORE
-                case BuildTarget.GameCoreScarlett:
-                    return RuntimePlatform.GameCoreScarlett;
+                case BuildTarget.GameCoreXboxSeries:
+                    return RuntimePlatform.GameCoreXboxSeries;
                 case BuildTarget.GameCoreXboxOne:
                     return RuntimePlatform.GameCoreXboxOne;
 #endif
