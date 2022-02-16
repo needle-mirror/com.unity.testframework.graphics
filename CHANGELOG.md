@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.8.19-exp.2] - 2022-02-16
+- Allow custom scene views as input to CaptureSceneView.
+
 ## [7.8.19-exp.1] - 2022-02-16
 - Add the CaptureSceneView class that enables scene view graphics tests.
 
