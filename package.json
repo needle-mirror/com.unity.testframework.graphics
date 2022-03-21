@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Tests Framework",
-  "version": "7.8.19-exp.2",
+  "version": "7.8.20-exp.1",
   "unity": "2019.4",
   "unityRelease": "0a23",
   "description": "Provides test framework helpers for writing tests for graphics code, such as image comparison assertions and automatic management of reference images.",
@@ -23,12 +23,15 @@
     "com.unity.addressables": "1.17.15",
     "com.unity.modules.imageconversion": "1.0.0"
   },
+  "upm": {
+    "changelog": "- Add Optimization feature available for reference images."
+  },
   "upmCi": {
-    "footprint": "b534b6aeff779df66ab7ac98a9a5ac84aa90b0fa"
+    "footprint": "e75d7948e18be510514d9fe7f1d37050661e3432"
   },
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "00a18c4a210f2a10cc597855458c10a9111b9d96"
+    "revision": "a1fc3d561eb5492c9519099007af36ea3f4c1e35"
   }
 }
