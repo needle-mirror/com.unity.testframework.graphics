@@ -67,7 +67,7 @@ namespace UnityEditor.TestTools.Graphics
             else
             {
                 buildPlatform = EditorUserBuildSettings.activeBuildTarget;
-                runtimePlatform = Utils.BuildTargetToRuntimePlatform(buildPlatform);
+                runtimePlatform = EditorUtils.BuildTargetToRuntimePlatform(buildPlatform);
                 colorSpace = PlayerSettings.colorSpace;
                 graphicsDevices = PlayerSettings.GetGraphicsAPIs(buildPlatform);
             }
@@ -128,7 +128,7 @@ namespace UnityEditor.TestTools.Graphics
                 {
                     var images = EditorGraphicsTestCaseProvider.CollectReferenceImagePathsFor(rootImageTemplatePath, colorSpace, runtimePlatform, api, xrsdk);
 
-                    Utils.SetupReferenceImageImportSettings(images.Values);
+                    EditorUtils.SetupReferenceImageImportSettings(images.Values);
 
                     bundleBuilds.Add(new AssetBundleBuild
                     {
@@ -140,7 +140,7 @@ namespace UnityEditor.TestTools.Graphics
 
                 string ReferenceImagesBaseRoot = "Assets/ReferenceImagesBase";
                 var imagesBase = EditorGraphicsTestCaseProvider.CollectReferenceImageBasePaths(ReferenceImagesBaseRoot);
-                Utils.SetupReferenceImageImportSettings(imagesBase.Values);
+                EditorUtils.SetupReferenceImageImportSettings(imagesBase.Values);
 
                 bundleBuilds.Add(new AssetBundleBuild
                 {

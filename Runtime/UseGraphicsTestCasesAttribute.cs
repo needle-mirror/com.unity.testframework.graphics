@@ -102,7 +102,7 @@ namespace UnityEngine.TestTools.Graphics
                 {
                     TestCaseData data = new TestCaseData( new object[]{ testCase } );
 
-                    data.SetName(System.IO.Path.GetFileNameWithoutExtension(testCase.ScenePath));
+                    data.SetName(testCase.Name);
                     data.ExpectedResult = new Object();
                     data.HasExpectedResult = true;
 
@@ -110,7 +110,7 @@ namespace UnityEngine.TestTools.Graphics
                     if (test.parms != null)
                         test.parms.HasExpectedResult = false;
 
-                    test.Name = System.IO.Path.GetFileNameWithoutExtension(testCase.ScenePath);
+                    test.Name = testCase.Name;
 
                     results.Add(test);
                 }

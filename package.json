@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Tests Framework",
-  "version": "7.8.20-exp.1",
+  "version": "7.8.21-exp.1",
   "unity": "2019.4",
   "unityRelease": "0a23",
   "description": "Provides test framework helpers for writing tests for graphics code, such as image comparison assertions and automatic management of reference images.",
@@ -24,14 +24,14 @@
     "com.unity.modules.imageconversion": "1.0.0"
   },
   "upm": {
-    "changelog": "- Add Optimization feature available for reference images."
+    "changelog": "- Added `CodeBasedGraphicsTestAttribute` which allows a unit test to be marked as a graphics test, and root paths of reference images and actual images to be specified.\r\n- Added `UnityEditor.TestTools.Graphics.EditorUtils` class which provides a few utility functions. Please refer to the documentation page.\r\n- Added `UnityEngine.TestTools.Graphics.TestUtils` class which provides utility functions for generating test result folder path based on give test configurations.\r\n- Changed `GraphicsTestCase` class now provides new properties returning the test name and the `CodeBasedGraphicsTestAttribute` for unit test based graphics tests."
   },
   "upmCi": {
-    "footprint": "e75d7948e18be510514d9fe7f1d37050661e3432"
+    "footprint": "788c6e55961301c8a93fcbfd081df430066364dd"
   },
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "a1fc3d561eb5492c9519099007af36ea3f4c1e35"
+    "revision": "8c8af11510f86e9036ee8015c54d55e6bee17aba"
   }
 }

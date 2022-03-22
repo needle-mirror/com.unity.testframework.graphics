@@ -200,11 +200,10 @@ namespace UnityEngine.TestTools.Graphics
             if (actual == null)
                 throw new ArgumentNullException(nameof(actual));
 
-            var dirName = Path.Combine("Assets/ActualImages", string.Format("{0}/{1}/{2}/{3}",
-                UseGraphicsTestCasesAttribute.ColorSpace,
-                UseGraphicsTestCasesAttribute.Platform.ToUniqueString(),
-                UseGraphicsTestCasesAttribute.GraphicsDevice,
-                UseGraphicsTestCasesAttribute.LoadedXRDevice));
+            var actualImagePath = CodeBasedGraphicsTestAttribute.TryFindAttributeOn(TestContext.CurrentTestExecutionContext.CurrentTest, out var attrib)
+                ? attrib.ActualImagesRoot : "Assets/ActualImages";
+
+            var dirName = Path.Combine(actualImagePath, TestUtils.GetCurrentTestResultsFolderPath());
 
             var imageName = TestContext.CurrentContext.Test.MethodName != null ? TestContext.CurrentContext.Test.Name : "NoName";
             var failedImageMessage = new FailedImageMessage

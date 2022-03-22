@@ -12,6 +12,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine.Events;
 using UnityEngine.TestTools.Graphics;
 using UnityEditor.TestTools.Graphics;
+using UnityEditor.TestTools.TestRunner.Api;
 
 namespace UnityEngine.Experimental.Rendering
 {
@@ -69,7 +70,7 @@ namespace UnityEngine.Experimental.Rendering
             }
         }
 
-        [MenuItem("Tests/Result Window")]
+        [MenuItem("Tests/Graphics Tests Results")]
         public static void OpenWindow()
         {
             OpenWindow( null );
@@ -188,17 +189,19 @@ namespace UnityEngine.Experimental.Rendering
                             ApplyValues();
                         }
 
-                        GUILayout.FlexibleSpace();
-
-                        bool b = GUI.enabled;
-                        GUI.enabled = true;
-                        if (GUILayout.Button("Open Scene"))
+                        if (testCase.ScenePath != null)
                         {
-                            EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo();
-                            EditorSceneManager.OpenScene( testCase.ScenePath , OpenSceneMode.Single);
-                        }
+                            GUILayout.FlexibleSpace();
 
-                        GUI.enabled = b;
+                            bool b = GUI.enabled;
+                            GUI.enabled = true;
+                            if (GUILayout.Button("Open Scene"))
+                            {
+                                EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo();
+                                EditorSceneManager.OpenScene(testCase.ScenePath, OpenSceneMode.Single);
+                            }
+                            GUI.enabled = b;
+                        }
 
                         GUILayout.FlexibleSpace();
                     }
@@ -261,7 +264,6 @@ namespace UnityEngine.Experimental.Rendering
             if(templateImage == null || resultImage == null)
                 return;
 
-
             AssetDatabase.CopyAsset(AssetDatabase.GetAssetPath(resultImage), AssetDatabase.GetAssetPath(templateImage));
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -290,18 +292,12 @@ namespace UnityEngine.Experimental.Rendering
                 return false; // No reference image found
             }
 
-            var colorSpace = UseGraphicsTestCasesAttribute.ColorSpace;
-            var platform = UseGraphicsTestCasesAttribute.Platform;
-            var graphicsDevice = UseGraphicsTestCasesAttribute.GraphicsDevice;
-            var xrsdk = UseGraphicsTestCasesAttribute.LoadedXRDevice;
-
-            var actualImagesDir = Path.Combine(ActualImagesRoot, string.Format("{0}/{1}/{2}/{3}", colorSpace, platform.ToUniqueString(), graphicsDevice, xrsdk));
-
-            var sceneName = Path.GetFileNameWithoutExtension( tCase.ScenePath );
+            var actualImagesRoot = tCase.CodeBasedGraphicsTestAttribute?.ActualImagesRoot ?? ActualImagesRoot;
+            var actualImagesDir = Path.Combine(actualImagesRoot, TestUtils.GetCurrentTestResultsFolderPath());
 
             templateImage = tCase.ReferenceImage;
-            resultImage = AssetDatabase.LoadMainAssetAtPath( Path.Combine(actualImagesDir, sceneName + ".png") ) as Texture2D;
-            diffImage = AssetDatabase.LoadMainAssetAtPath( Path.Combine(actualImagesDir, sceneName + ".diff.png") ) as Texture2D;
+            resultImage = AssetDatabase.LoadMainAssetAtPath( Path.Combine(actualImagesDir, $"{tCase.Name}.png") ) as Texture2D;
+            diffImage = AssetDatabase.LoadMainAssetAtPath( Path.Combine(actualImagesDir, $"{tCase.Name}.diff.png") ) as Texture2D;
 
             foreach( Texture2D image in new Texture2D[]{templateImage, resultImage, diffImage})
             {
@@ -322,9 +318,16 @@ namespace UnityEngine.Experimental.Rendering
             public delegate void OnSceneSelect( GraphicsTestCase testCase );
             public OnSceneSelect onSceneSelect;
 
+            private List<GraphicsTestCase> m_CodeBasedGraphicsTests = new List<GraphicsTestCase>();
+
             public TestResultTreeView(TreeViewState state) : base(state)
             {
                 Reload();
+                CodeBasedGraphicsTests.AsyncEnumerate(tests =>
+                {
+                    m_CodeBasedGraphicsTests.AddRange(tests);
+                    Reload();
+                });
             }
 
             protected override TreeViewItem BuildRoot()
@@ -334,10 +337,13 @@ namespace UnityEngine.Experimental.Rendering
                 int nextID = 1;
 
                 IEnumerable<GraphicsTestCase> testCases = new EditorGraphicsTestCaseProvider().GetTestCases();
+                testCases = testCases.Concat(m_CodeBasedGraphicsTests.Select(test =>
+                    new GraphicsTestCase(test.Name, test.CodeBasedGraphicsTestAttribute, CodeBasedGraphicsTests.LoadReferenceImage(test.Name, test.CodeBasedGraphicsTestAttribute))
+                ));
 
                 foreach ( var i_testCase in testCases )
                 {
-                    TestResultViewItem item = new TestResultViewItem(nextID, 0, Path.GetFileNameWithoutExtension( i_testCase.ScenePath ) , i_testCase);
+                    TestResultViewItem item = new TestResultViewItem(nextID, 0, i_testCase.Name, i_testCase);
                     nextID++;
                     root.AddChild(item);
                 }
@@ -366,8 +372,12 @@ namespace UnityEngine.Experimental.Rendering
 
             protected override void DoubleClickedItem(int id)
             {
-                EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo();
-                EditorSceneManager.OpenScene( ( FindItem(id, rootItem) as TestResultViewItem ).testCase.ScenePath , OpenSceneMode.Single);
+                var testCase = (FindItem(id, rootItem) as TestResultViewItem).testCase;
+                if (testCase.ScenePath != null)
+                {
+                    EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo();
+                    EditorSceneManager.OpenScene(testCase.ScenePath, OpenSceneMode.Single);
+                }
             }
         }
 

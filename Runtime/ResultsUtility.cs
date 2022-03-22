@@ -78,7 +78,7 @@ namespace UnityEditor.TestTools.Graphics
 
             AssetDatabase.Refresh();
 
-            Utils.SetupReferenceImageImportSettings(imagesWritten);
+            EditorUtils.SetupReferenceImageImportSettings(imagesWritten);
         }
 
         public static void ExtractImagesFromTestProperties(TestContext.TestAdapter test)
@@ -87,11 +87,7 @@ namespace UnityEditor.TestTools.Graphics
                   test.Properties.ContainsKey("DiffImage")))
                 return;
             
-            var dirName = Path.Combine(ActualImagesRoot, string.Format("{0}/{1}/{2}/{3}",
-                UseGraphicsTestCasesAttribute.ColorSpace,
-                UseGraphicsTestCasesAttribute.Platform.ToUniqueString(),
-                UseGraphicsTestCasesAttribute.GraphicsDevice,
-                UseGraphicsTestCasesAttribute.LoadedXRDevice));
+            var dirName = Path.Combine(ActualImagesRoot, TestUtils.GetCurrentTestResultsFolderPath());
 
             if (!Directory.Exists(dirName))
                 Directory.CreateDirectory(dirName);
@@ -116,7 +112,7 @@ namespace UnityEditor.TestTools.Graphics
 
             AssetDatabase.Refresh();
 
-            Utils.SetupReferenceImageImportSettings(imagesWritten);
+            EditorUtils.SetupReferenceImageImportSettings(imagesWritten);
         }
     }
 }

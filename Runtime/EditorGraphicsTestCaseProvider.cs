@@ -40,12 +40,12 @@ namespace UnityEditor.TestTools.Graphics
 
         public IEnumerable<GraphicsTestCase> GetTestCases()
         {
-            var allImagesSpecific = CollectReferenceImagePathsFor(string.IsNullOrEmpty(m_ReferenceImagePath) ? ReferenceImagesRoot : m_ReferenceImagePath, QualitySettings.activeColorSpace, Application.platform,
-                SystemInfo.graphicsDeviceType, UseGraphicsTestCasesAttribute.LoadedXRDevice);
+            var allImagesSpecific = CollectReferenceImagePathsFor(string.IsNullOrEmpty(m_ReferenceImagePath) ? ReferenceImagesRoot : m_ReferenceImagePath,
+                UseGraphicsTestCasesAttribute.ColorSpace, UseGraphicsTestCasesAttribute.Platform, UseGraphicsTestCasesAttribute.GraphicsDevice, UseGraphicsTestCasesAttribute.LoadedXRDevice);
             var allImagesBase = CollectReferenceImageBasePaths(ReferenceImagesBaseRoot);
 
-            Utils.SetupReferenceImageImportSettings(allImagesSpecific.Values);
-            Utils.SetupReferenceImageImportSettings(allImagesBase.Values);
+            EditorUtils.SetupReferenceImageImportSettings(allImagesSpecific.Values);
+            EditorUtils.SetupReferenceImageImportSettings(allImagesBase.Values);
 
             var scenes = GetTestScenePaths();
             foreach (var scenePath in scenes)
@@ -71,8 +71,8 @@ namespace UnityEditor.TestTools.Graphics
         {
             GraphicsTestCase output = null;
 
-            var allImagesSpecific = CollectReferenceImagePathsFor(string.IsNullOrEmpty(m_ReferenceImagePath) ? ReferenceImagesRoot : m_ReferenceImagePath, QualitySettings.activeColorSpace, Application.platform,
-                SystemInfo.graphicsDeviceType); 
+            var allImagesSpecific = CollectReferenceImagePathsFor(string.IsNullOrEmpty(m_ReferenceImagePath) ? ReferenceImagesRoot : m_ReferenceImagePath,
+                UseGraphicsTestCasesAttribute.ColorSpace, UseGraphicsTestCasesAttribute.Platform, UseGraphicsTestCasesAttribute.GraphicsDevice);
 
             Texture2D referenceImage = null;
 
@@ -98,7 +98,7 @@ namespace UnityEditor.TestTools.Graphics
             if (!Directory.Exists(referenceImageRoot))
                 return result;
 
-            var fullPathPrefix = string.Format("{0}/{1}/{2}/{3}/{4}/", referenceImageRoot, colorSpace, runtimePlatform.ToUniqueString(), graphicsApi, xrsdk);
+            var fullPathPrefix = $"{referenceImageRoot}/{TestUtils.GetTestResultsFolderPath(colorSpace, runtimePlatform, graphicsApi, xrsdk)}/";
 
             foreach (var assetPath in AssetDatabase.GetAllAssetPaths()
                 .Where(p => p.StartsWith(fullPathPrefix, StringComparison.OrdinalIgnoreCase))

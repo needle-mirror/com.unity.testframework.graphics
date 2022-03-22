@@ -50,7 +50,7 @@ public class BaseImageOptimization
         refImages = FindAssets(AssetsRefImagePath);
         initialRefImages = refImages.Count;
         logMessageReceived("All distinct reference images found\n", LogType.Log, 0.2f);
-        Utils.SetupReferenceImageImportSettings(refImages.ToArray());
+        EditorUtils.SetupReferenceImageImportSettings(refImages.ToArray());
 
         if (IsOptimized)
         {

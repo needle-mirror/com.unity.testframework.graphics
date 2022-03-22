@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace UnityEditor.TestTools.Graphics
 {
-    internal static class Utils
+    public static class EditorUtils
     {
         public static RuntimePlatform BuildTargetToRuntimePlatform(BuildTarget target)
         {
@@ -125,20 +125,23 @@ namespace UnityEditor.TestTools.Graphics
                     if (!importer)
                         continue;
 
-                    if (importer.textureCompression == TextureImporterCompression.Uncompressed && importer.isReadable)
-                        continue;
-
-                    importer.textureCompression = TextureImporterCompression.Uncompressed;
-                    importer.isReadable = true;
-                    importer.mipmapEnabled = false;
-                    importer.npotScale = TextureImporterNPOTScale.None;
-                    AssetDatabase.ImportAsset(path);
+                    if (SetupReferenceImageImportSettings(importer))
+                        AssetDatabase.ImportAsset(path);
                 }
             }
             finally
             {
                 AssetDatabase.StopAssetEditing();
             }
+        }
+
+        public static bool SetupReferenceImageImportSettings(TextureImporter textureImporter)
+        {
+            textureImporter.textureCompression = TextureImporterCompression.Uncompressed;
+            textureImporter.isReadable = true;
+            textureImporter.mipmapEnabled = false;
+            textureImporter.npotScale = TextureImporterNPOTScale.None;
+            return EditorUtility.IsDirty(textureImporter);
         }
     }
 }
