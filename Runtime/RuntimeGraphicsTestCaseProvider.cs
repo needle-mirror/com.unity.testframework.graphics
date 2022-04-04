@@ -49,11 +49,12 @@ namespace UnityEngine.TestTools.Graphics
                 Texture2D referenceImage = null;
 
                 // The bundle might not exist if there are no reference images for this configuration yet
-                if (referenceImagesBaseBundle != null && referenceImagesBaseBundle.Contains(imagePath))
-                    referenceImage = referenceImagesBaseBundle.LoadAsset<Texture2D>(imagePath); 
-
-                else if (referenceImagesBundle != null && referenceImagesBundle.Contains(imagePath))
+                
+                if (referenceImagesBundle != null && referenceImagesBundle.Contains(imagePath))
                     referenceImage = referenceImagesBundle.LoadAsset<Texture2D>(imagePath);
+
+                else if (referenceImagesBaseBundle != null && referenceImagesBaseBundle.Contains(imagePath))
+                    referenceImage = referenceImagesBaseBundle.LoadAsset<Texture2D>(imagePath);
 
                 yield return new GraphicsTestCase(scenePath, referenceImage);
             }
@@ -91,11 +92,11 @@ namespace UnityEngine.TestTools.Graphics
             Texture2D referenceImage = null;
 
             // The bundle might not exist if there are no reference images for this configuration yet
-            if (referenceImagesBaseBundle != null)
-                referenceImage = referenceImagesBaseBundle.LoadAsset<Texture2D>(imagePath);
-
-            else if (referenceImagesBundle != null)
+            if (referenceImagesBundle != null)
                 referenceImage = referenceImagesBundle.LoadAsset<Texture2D>(imagePath);
+
+            else if (referenceImagesBaseBundle != null)
+                referenceImage = referenceImagesBaseBundle.LoadAsset<Texture2D>(imagePath);
 
             output = new GraphicsTestCase(scenePath, referenceImage);
 

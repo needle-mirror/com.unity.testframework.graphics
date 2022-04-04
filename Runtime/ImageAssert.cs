@@ -199,10 +199,17 @@ namespace UnityEngine.TestTools.Graphics
         {
             if (actual == null)
                 throw new ArgumentNullException(nameof(actual));
+            
+            var actualImagePath = "";
 
-            var actualImagePath = CodeBasedGraphicsTestAttribute.TryFindAttributeOn(TestContext.CurrentTestExecutionContext.CurrentTest, out var attrib)
+            if (saveFailedImage == true)
+            {
+                actualImagePath = CodeBasedGraphicsTestAttribute.TryFindAttributeOn(TestContext.CurrentTestExecutionContext.CurrentTest, out var attrib)
                 ? attrib.ActualImagesRoot : "Assets/ActualImages";
-
+            } else {
+                actualImagePath = "Assets/ActualImages";
+            };
+            
             var dirName = Path.Combine(actualImagePath, TestUtils.GetCurrentTestResultsFolderPath());
 
             var imageName = TestContext.CurrentContext.Test.MethodName != null ? TestContext.CurrentContext.Test.Name : "NoName";
