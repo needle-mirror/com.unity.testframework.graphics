@@ -58,9 +58,7 @@ By default, reference images will be set up in a three-level hierarchy of folder
 
 ## Scene view tests
 
-To capture from the scene view instead of the game view, use `yield return CaptureSceneView.Capture()` or `yield return CaptureSceneView.CaptureFromMainCamera()` in a `UnityTest`. This will return an `IEnumerator` that will follow this procedure: 1. Instantiate a scene view window in the specified width and height (default is 512), 2. Match the camera with the specified transform (or `Camera.main`) and 3. Read the pixels on your screen at the scene view window location. The captured Texture2D will be accessible as `CaptureSceneView.Result`.
-
-Note: On Windows, only DX12 is supported at this time.
+To capture from the scene view instead of the game view, use `yield return CaptureSceneView.Capture()` or `yield return CaptureSceneView.CaptureFromMainCamera()` in a `UnityTest`. This will return an `IEnumerator` that will follow this procedure: 1. Instantiate a scene view window in the specified width and height (default is 512), 2. Match the camera with the specified transform (or `Camera.main`) and 3. Read the Scene View window's output from the back-buffer. The captured Texture2D will be accessible as `CaptureSceneView.Result`.
 
 # Technical details
 ## Requirements

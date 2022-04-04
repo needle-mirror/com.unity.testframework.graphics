@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.8.22-exp.1] - 2022-04-04
+- Reworked `CaptureSceneView` to use the back-buffer instead of a screenshot.
+
 ## [7.8.21-exp.2] - 2022-04-04
 - Fixed the issue in `ImageAssert.cs` with running the optimization for reference images.
 - Fixed the issue in the optimization implementation.

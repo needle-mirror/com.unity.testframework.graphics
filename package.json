@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Tests Framework",
-  "version": "7.8.21-exp.2",
+  "version": "7.8.22-exp.1",
   "unity": "2019.4",
   "unityRelease": "0a23",
   "description": "Provides test framework helpers for writing tests for graphics code, such as image comparison assertions and automatic management of reference images.",
@@ -24,14 +24,14 @@
     "com.unity.modules.imageconversion": "1.0.0"
   },
   "upm": {
-    "changelog": "- Fixed the issue in `ImageAssert.cs` with running the optimization for reference images.\r\n- Fixed the issue in the optimization implementation."
+    "changelog": "- Reworked `CaptureSceneView` to use the back-buffer instead of a screenshot."
   },
   "upmCi": {
-    "footprint": "9a1c887425bedf9a7e2def4bb957fb8fa8781f2f"
+    "footprint": "10192e2ddc4f174b028aad8f5f3ab7c27534d15a"
   },
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "a7d0f89a26375e1fea074205987c3794b2f974ea"
+    "revision": "48a7d115c15abab8bbee182696c1d4d1079afaa7"
   }
 }
