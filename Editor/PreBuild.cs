@@ -18,7 +18,6 @@ namespace UnityEditor.TestTools.Graphics
         public void OnPreprocessBuild(BuildReport report)
         {
             PlayerSettings.fullScreenMode = FullScreenMode.Windowed;
-            PlayerSettings.SetAspectRatio(AspectRatio.Aspect16by9, true);
             PlayerSettings.defaultScreenHeight = ImageAssert.kBackBufferHeight;
             PlayerSettings.defaultScreenWidth = ImageAssert.kBackBufferWidth;
         }

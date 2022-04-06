@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Tests Framework",
-  "version": "7.8.22-exp.1",
+  "version": "7.8.22-exp.2",
   "unity": "2019.4",
   "unityRelease": "0a23",
   "description": "Provides test framework helpers for writing tests for graphics code, such as image comparison assertions and automatic management of reference images.",
@@ -24,14 +24,14 @@
     "com.unity.modules.imageconversion": "1.0.0"
   },
   "upm": {
-    "changelog": "- Reworked `CaptureSceneView` to use the back-buffer instead of a screenshot."
+    "changelog": "- Added `UNITY_TESTS_FRAMEWORK` defines for the package assemblies so they can be referred by test projects without adding to the `testables` section of the manifest.json file."
   },
   "upmCi": {
-    "footprint": "10192e2ddc4f174b028aad8f5f3ab7c27534d15a"
+    "footprint": "9c15e9dbdf3d3492b4169c2e542a1fb69068d1ef"
   },
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "48a7d115c15abab8bbee182696c1d4d1079afaa7"
+    "revision": "487f4a4804390fccdcd3fd8dbfb13523a3d808d9"
   }
 }

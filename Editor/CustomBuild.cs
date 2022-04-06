@@ -126,7 +126,6 @@ public static class CustomBuild
         PlayerSettings.fullScreenMode = FullScreenMode.Windowed;
         PlayerSettings.defaultScreenHeight = ImageAssert.kBackBufferHeight;
         PlayerSettings.defaultScreenWidth = ImageAssert.kBackBufferWidth;
-        PlayerSettings.SetAspectRatio(AspectRatio.Aspect16by9, true);
 
         List<string> scenesToBuild = new List<string>();
         foreach (EditorBuildSettingsScene scene in EditorBuildSettings.scenes)
