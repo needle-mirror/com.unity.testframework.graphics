@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.8.23-exp.1] - 2022-04-11
+- Added support for new PS5 GraphicsDeviceType.
+
 ## [7.8.22-exp.2] - 2022-04-06
 - Added `UNITY_TESTS_FRAMEWORK` defines for the package assemblies so they can be referred by test projects without adding to the `testables` section of the manifest.json file.
 

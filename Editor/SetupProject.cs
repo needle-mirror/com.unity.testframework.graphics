@@ -23,6 +23,7 @@ public static class SetupProject
             { "ps4", () => SetGraphicsAPI(GraphicsDeviceType.PlayStation4) },
 #if UNITY_PS5
             { "ps5", () => SetGraphicsAPI(GraphicsDeviceType.PlayStation5) },
+            { "ps5nggc", () => SetGraphicsAPI(GraphicsDeviceType.PlayStation5NGGC) },
 #endif
             { "xb1d3d11", () => SetGraphicsAPI(GraphicsDeviceType.XboxOne) },
             { "xb1d3d12", () => SetGraphicsAPI(GraphicsDeviceType.XboxOneD3D12) },
