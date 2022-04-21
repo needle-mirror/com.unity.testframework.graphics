@@ -3,16 +3,17 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
-using UnityEngine;
 using UnityEditor;
-using UnityEngine.Experimental.Rendering;
 using UnityEditor.IMGUI.Controls;
 using UnityEditor.SceneManagement;
-using UnityEngine.Events;
-using UnityEngine.TestTools.Graphics;
 using UnityEditor.TestTools.Graphics;
 using UnityEditor.TestTools.TestRunner.Api;
+using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.Experimental.Rendering;
+using UnityEngine.TestTools.Graphics;
 
 namespace UnityEngine.Experimental.Rendering
 {
@@ -296,8 +297,8 @@ namespace UnityEngine.Experimental.Rendering
             var actualImagesDir = Path.Combine(actualImagesRoot, TestUtils.GetCurrentTestResultsFolderPath());
 
             templateImage = tCase.ReferenceImage;
-            resultImage = AssetDatabase.LoadMainAssetAtPath( Path.Combine(actualImagesDir, $"{tCase.Name}.png") ) as Texture2D;
-            diffImage = AssetDatabase.LoadMainAssetAtPath( Path.Combine(actualImagesDir, $"{tCase.Name}.diff.png") ) as Texture2D;
+            resultImage = AssetDatabase.LoadMainAssetAtPath( EditorUtils.ReplaceCharacters(Path.Combine(actualImagesDir, $"{tCase.Name}.png") )) as Texture2D;
+            diffImage = AssetDatabase.LoadMainAssetAtPath( EditorUtils.ReplaceCharacters(Path.Combine(actualImagesDir, $"{tCase.Name}.diff.png") )) as Texture2D;
 
             foreach( Texture2D image in new Texture2D[]{templateImage, resultImage, diffImage})
             {
@@ -328,6 +329,8 @@ namespace UnityEngine.Experimental.Rendering
                     m_CodeBasedGraphicsTests.AddRange(tests);
                     Reload();
                 });
+
+                SetUseHorizontalScroll(true);
             }
 
             protected override TreeViewItem BuildRoot()
@@ -378,6 +381,23 @@ namespace UnityEngine.Experimental.Rendering
                     EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo();
                     EditorSceneManager.OpenScene(testCase.ScenePath, OpenSceneMode.Single);
                 }
+            }
+
+            private void SetUseHorizontalScroll(bool value)
+            {
+                FieldInfo guiFieldInfo = typeof(TreeView).GetField("m_GUI", BindingFlags.Instance | BindingFlags.NonPublic);
+                if (null == guiFieldInfo)
+                {
+                    throw new Exception("TreeView API has changed.");
+                }
+                object gui = guiFieldInfo.GetValue(this);
+
+                FieldInfo useHorizontalScrollFieldInfo = gui.GetType().GetField("m_UseHorizontalScroll", BindingFlags.Instance | BindingFlags.NonPublic);
+                if (null == useHorizontalScrollFieldInfo)
+                {
+                    throw new Exception("TreeView API has changed.");
+                }
+                useHorizontalScrollFieldInfo.SetValue(gui, value);
             }
         }
 

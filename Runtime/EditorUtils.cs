@@ -143,6 +143,8 @@ namespace UnityEditor.TestTools.Graphics
             textureImporter.npotScale = TextureImporterNPOTScale.None;
             return EditorUtility.IsDirty(textureImporter);
         }
+
+        public static string ReplaceCharacters(string _str) => _str.Replace("(", "_").Replace(")", "_").Replace("\"", "").Replace(",", "-");
     }
 }
 #endif

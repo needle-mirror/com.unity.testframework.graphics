@@ -5,6 +5,7 @@ using NUnit.Framework.Interfaces;
 using UnityEditor;
 #if UNITY_EDITOR
 using UnityEditor.TestTools.TestRunner.Api;
+using  UnityEditor.TestTools.Graphics;
 #endif
 
 namespace UnityEngine.TestTools.Graphics
@@ -63,6 +64,14 @@ namespace UnityEngine.TestTools.Graphics
                 if (newGraphicsTests.Count > 0)
                     onEnumerate(newGraphicsTests);
             });
+            
+            api.RetrieveTestList(TestMode.PlayMode, (testRoot) =>
+            {
+                var newGraphicsTests = new List<GraphicsTestCase>();
+                TraverseTests(testRoot, newGraphicsTests);
+                if (newGraphicsTests.Count > 0)
+                    onEnumerate(newGraphicsTests);
+            });
         }
 
         public static Texture2D LoadReferenceImage(string testName, CodeBasedGraphicsTestAttribute attrib)
@@ -70,9 +79,17 @@ namespace UnityEngine.TestTools.Graphics
             if (attrib == null)
                 throw new ArgumentNullException(nameof(attrib));
 
-            var referenceImageFolder = Path.Combine(attrib.ReferenceImagesRoot, TestUtils.GetCurrentTestResultsFolderPath());
-            var referenceImagePath = Path.Combine(referenceImageFolder, $"{testName}.png");
-            return AssetDatabase.LoadAssetAtPath<Texture2D>(referenceImagePath);
+                var referenceImageFolder = Path.Combine(attrib.ReferenceImagesRoot, TestUtils.GetCurrentTestResultsFolderPath());
+                var referenceImagePath = EditorUtils.ReplaceCharacters(Path.Combine(referenceImageFolder, $"{testName}.png"));
+                var referenceImage = AssetDatabase.LoadAssetAtPath<Texture2D>(referenceImagePath);
+
+            if (referenceImage == null)
+            {
+                referenceImagePath = EditorUtils.ReplaceCharacters(Path.Combine(attrib.ReferenceImagesRoot, $"{testName}.png"));
+                referenceImage = AssetDatabase.LoadAssetAtPath<Texture2D>(referenceImagePath);
+            }
+
+            return referenceImage;
         }
 
         private static void TraverseTests(ITestAdaptor test, List<GraphicsTestCase> collection)

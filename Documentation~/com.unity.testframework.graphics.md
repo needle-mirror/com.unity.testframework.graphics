@@ -60,6 +60,17 @@ By default, reference images will be set up in a three-level hierarchy of folder
 
 To capture from the scene view instead of the game view, use `yield return CaptureSceneView.Capture()` or `yield return CaptureSceneView.CaptureFromMainCamera()` in a `UnityTest`. This will return an `IEnumerator` that will follow this procedure: 1. Instantiate a scene view window in the specified width and height (default is 512), 2. Match the camera with the specified transform (or `Camera.main`) and 3. Read the Scene View window's output from the back-buffer. The captured Texture2D will be accessible as `CaptureSceneView.Result`.
 
+## Code-Based Graphics Tests
+To use the Graphics Test Framework using code-based tests instead of scene-based tests, use the `[CodeBasedGraphicsTest]` attribute. You must specify the reference image directory and optionally specify the actual image directory. Here's an example:
+```CSharp
+[UnityTest, Category("Graphics")]
+[CodeBasedGraphicsTest("Assets/ReferenceImages", "Assets/ActualImages")]
+public IEnumerator MyTest()
+{
+    ...
+}
+```
+
 # Technical details
 ## Requirements
 
