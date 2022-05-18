@@ -24,7 +24,7 @@ namespace UnityEditor.TestTools.Graphics
         {
             m_ReferenceImagePath = referenceImagePath;
         }
-
+        
         public static IEnumerable<string> GetTestScenePaths()
         {
             return EditorBuildSettings.scenes
@@ -37,9 +37,12 @@ namespace UnityEditor.TestTools.Graphics
                     return !labels.Contains("ExcludeGfxTests");
                 });
         }
-
+        
         public IEnumerable<GraphicsTestCase> GetTestCases()
         {
+            SRPTestSceneAsset srpTestSceneAsset = null;
+            srpTestSceneAsset = Resources.Load<SRPTestSceneAsset>("SRPTestSceneSO");
+            
             var allImagesSpecific = CollectReferenceImagePathsFor(string.IsNullOrEmpty(m_ReferenceImagePath) ? ReferenceImagesRoot : m_ReferenceImagePath,
                 UseGraphicsTestCasesAttribute.ColorSpace, UseGraphicsTestCasesAttribute.Platform, UseGraphicsTestCasesAttribute.GraphicsDevice, UseGraphicsTestCasesAttribute.LoadedXRDevice);
             var allImagesBase = CollectReferenceImageBasePaths(ReferenceImagesBaseRoot);
@@ -51,19 +54,43 @@ namespace UnityEditor.TestTools.Graphics
             foreach (var scenePath in scenes)
             {
                 Texture2D referenceImage = null;
-
                 string imagePath;
-                if (allImagesSpecific.TryGetValue(Path.GetFileNameWithoutExtension(scenePath), out imagePath))
+                bool srpTestSceneAssetUsed = false;
+                // Need to check if this scene is part of the SRPTestScene Asset,
+                // If it is, we want to use that information instead.
+                if (srpTestSceneAsset != null)
                 {
-                    referenceImage = AssetDatabase.LoadAssetAtPath<Texture2D>(imagePath);
+                    foreach (SRPTestSceneAsset.TestData testData in srpTestSceneAsset.testDatas)
+                    {
+                        if (testData.path == scenePath && testData.enabled)
+                        {
+                            srpTestSceneAssetUsed = true;
+                            foreach (RenderPipelineAsset srpAsset in testData.srpAssets)
+                            {
+                                var refImageName = $"{Path.GetFileNameWithoutExtension(scenePath)}_{srpAsset.name}";
+                                allImagesSpecific.TryGetValue(refImageName, out imagePath);
+                                referenceImage = AssetDatabase.LoadAssetAtPath<Texture2D>(imagePath);
+                                yield return new GraphicsTestCase(scenePath, referenceImage, srpAsset);
+                            }
+                            break;
+                        }
+                    }
                 }
-                else
+                
+                if(!srpTestSceneAssetUsed)
                 {
-                    imagePath = $"{ReferenceImagesBaseRoot}/{Path.GetFileNameWithoutExtension(scenePath)}.png";
-                    referenceImage = AssetDatabase.LoadAssetAtPath<Texture2D>(imagePath);
+                    if (allImagesSpecific.TryGetValue(Path.GetFileNameWithoutExtension(scenePath), out imagePath))
+                    {
+                        referenceImage = AssetDatabase.LoadAssetAtPath<Texture2D>(imagePath);
+                    }
+                    else
+                    {
+                        imagePath = $"{ReferenceImagesBaseRoot}/{Path.GetFileNameWithoutExtension(scenePath)}.png";
+                        referenceImage = AssetDatabase.LoadAssetAtPath<Texture2D>(imagePath);
+                    }
+                
+                    yield return new GraphicsTestCase(scenePath, referenceImage);
                 }
-
-                yield return new GraphicsTestCase(scenePath, referenceImage);
             }
         }
 

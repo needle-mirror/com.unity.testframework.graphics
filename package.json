@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Tests Framework",
-  "version": "7.8.23-exp.2",
+  "version": "7.9.0-exp.1",
   "unity": "2019.4",
   "unityRelease": "0a23",
   "description": "Provides test framework helpers for writing tests for graphics code, such as image comparison assertions and automatic management of reference images.",
@@ -24,14 +24,14 @@
     "com.unity.modules.imageconversion": "1.0.0"
   },
   "_upm": {
-    "changelog": "- Added support for parametric CodeBasedGraphicsTests.\r\n- Added support for Playmode CodeBasedGraphicsTests.\r\n- Made Graphics Test Results window TreeView scrollable\r\n- Added compatibility between CodeBasedGraphicsTests and the ReferenceImagesBase folder"
+    "changelog": "- Added SRP Test Scene Asset. Which allows users to add scenes combined with SRP Assets. So that we can test 1 scene with several different SRP's."
   },
   "upmCi": {
-    "footprint": "aa3ede9756a018830eb241a6c4675cbba8bd8a97"
+    "footprint": "1699de9bb1c287eafe897d59ddfc513dc8c55366"
   },
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "6f7e8fd5221946d40f39a67cf10403832431b2b1"
+    "revision": "79aeb7b8a8a040cfdbf85108421b72752f70c111"
   }
 }

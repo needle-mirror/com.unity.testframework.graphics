@@ -1,18 +1,21 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using NUnit.Framework;
 using UnityEngine.Networking;
+using UnityEngine.Rendering;
 
 namespace UnityEngine.TestTools.Graphics
 {
     internal class RuntimeGraphicsTestCaseProvider : IGraphicsTestCaseProvider
     {
-        public IEnumerable<GraphicsTestCase> GetTestCases()
+        void GetAssetBundlesAndScenePaths(out AssetBundle referenceImagesBundle, out AssetBundle referenceImagesBaseBundle, out string[] scenePaths)
         {
-            AssetBundle referenceImagesBundle = null;
-            AssetBundle referenceImagesBaseBundle = null;
-            string[] scenePaths;
-
+            referenceImagesBundle = null;
+            referenceImagesBaseBundle = null;
+            scenePaths = null;
+            
             // apparently unity automatically saves the asset bundle as all lower case
             var referenceImagesBundlePath = string.Format("referenceimages-{0}-{1}-{2}-{3}",
                 UseGraphicsTestCasesAttribute.ColorSpace,
@@ -23,40 +26,78 @@ namespace UnityEngine.TestTools.Graphics
 
             var referenceImagesBaseBundlePath = "referenceimagesbase";
             referenceImagesBaseBundlePath = Path.Combine(Application.streamingAssetsPath, referenceImagesBaseBundlePath);
-
+            
 #if UNITY_ANDROID
             // Unlike standalone where you can use File.Read methods and pass the path to the file,
             // Android requires UnityWebRequest to read files from local storage
             referenceImagesBundle = GetRefImagesBundleViaWebRequest(referenceImagesBundlePath);
             referenceImagesBaseBundle = GetRefImagesBundleViaWebRequest(referenceImagesBaseBundlePath);
-
+            
             // Same applies to the scene list
             scenePaths = GetScenePathsViaWebRequest(Application.streamingAssetsPath + "/SceneList.txt");
 #else
             if (File.Exists(referenceImagesBundlePath))
+            {
                 referenceImagesBundle = AssetBundle.LoadFromFile(referenceImagesBundlePath);
+            }
 
             if (File.Exists(referenceImagesBaseBundlePath))
+            {
                 referenceImagesBaseBundle = AssetBundle.LoadFromFile(referenceImagesBaseBundlePath);
-
+            }
             scenePaths = File.ReadAllLines(Application.streamingAssetsPath + "/SceneList.txt");
 #endif
-
+        }
+        
+        public IEnumerable<GraphicsTestCase> GetTestCases()
+        {
+            SRPTestSceneAsset srpTestSceneAsset = null;
+            srpTestSceneAsset = Resources.Load<SRPTestSceneAsset>("SRPTestSceneSO");
+            
+            GetAssetBundlesAndScenePaths(out AssetBundle referenceImagesBundle, out AssetBundle referenceImagesBaseBundle, out string[] scenePaths);
+            
             foreach (var scenePath in scenePaths)
             {
-                var imagePath = Path.GetFileNameWithoutExtension(scenePath);
-
                 Texture2D referenceImage = null;
-
-                // The bundle might not exist if there are no reference images for this configuration yet
+                bool srpTestSceneAssetUsed = false;
+                if (srpTestSceneAsset != null)
+                {
+                    foreach (SRPTestSceneAsset.TestData testData in srpTestSceneAsset.testDatas)
+                    {
+                        if (testData.path == scenePath && testData.enabled)
+                        {
+                            srpTestSceneAssetUsed = true;
+                            foreach (RenderPipelineAsset srpAsset in testData.srpAssets)
+                            {
+                                var imagePath = $"{Path.GetFileNameWithoutExtension(scenePath)}_{srpAsset.name}";
+                                // The bundle might not exist if there are no reference images for this configuration yet
                 
-                if (referenceImagesBundle != null && referenceImagesBundle.Contains(imagePath))
-                    referenceImage = referenceImagesBundle.LoadAsset<Texture2D>(imagePath);
+                                if (referenceImagesBundle != null && referenceImagesBundle.Contains(imagePath))
+                                    referenceImage = referenceImagesBundle.LoadAsset<Texture2D>(imagePath);
+                
+                                else if (referenceImagesBaseBundle != null && referenceImagesBaseBundle.Contains(imagePath))
+                                    referenceImage = referenceImagesBaseBundle.LoadAsset<Texture2D>(imagePath);
+                            
+                                yield return new GraphicsTestCase(scenePath, referenceImage, srpAsset);
+                            }
+                            break;
+                        }
+                    }
+                }
+                
+                if(!srpTestSceneAssetUsed)
+                {
+                    var imagePath = Path.GetFileNameWithoutExtension(scenePath);
+                    // The bundle might not exist if there are no reference images for this configuration yet
 
-                else if (referenceImagesBaseBundle != null && referenceImagesBaseBundle.Contains(imagePath))
-                    referenceImage = referenceImagesBaseBundle.LoadAsset<Texture2D>(imagePath);
+                    if (referenceImagesBundle != null && referenceImagesBundle.Contains(imagePath))
+                        referenceImage = referenceImagesBundle.LoadAsset<Texture2D>(imagePath);
 
-                yield return new GraphicsTestCase(scenePath, referenceImage);
+                    else if (referenceImagesBaseBundle != null && referenceImagesBaseBundle.Contains(imagePath))
+                        referenceImage = referenceImagesBaseBundle.LoadAsset<Texture2D>(imagePath);
+
+                    yield return new GraphicsTestCase(scenePath, referenceImage);
+                }
             }
         }
         

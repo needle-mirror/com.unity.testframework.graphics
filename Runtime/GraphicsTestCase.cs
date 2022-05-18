@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace UnityEngine.TestTools.Graphics
 {
@@ -11,23 +13,36 @@ namespace UnityEngine.TestTools.Graphics
         private readonly string _scenePath;
         private readonly CodeBasedGraphicsTestAttribute _codeBasedGraphicsTestAttribute;
         private readonly Texture2D _referenceImage;
+        private readonly RenderPipelineAsset _srpAsset;
 
-        public GraphicsTestCase(string scenePath, Texture2D referenceImage)
+        public GraphicsTestCase(string scenePath, Texture2D referenceImage, RenderPipelineAsset srpAsset = null)
         {
-            _name = System.IO.Path.GetFileNameWithoutExtension(scenePath);
+            var nameExt = string.Empty;
+            if (srpAsset != null)
+            {
+                nameExt = $"_{srpAsset.name}";
+            }
+            _name = System.IO.Path.GetFileNameWithoutExtension(scenePath) + nameExt;
             _scenePath = scenePath;
             _codeBasedGraphicsTestAttribute = null;
             _referenceImage = referenceImage;
+            _srpAsset = srpAsset;
         }
 
-        public GraphicsTestCase(string name, CodeBasedGraphicsTestAttribute codeBasedGraphicsTestAttrib, Texture2D referenceImage)
+        public GraphicsTestCase(string name, CodeBasedGraphicsTestAttribute codeBasedGraphicsTestAttrib, Texture2D referenceImage, RenderPipelineAsset srpAsset = null)
         {
-            _name = name;
+            var nameExt = string.Empty;
+            if (srpAsset != null)
+            {
+                nameExt = $"_{srpAsset.name}";
+            }
+            _name = name + nameExt;
             _scenePath = null;
             _codeBasedGraphicsTestAttribute = codeBasedGraphicsTestAttrib;
             _referenceImage = referenceImage;
+            _srpAsset = srpAsset;
         }
-
+        
         /// <summary>
         /// The path to the scene to be used for this test case.
         /// </summary>
@@ -47,5 +62,10 @@ namespace UnityEngine.TestTools.Graphics
         /// The reference image that represents the expected output for this test case.
         /// </summary>
         public Texture2D ReferenceImage {  get { return _referenceImage; } }
+
+        /// <summary>
+        /// The Scriptable Render Pipeline Asset used for this test case.
+        /// </summary>
+        public RenderPipelineAsset SRPAsset => _srpAsset;
     }
 }

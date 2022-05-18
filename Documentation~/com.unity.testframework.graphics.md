@@ -44,6 +44,25 @@ Note that if options are left blank or otherwise unspecified it will indicate al
 
 To add more filters just click the Add Filter button at the bottom.  You can have as many filters per scene as you need but will need to create one for each configuration you want.  However, you should only have one test filter scriptable object in the project as the filters are applied from only the first scriptable object found in the assets.
 
+### Base Reference images (new approach)
+
+The Graphics Test Framework has a new way of using the reference images. The `ReferenceImagesBase` folder stores the project's reference images that are similar accross platforms and graphics APIs. When a reference image for a test is required, first it tries to load it from its specific location in the `ReferenceImages/ColorSpace/Platform/GraphicsAPI` folder. If it doesn’t exist, it is loaded from the `ReferenceImagesBase` folder. Thus, specific reference images are preferred over the base reference images.
+
+The preferred way of using it is the following one. If you want to use the same reference image across multiple graphics APIs and platforms, once you have created your tests and added them to the Build Settings, add the images for the tests directly to the `ReferenceImagesBase` folder. Then you can either run the tests in-Editor to generate the images for the tests that differ, using the Editor renderer, or you can exit Unity and run the tests on-device from the commandline.
+
+When the run completes, you should be able to obtain a TestResults.xml file for the run. As well as reporting what tests failed (uses a different image), the TestResults.xml file will also contain encoded versions of the rendered images.
+
+In Unity, go to `Tests -> Extract images from TestResults.xml...` and select the TestResults.xml file created by the run. The framework will process the images in the test results and put them into a folder called "ActualImages" in the root of your Assets folder, where you can inspect them to make sure they look correct.
+
+Once the generated images look correct, merge the images into the ReferenceImages folder to the specific `ColorSpace/Platform/GraphicsAPI`. Run the tests again and you should see that they now use the reference images successfully!
+
+#### Optimize your existing project
+    1. Open the target project in the Unity Editor
+    2. In the “Window” tab, “General” tag, open “Graphics Test Setup” window
+    3. In the new window press “Start Optimization” and follow the progress bar for updates on the optimization.
+    4. At the end of the optimization, the right top corner displays the total of images optimized.
+    5. The optimized reference images can be found in the ReferenceImagesBase folder.
+
 ### Reference images
 
 The simplest way to set up your initial reference images is to allow the tests to generate them. Once you have created your tests and added them to the Build Settings, you can either run the tests in-Editor to generate images using the Editor renderer, or you can exit Unity and run the tests on-device from the commandline.
