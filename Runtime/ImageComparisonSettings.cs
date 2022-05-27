@@ -44,6 +44,14 @@ namespace UnityEngine.TestTools.Graphics
         public float PerPixelAlphaThreshold = 1f / 255;
 
         /// <summary>
+        /// The maximum permitted root mean squared error value across the entire image. If the root mean squared
+        /// per-pixel error across the image is above this value, the images are considered
+        /// not to be equal.
+        /// </summary>
+        [Tooltip("The maximum permitted root mean squared error value across the entire image.")]
+        public float RMSEThreshold;
+
+        /// <summary>
         /// The maximum permitted average error value across the entire image. If the average
         /// per-pixel difference across the image is above this value, the images are considered
         /// not to be equal.
@@ -94,7 +102,8 @@ namespace UnityEngine.TestTools.Graphics
         {
             None = 0,
             AverageDeltaE = 1 << 0,
-            IncorrectPixelsCount = 1 << 1
+            IncorrectPixelsCount = 1 << 1,
+            RMSE = 1 << 2
         }
 
         /// <summary>

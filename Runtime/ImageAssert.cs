@@ -190,6 +190,123 @@ namespace UnityEngine.TestTools.Graphics
         }
 
         /// <summary>
+        /// Compares an image to a 'reference' image to see if it looks correct. Assumes linear HDR images (RGBAFloat or RGBAHalf).
+        /// </summary>
+        /// <param name="expected">What the image is supposed to look like.</param>
+        /// <param name="actual">What the image actually looks like.</param>
+        /// <param name="settings">Optional settings that control how the comparison is performed. Can be null, in which case the images are required to be exactly identical.</param>
+        public static void AreEqualLinearHDR(Texture2D expected, Texture2D actual, ImageComparisonSettings settings = null, bool saveFailedImage = true)
+        {
+            if (actual == null)
+                throw new ArgumentNullException(nameof(actual));
+
+            bool hdrFormat = (actual.format == TextureFormat.RGBAHalf || actual.format == TextureFormat.RGBAFloat);
+                Assert.IsTrue(hdrFormat, $"Input image {nameof(actual)} is using an invalid format. Expected format should be RGBAHalf or RGBAFloat.");
+
+            var actualImagePath = "";
+            if (saveFailedImage == true)
+            {
+                actualImagePath = CodeBasedGraphicsTestAttribute.TryFindAttributeOn(TestContext.CurrentTestExecutionContext.CurrentTest, out var attrib)
+                ? attrib.ActualImagesRoot : "Assets/ActualImages";
+            }
+            else
+            {
+                actualImagePath = "Assets/ActualImages";
+            };
+
+            var dirName = Path.Combine(actualImagePath, TestUtils.GetCurrentTestResultsFolderPath());
+
+            var imageName = TestContext.CurrentContext.Test.MethodName != null ? TestContext.CurrentContext.Test.Name : "NoName";
+            var failedImageMessage = new FailedImageMessage
+            {
+                PathName = dirName,
+                ImageName = StripParametricTestCharacters(imageName),
+            };
+
+            try
+            {
+                Assert.That(expected, Is.Not.Null, "No reference image was provided. Path: " + dirName);
+
+                Assert.That(actual.width, Is.EqualTo(expected.width),
+                    "The expected image had width {0}px, but the actual image had width {1}px.", expected.width,
+                    actual.width);
+                Assert.That(actual.height, Is.EqualTo(expected.height),
+                    "The expected image had height {0}px, but the actual image had height {1}px.", expected.height,
+                    actual.height);
+
+                Assert.That(actual.format, Is.EqualTo(expected.format),
+                    "The expected image had format {0} but the actual image had format {1}.", expected.format,
+                    actual.format);
+
+                using (var expectedPixels = new NativeArray<Color>(expected.GetPixels(0), Allocator.TempJob))
+                using (var actualPixels = new NativeArray<Color>(actual.GetPixels(0), Allocator.TempJob))
+                using (var diffPixels = new NativeArray<Color>(expectedPixels.Length, Allocator.TempJob))
+                using (var batchMSEArray = new NativeArray<float>(Mathf.CeilToInt(expectedPixels.Length / (float)k_BatchSize), Allocator.TempJob))
+                using (var batchMaxDeltaArray = new NativeArray<float>(batchMSEArray.Length, Allocator.TempJob))
+                using (var batchBadPixelsArray = new NativeArray<int>(batchMSEArray.Length, Allocator.TempJob))
+                {
+                    if (settings == null)
+                        settings = new ImageComparisonSettings();
+
+                    // Extract flags
+                    bool testBadPixelsCount = settings.ActiveImageTests.HasFlag(ImageComparisonSettings.ImageTests.IncorrectPixelsCount);
+                    bool testRMSE = settings.ActiveImageTests.HasFlag(ImageComparisonSettings.ImageTests.RMSE);
+
+                    new ComputeLinearHDRImageDiffJob
+                    {
+                        expected = expectedPixels,
+                        actual = actualPixels,
+                        diff = diffPixels,
+                        pixelThreshold = settings.PerPixelCorrectnessThreshold,
+                        batchMSE = batchMSEArray,
+                        batchMaxDelta = batchMaxDeltaArray,
+                        batchBadPixels = batchBadPixelsArray
+                    }.Schedule(expectedPixels.Length, k_BatchSize).Complete();
+
+                    int pixelCount = expected.width * expected.height;
+                    float mse = batchMSEArray.Sum() / (pixelCount * 4);
+                    float rmse = Mathf.Sqrt(mse);
+                    float badPixelsMean = (batchBadPixelsArray.Sum() - 0.1f) / pixelCount;
+                    float maxPixelDelta = batchMaxDeltaArray.Max();
+
+                    try
+                    {
+                        if (testRMSE)
+                            Assert.That(rmse, Is.LessThanOrEqualTo(settings.RMSEThreshold), "Failed RMSE threshold test.");
+                        if (testBadPixelsCount)
+                            Assert.That(badPixelsMean, Is.LessThanOrEqualTo(settings.IncorrectPixelsThreshold), "Failed per pixel threshold test.");
+                    }
+                    catch (AssertionException)
+                    {
+                        var diffImage = new Texture2D(expected.width, expected.height, TextureFormat.RGBAHalf, false);
+                        var diffPixelsArray = new Color[expected.width * expected.height];
+                        diffPixels.CopyTo(diffPixelsArray);
+                        diffImage.SetPixels(diffPixelsArray, 0);
+                        diffImage.Apply(false);
+
+                        failedImageMessage.DiffImage = diffImage.EncodeToEXR();
+                        failedImageMessage.ExpectedImage = expected.EncodeToEXR();
+                        throw;
+                    }
+                }
+            }
+            catch (AssertionException)
+            {
+                failedImageMessage.ActualImage = actual.EncodeToEXR();
+#if UNITY_EDITOR
+                if (saveFailedImage)
+                {
+                    ImageHandler.TextureImporterSettings importSettings = new ImageHandler.TextureImporterSettings(); 
+                    ImageHandler.instance.SaveImage(failedImageMessage, true, importSettings);
+                }
+#else
+                PlayerConnection.instance.Send(FailedImageMessage.MessageId, failedImageMessage.Serialize());
+#endif
+                throw;
+            }
+        }
+
+        /// <summary>
         /// Compares an image to a 'reference' image to see if it looks correct.
         /// </summary>
         /// <param name="expected">What the image is supposed to look like.</param>
@@ -465,6 +582,44 @@ namespace UnityEngine.TestTools.Graphics
                 diff[index] = colorResult;
             }
         }
+        struct ComputeLinearHDRImageDiffJob : IJobParallelFor
+        {
+            [ReadOnly] public NativeArray<Color> expected;
+            [ReadOnly] public NativeArray<Color> actual;
+            public NativeArray<Color> diff;
+            public float pixelThreshold;
+
+            [NativeDisableParallelForRestriction]
+            public NativeArray<float> batchMSE;
+
+            [NativeDisableParallelForRestriction]
+            public NativeArray<float> batchMaxDelta;
+
+            [NativeDisableParallelForRestriction]
+            public NativeArray<int> batchBadPixels;
+
+            public void Execute(int index)
+            {
+                Color exp = expected[index];
+                Color act = actual[index];
+                int batch = index / k_BatchSize;
+
+                // compute pixel difference
+                float deltaR = Mathf.Abs(exp.r - act.r);
+                float deltaG = Mathf.Abs(exp.g - act.g);
+                float deltaB = Mathf.Abs(exp.b - act.b);
+                float deltaA = Mathf.Abs(exp.a - act.a);
+                float maxDelta = Mathf.Max(Mathf.Max(Mathf.Max(deltaR, deltaG), deltaB), deltaA);
+                if (maxDelta > pixelThreshold)
+                    batchBadPixels[batch]++;
+                batchMaxDelta[batch] = Mathf.Max(batchMaxDelta[batch], maxDelta);
+                batchMSE[batch] += deltaR * deltaR;
+                batchMSE[batch] += deltaG * deltaG;
+                batchMSE[batch] += deltaB * deltaB;
+                batchMSE[batch] += deltaA * deltaA;
+                diff[index] = new Color(maxDelta, maxDelta, maxDelta, 1.0f);
+            }
+        } 
 
         // Linear RGB to XYZ using D65 ref. white
         static Vector3 RGBtoXYZ(Color color)
@@ -575,7 +730,32 @@ public class ImageHandler : ScriptableSingleton<ImageHandler>
         SaveImage(failedImageMessage);
     }
 
-    public void SaveImage(FailedImageMessage failedImageMessage)
+#if UNITY_EDITOR
+    public class TextureImporterSettings
+    {
+        public bool IsReadable { get; set; } = true;
+        public bool UseMipMaps { get; set; } = false;
+        public TextureImporterNPOTScale NPOTScale { get; set; } = TextureImporterNPOTScale.None;
+        public TextureImporterCompression TextureCompressionType { get; set; } = TextureImporterCompression.Uncompressed;
+        public FilterMode TextureFilterMode { get; set; } = FilterMode.Point;
+    }
+
+    public static void ReImportTextureWithSettings(string path, TextureImporterSettings settings)
+    {
+        TextureImporter importer = (TextureImporter)TextureImporter.GetAtPath(path);
+        if (importer == null)
+            return;
+        importer.isReadable = settings.IsReadable;
+        importer.npotScale = settings.NPOTScale;
+        importer.mipmapEnabled = settings.UseMipMaps;
+        importer.textureCompression = settings.TextureCompressionType;
+        importer.filterMode = settings.TextureFilterMode;
+        EditorUtility.SetDirty(importer);
+        importer.SaveAndReimport();
+    }
+#endif
+
+    public void SaveImage(FailedImageMessage failedImageMessage, bool hdr = false, TextureImporterSettings textureImporterSettings = null)
     {
         var saveDir = string.IsNullOrEmpty(ImageResultsPath) ? failedImageMessage.PathName : ImageResultsPath;
 
@@ -583,21 +763,27 @@ public class ImageHandler : ScriptableSingleton<ImageHandler>
         {
             Directory.CreateDirectory(saveDir);
         }
-
-        var actualImagePath = Path.Combine(saveDir, $"{failedImageMessage.ImageName}.png");
+        string extension = hdr ? "exr" : "png";
+        var actualImagePath = Path.Combine(saveDir, $"{failedImageMessage.ImageName}.{extension}");
         File.WriteAllBytes(actualImagePath, failedImageMessage.ActualImage);
         ReportArtifact(actualImagePath);
+        if (textureImporterSettings != null)
+            ReImportTextureWithSettings(actualImagePath, textureImporterSettings);
 
         if (failedImageMessage.DiffImage != null)
         {
-            var diffImagePath = Path.Combine(saveDir, $"{failedImageMessage.ImageName}.diff.png");
+            var diffImagePath = Path.Combine(saveDir, $"{failedImageMessage.ImageName}.diff.{extension}");
             File.WriteAllBytes(diffImagePath, failedImageMessage.DiffImage);
             ReportArtifact(diffImagePath);
+            if (textureImporterSettings != null)
+                ReImportTextureWithSettings(diffImagePath, textureImporterSettings);
 
             var expectedImagesPath =
-                Path.Combine(saveDir, $"{failedImageMessage.ImageName}.expected.png");
+                Path.Combine(saveDir, $"{failedImageMessage.ImageName}.expected.{extension}");
             File.WriteAllBytes(expectedImagesPath, failedImageMessage.ExpectedImage);
             ReportArtifact(expectedImagesPath);
+            if (textureImporterSettings != null)
+                ReImportTextureWithSettings(expectedImagesPath, textureImporterSettings);
         }
     }
 
