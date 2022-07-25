@@ -17,10 +17,9 @@ By making a pull request, you are confirming agreement to the terms and conditio
     * If you created a new project for testing, make sure to add the graphics test framework package to testables in the project manifest: https://docs.unity3d.com/Manual/cus-tests.html
 * Bigger changes should be tested against multiple branches/platforms:
     * Make a branch in the [ant-graphics-ci](https://github.cds.internal.unity3d.com/unity/ant-graphics-ci) repo
-    * Find the manifest.json of the projects you want to test on (the projects live [here](https://github.cds.internal.unity3d.com/unity/unity/tree/trunk/Tests/SRPTests/Projects) now)
-    * Replace the graphics test framework version with an ssh git url pointing to your graphics test framework branch, eg
-        * `"com.unity.testframework.graphics": "ssh://git@github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git#your-branch-here"`
-    * Run the jobs in the [ant-graphics-ci yamato project](https://unity-ci.cds.internal.unity3d.com/project/1647)
+    * Go to the [ant-graphics-ci yamato project](https://unity-ci.cds.internal.unity3d.com/project/1647)
+    * After clicking "Queue Job", go to the Edit Variables tab and replace `use_version_in_manifest` with your branch name
+      ![Screenshot 2022-06-23 at 10 23 46](https://media.github.cds.internal.unity3d.com/user/159/files/b9235bcf-885a-4f6e-aad9-0abc5bef7957)
 
 ## Publishing and promoting
 The package is now on "Lifecycle V2" of Package Manager, more info here https://docs.unity3d.com/Packages/com.unity.package-validation-suite@0.23/manual/lifecycle_validation_error.html#lifecycle-v2-tagging-rules

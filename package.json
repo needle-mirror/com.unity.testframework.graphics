@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Tests Framework",
-  "version": "7.10.0-exp.1",
+  "version": "7.10.0-exp.2",
   "unity": "2019.4",
   "unityRelease": "0a23",
   "description": "Provides test framework helpers for writing tests for graphics code, such as image comparison assertions and automatic management of reference images.",
@@ -16,7 +16,6 @@
     "com.unity.xr.management": "4.0.5",
     "com.unity.external.test-protocol": "1.0.0-preview",
     "com.unity.nuget.newtonsoft-json": "2.0.0",
-    "com.unity.subsystemregistration": "1.0.6",
     "com.unity.xr.legacyinputhelpers": "2.1.8",
     "com.unity.modules.xr": "1.0.0",
     "com.unity.modules.vr": "1.0.0",
@@ -24,14 +23,14 @@
     "com.unity.modules.imageconversion": "1.0.0"
   },
   "_upm": {
-    "changelog": "- Added new image assert function that implements functionality to do image asserts with floating point images. These images can have negative numbers and are written out as EXR.\r\n- Added new image comparison function that implements MSE/RMSE comparisons.\r\n- Added support for applying texture import settings for the written ActualImages."
+    "changelog": "- Removed `com.unity.subsystemregistration` package dependency."
   },
   "upmCi": {
-    "footprint": "0ebffcf9481247c0e8860357dd57ad9de4b37350"
+    "footprint": "9ec8f3471ef94962fb6ab030b84724582f09fe6b"
   },
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "16f4f13cac0a49067aeab8033820d7b91f76a1e0"
+    "revision": "cbcb17fed5949d532c6ee5a08271e6036814b15c"
   }
 }
