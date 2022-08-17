@@ -19,8 +19,8 @@
     "versionDefines": [
         {
             "name": "com.unity.test-framework",
-            "expression": "1.2",
-            "define": "TEST_FRAMEWORK_1_2_0_OR_NEWER"
+            "expression": "2.0",
+            "define": "TEST_FRAMEWORK_2_0_0_OR_NEWER"
         }
     ]
 }

@@ -2,7 +2,7 @@ using NUnit.Framework;
 
 namespace UnityEngine.TestTools.Graphics.Tests
 {
-#if TEST_FRAMEWORK_1_2_0_OR_NEWER
+#if TEST_FRAMEWORK_2_0_0_OR_NEWER
     [RequiresPlayMode]
 #endif
     public class FailedImageMessageTests

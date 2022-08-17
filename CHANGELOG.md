@@ -3,6 +3,10 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+
+## [7.10.0-exp.3] - 2022-08-17
+- Update version defines for Unity Test Framework
+
 ## [7.10.0-exp.2] - 2022-07-25
 - Removed `com.unity.subsystemregistration` package dependency.
 

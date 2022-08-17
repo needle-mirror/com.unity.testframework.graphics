@@ -26,7 +26,7 @@ namespace UnityEditor.TestTools.Graphics
         {
             get
             {
-                #if TEST_FRAMEWORK_1_2_0_OR_NEWER
+                #if TEST_FRAMEWORK_2_0_0_OR_NEWER
                     return TestRunnerApi.GetActiveRunGuids().Any(guid =>
                     {
                         var settings = TestRunnerApi.GetExecutionSettings(guid);

@@ -25,7 +25,7 @@
         {
             "name": "com.unity.test-framework",
             "expression": "1.2",
-            "define": "TEST_FRAMEWORK_1_2_0_OR_NEWER"
+            "define": "TEST_FRAMEWORK_2_0_0_OR_NEWER"
         },
         {
             "name": "com.unity.testframework.graphics",
