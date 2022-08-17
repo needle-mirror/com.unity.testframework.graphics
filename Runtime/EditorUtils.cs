@@ -137,11 +137,18 @@ namespace UnityEditor.TestTools.Graphics
 
         public static bool SetupReferenceImageImportSettings(TextureImporter textureImporter)
         {
-            textureImporter.textureCompression = TextureImporterCompression.Uncompressed;
-            textureImporter.isReadable = true;
-            textureImporter.mipmapEnabled = false;
-            textureImporter.npotScale = TextureImporterNPOTScale.None;
-            return EditorUtility.IsDirty(textureImporter);
+            if (textureImporter.textureCompression != TextureImporterCompression.Uncompressed
+                || !textureImporter.isReadable
+                || textureImporter.mipmapEnabled
+                || textureImporter.npotScale != TextureImporterNPOTScale.None)
+            {
+                textureImporter.textureCompression = TextureImporterCompression.Uncompressed;
+                textureImporter.isReadable = true;
+                textureImporter.mipmapEnabled = false;
+                textureImporter.npotScale = TextureImporterNPOTScale.None;
+                return true;
+            }
+            return false;
         }
 
         public static string ReplaceCharacters(string _str) => _str.Replace("(", "_").Replace(")", "_").Replace("\"", "").Replace(",", "-");

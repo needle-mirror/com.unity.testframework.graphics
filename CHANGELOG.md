@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.10.0-exp.4] - 2022-08-17
+- Fixed a performance regression that caused reference image assets to be reimported at every selection in the Test Results window.
+
 ## [7.10.0-exp.3] - 2022-08-17
 - Update version defines for Unity Test Framework
 
