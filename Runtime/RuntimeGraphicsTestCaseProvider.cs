@@ -70,13 +70,26 @@ namespace UnityEngine.TestTools.Graphics
                             foreach (RenderPipelineAsset srpAsset in testData.srpAssets)
                             {
                                 var imagePath = $"{Path.GetFileNameWithoutExtension(scenePath)}_{srpAsset.name}";
+
                                 // The bundle might not exist if there are no reference images for this configuration yet
-                
+                                
+                                // First look for a scenePath_srpAssetName reference image in both bundles
                                 if (referenceImagesBundle != null && referenceImagesBundle.Contains(imagePath))
                                     referenceImage = referenceImagesBundle.LoadAsset<Texture2D>(imagePath);
-                
                                 else if (referenceImagesBaseBundle != null && referenceImagesBaseBundle.Contains(imagePath))
                                     referenceImage = referenceImagesBaseBundle.LoadAsset<Texture2D>(imagePath);
+
+                                // If no scenePath_srpAssetName reference image was found, fall back to scenePath only
+                                if (!referenceImage)
+                                {
+                                    var baseImagePath = $"{Path.GetFileNameWithoutExtension(scenePath)}";
+                                    
+                                    if (referenceImagesBundle != null && referenceImagesBundle.Contains(baseImagePath))
+                                        referenceImage = referenceImagesBundle.LoadAsset<Texture2D>(baseImagePath);
+                                    else if (referenceImagesBaseBundle != null && referenceImagesBaseBundle.Contains(baseImagePath))
+                                        referenceImage = referenceImagesBaseBundle.LoadAsset<Texture2D>(baseImagePath);
+                                }
+                                    
                             
                                 yield return new GraphicsTestCase(scenePath, referenceImage, srpAsset);
                             }

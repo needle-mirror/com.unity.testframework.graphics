@@ -68,7 +68,11 @@ namespace UnityEditor.TestTools.Graphics
                             foreach (RenderPipelineAsset srpAsset in testData.srpAssets)
                             {
                                 var refImageName = $"{Path.GetFileNameWithoutExtension(scenePath)}_{srpAsset.name}";
-                                allImagesSpecific.TryGetValue(refImageName, out imagePath);
+                                
+                                // If no scenePath_srpAssetName reference image is found, fall back to scenePath only
+                                if(!allImagesSpecific.TryGetValue(refImageName, out imagePath))
+                                    allImagesSpecific.TryGetValue($"{Path.GetFileNameWithoutExtension(scenePath)}", out imagePath);
+                                
                                 referenceImage = AssetDatabase.LoadAssetAtPath<Texture2D>(imagePath);
                                 yield return new GraphicsTestCase(scenePath, referenceImage, srpAsset);
                             }
