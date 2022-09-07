@@ -10,6 +10,10 @@ public class GraphicsPlayerBuildModifier : ITestPlayerBuildModifier
         // Add an extra define to the player so that XR test code can be enabled while still using the regular (non-VR) reference images
         if (RuntimeSettings.reuseTestsForXR)
             AddExtraScriptingDefine(ref playerOptions, "XR_REUSE_TESTS_STANDALONE");
+        
+        // Add an extra define to the player so that RenderGraph test code can be enabled while still using the regular (non-RG) reference images
+        if (RuntimeSettings.reuseTestsForRenderGraph)
+            AddExtraScriptingDefine(ref playerOptions, "RENDER_GRAPH_REUSE_TESTS_STANDALONE");
 
         return playerOptions;
     }

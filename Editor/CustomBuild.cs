@@ -116,6 +116,19 @@ public static class CustomBuild
         BuildScenes(".", graphicsAPIs[0].ToString(), buildTarget);
     }
 
+#if UNITY_2021_3_OR_NEWER
+    [MenuItem("Tools/Build LinuxHeadlessSimulation")]
+    static void BuildLinuxHeadlessSimulation()
+    {
+        //PlayerSettings.colorSpace = ColorSpace.Linear;
+        BuildTarget buildTarget = BuildTarget.LinuxHeadlessSimulation;
+        // BuildOptions buildOptions = BuildOptions.None;
+
+        GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.Vulkan };
+        BuildScenes(".", graphicsAPIs[0].ToString(), buildTarget);        
+    }
+#endif
+
     public static void BuildScenes(string path, string name, BuildTarget buildTarget)
     {
         string buildName = string.Format("{0}{1}", "TestScenes", name);

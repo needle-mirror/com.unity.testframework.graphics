@@ -42,6 +42,10 @@ namespace UnityEditor.TestTools.Graphics
                     return RuntimePlatform.XboxOne;
                 case BuildTarget.tvOS:
                     return RuntimePlatform.tvOS;
+#if UNITY_2021_3_OR_NEWER
+                case BuildTarget.LinuxHeadlessSimulation:
+                    return RuntimePlatform.LinuxPlayer;
+#endif
 #if UNITY_2019_3_OR_NEWER
                 case BuildTarget.Stadia:
                     return RuntimePlatform.Stadia;

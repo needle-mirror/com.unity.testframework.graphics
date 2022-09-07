@@ -23,5 +23,19 @@ namespace UnityEngine.TestTools.Graphics
             get => false;
 #endif
         }
+        
+        public static bool reuseTestsForRenderGraph { get; } = _reuseTestsForRenderGraph;
+        
+        // Cache result to avoid GC.
+        private static bool _reuseTestsForRenderGraph
+        {
+#if UNITY_EDITOR
+            get => Array.Exists(Environment.GetCommandLineArgs(), arg => arg == "-render-graph-reuse-tests");
+#elif RENDER_GRAPH_REUSE_TESTS_STANDALONE
+            get => true;
+#else
+            get => false;
+#endif
+        }
     }
 }
