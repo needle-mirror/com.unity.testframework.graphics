@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Tests Framework",
-  "version": "7.10.0-exp.6",
+  "version": "7.10.0-exp.7",
   "unity": "2019.4",
   "unityRelease": "0a23",
   "description": "Provides test framework helpers for writing tests for graphics code, such as image comparison assertions and automatic management of reference images.",
@@ -23,11 +23,11 @@
     "com.unity.modules.imageconversion": "1.0.0"
   },
   "upmCi": {
-    "footprint": "a248cf4679937f9439ccc1fc0db0d7aaa6069376"
+    "footprint": "155dbfcd72d398e6e77adaa00c859a4bcd6701ff"
   },
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "89408ce0ef00b326141de2cf0cc69ee0c9445225"
+    "revision": "c60a8af3a938bbf91a6277d5a77fbcb25fa11e72"
   }
 }

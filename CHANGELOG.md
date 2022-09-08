@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.10.0-exp.7] - 2022-09-08
+- Fix version of UTF in the asmdef define
+
 ## [7.10.0-exp.6] - 2022-09-07
 - Added an extra "-render-graph-reuse-tests" command line option and define to the player so that RenderGraph test code can be enabled while still using the regular (non-RG) reference images.
 - Add support for LinuxHeadlessSimulation platform
