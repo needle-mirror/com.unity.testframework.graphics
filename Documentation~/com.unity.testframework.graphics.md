@@ -1,6 +1,6 @@
 # About the Graphics Test Framework
 
-Use the Graphics Test Framework package to create automated tests for rendering outputs - tests that render an image and compare it to a 'known good' reference image.
+Use the Graphics Test Framework package to create automated tests for rendering outputs - tests that render an image and compare it to a 'known good' reference image. The package uses features from the [Unity Test Framework](https://docs.unity3d.com/Packages/com.unity.test-framework@1.1/manual/index.html) and [NUnit](https://docs.nunit.org/).
 
 # Installing the Graphics Test Framework
 
@@ -8,6 +8,9 @@ To install this package, follow the instructions in the [Package Manager documen
 
 <a name="UsingPackageName"></a>
 # Using the Graphics Test Framework
+
+Before you can use the Graphics Test Framework in your project, you need to add the Engine and Editor TestTools.Graphics assembly definitions to the test assembly (asmdef) in your project.
+Alternatively, you can add com.unity.testframework.graphics to the testables section of your manifest, but that will add the Graphics Test Framework tests to your test runner window.
 
 There are two main components to the framework:
 
