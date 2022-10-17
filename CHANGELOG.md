@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.10.1-exp.1] - 2022-10-17
+- Added `GenerateCodeCoverage` class that contains the method used to automate the code coverage analysis on the scene-based graphics tests using the `com.unity.testtools.codecoverage` package's on demand recording.
+
 ## [7.10.0-exp.8] - 2022-09-26
 - Update documentation
 
