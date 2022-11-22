@@ -4,12 +4,22 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-
 public static class SetupProject
 {
-  public static void ApplySettings()
-  {
-    var options = new Dictionary<string, Action>
+    public static void ApplySettings()
+    {
+        UnityEditor.TestTools.Graphics.SetupProject.ApplySettings();
+    }
+
+}
+
+namespace UnityEditor.TestTools.Graphics
+{
+    public static class SetupProject
+    {
+        public static void ApplySettings()
+        {
+            var options = new Dictionary<string, Action>
         {
             { "gamma", () => PlayerSettings.colorSpace = ColorSpace.Gamma },
             { "linear", () => PlayerSettings.colorSpace = ColorSpace.Linear },
@@ -34,25 +44,24 @@ public static class SetupProject
             { "switch", () => SetGraphicsAPI(GraphicsDeviceType.Switch) }
         };
 
-    var args = Environment.GetCommandLineArgs();
-    string apiName = "";
-    foreach (var arg in args)
-    {
-      Action action;
-      if (options.TryGetValue(arg, out action))
-      {
-        apiName = arg;
-        action();
-      }
+            var args = Environment.GetCommandLineArgs();
+            string apiName = "";
+            foreach (var arg in args)
+            {
+                Action action;
+                if (options.TryGetValue(arg, out action))
+                {
+                    apiName = arg;
+                    action();
+                }
+            }
+
+            CustomBuild.BuildScenes(".", apiName, EditorUserBuildSettings.activeBuildTarget);
+        }
+        static void SetGraphicsAPI(GraphicsDeviceType api)
+        {
+            var currentTarget = EditorUserBuildSettings.activeBuildTarget;
+            PlayerSettings.SetGraphicsAPIs(currentTarget, new[] { api });
+        }
     }
-
-    CustomBuild.BuildScenes(".", apiName, EditorUserBuildSettings.activeBuildTarget);
-  }
-
-  static void SetGraphicsAPI(GraphicsDeviceType api)
-  {
-    var currentTarget = EditorUserBuildSettings.activeBuildTarget;
-    PlayerSettings.SetGraphicsAPIs(currentTarget, new[] { api });
-  }
-
 }

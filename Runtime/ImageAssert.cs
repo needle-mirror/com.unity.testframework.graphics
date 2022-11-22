@@ -8,13 +8,18 @@ using System.Collections;
 using Unity.Jobs;
 using Unity.TestProtocol;
 using Unity.TestProtocol.Messages;
-using UnityEditor;
 using UnityEngine.TestTools.Constraints;
 using Is = UnityEngine.TestTools.Constraints.Is;
 using UnityEngine.Networking.PlayerConnection;
 using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.Experimental.Rendering;
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEditor.Profiling;
+using UnityEditorInternal;
+#endif
+using System.Text;
 
 namespace UnityEngine.TestTools.Graphics
 {
@@ -483,6 +488,126 @@ namespace UnityEngine.TestTools.Graphics
             {
                 RenderTexture.ReleaseTemporary(rt);
             }
+        }
+        
+        /// <summary>
+        /// Render an image from the given camera and check if it allocated memory while doing so. Also outputs the callstack of the GC.Alloc found
+        /// </summary>
+        /// <param name="camera">The camera to render from.</param>
+        /// <param name="settings">Settings to create the camera render target</param>
+        /// <param name="overrideSRPMarkerName">Override the main marker used to check the GC.Alloc</param>
+        public static IEnumerator CheckGCAllocWithCallstack(Camera camera, ImageComparisonSettings settings = null, string overrideSRPMarkerName = null)
+        {
+#if UNITY_2020_2_OR_NEWER && UNITY_EDITOR
+            if (camera == null)
+                throw new ArgumentNullException(nameof(camera));
+
+            if (settings == null)
+                settings = new ImageComparisonSettings();
+
+            int width = settings.TargetWidth;
+            int height = settings.TargetHeight;
+
+            var defaultFormat = (settings.UseHDR) ? SystemInfo.GetGraphicsFormat(DefaultFormat.HDR) : SystemInfo.GetGraphicsFormat(DefaultFormat.LDR);
+            RenderTextureDescriptor desc = new RenderTextureDescriptor(width, height, defaultFormat, 24);
+
+            var rt = RenderTexture.GetTemporary(desc);
+            try
+            {
+                if (!settings.UseBackBuffer && !RuntimeSettings.reuseTestsForXR)
+                    camera.targetTexture = rt;
+
+                ProfilerDriver.ClearAllFrames();
+                ProfilerDriver.memoryRecordMode = ProfilerMemoryRecordMode.GCAlloc;
+                ProfilerDriver.enabled = true;
+                
+                // Wait for memoryRecordMode to apply
+                yield return new WaitForEndOfFrame();
+               
+                // Render the camera
+                yield return new WaitForEndOfFrame();
+                
+                ProfilerDriver.enabled = false;
+                // Wait for results to be available in the profiler
+                yield return new WaitForEndOfFrame();
+
+                int cameraRenderFrameIndex = ProfilerDriver.GetPreviousFrameIndex(Time.frameCount);
+                long totalGcAllocSize = 0;
+
+                const int mainThread = 0;
+                var humanReadableCallstack = new StringBuilder();
+                using (RawFrameDataView frameData = ProfilerDriver.GetRawFrameDataView(cameraRenderFrameIndex, mainThread))
+                {
+                    if (!frameData.valid)
+                        yield break;
+
+                    int gcAllocMarkerId = frameData.GetMarkerId("GC.Alloc");
+                    
+                    // Check if there is a GC Alloc marker in the frame
+                    if (gcAllocMarkerId == FrameDataView.invalidMarkerId)
+                        yield break;
+                    
+                    // Check if there is the srp marker in the frame
+                    var srpMarker = frameData.GetMarkerId(overrideSRPMarkerName ?? "UnityEngine.CoreModule.dll!UnityEngine.Rendering::RenderPipelineManager.DoRenderLoop_Internal() [Invoke]");
+                    if (srpMarker == FrameDataView.invalidMarkerId)
+                        throw new Exception("SRP Marker not found in profiling while searching for GC.Alloc");
+                    int sampleCount = frameData.sampleCount;
+                    for (int i = 0; i < sampleCount; ++i)
+                    {
+                        if (srpMarker == frameData.GetSampleMarkerId(i))
+                        {
+                            var endMarkerIndex = frameData.GetSampleChildrenCountRecursive(i) + i;
+                            
+                            if (i >= endMarkerIndex)
+                                continue;
+                            
+                            for (; i < endMarkerIndex; i++)
+                            {
+                                if (gcAllocMarkerId != frameData.GetSampleMarkerId(i))
+                                    continue;
+                                
+                                var callstack = new List<ulong>();
+                                frameData.GetSampleCallstack(i, callstack);
+                                foreach (var callAddress in callstack)
+                                {
+                                    var methodInfo = frameData.ResolveMethodInfo(callAddress);
+                                    if (string.IsNullOrEmpty(methodInfo.methodName))
+                                        continue;
+                                    humanReadableCallstack.AppendLine(methodInfo.methodName);
+                                }
+                                
+                                humanReadableCallstack.AppendLine();
+                                
+                                long gcAllocSize = frameData.GetSampleMetadataAsLong(i, 0);
+                                totalGcAllocSize += gcAllocSize;
+                            }
+                        }
+                    }
+                }
+
+                if (totalGcAllocSize > 0)
+                    throw new Exception(
+                        $@"Memory allocation test failed, {totalGcAllocSize}B of GC.Alloc detected. Callstacks:
+{humanReadableCallstack}
+If the callstack is not exploitable you can try to find the allocation by following these instructions:
+- Open the profiler window (ctrl-7) and enable deep profiling.
+- Run your the test that fails and wait (it can take much longer because deep profiling is enabled).
+- In the CPU section of the profiler, select on Hierarchy and search for the 'GraphicTests_GC_Alloc_Check' marker.
+- This should give you one result, click on it and press f to go to the frame where it hapended.
+- Click on the GC Alloc column to sort by allocation and unfold the hierarchy under the 'GraphicTests_GC_Alloc_Check' marker."
+                    );
+
+                camera.targetTexture = null;
+            }
+            finally
+            {
+                RenderTexture.ReleaseTemporary(rt);
+            }
+            yield break;
+#else
+            AllocatesMemory(camera, settings, 0);
+            yield break;
+#endif
         }
 
         static Texture2D BackBufferCapture(Texture2D expected, IEnumerable<Camera> cameras, ImageComparisonSettings settings = null)

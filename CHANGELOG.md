@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.11.0-exp.1] - 2022-11-22
+- Added `ImageAssert.CheckGCAllocWithCallstack()` to render an image from the given camera and check if it allocated memory while doing so, outputting the callstack of the GC.Alloc if found.
+- Moved the `SetupProject` class behind the `UnityEditor.TestTools.Graphics` namespace to be able to call it from external code. Also added a non-namespaced wrapper that calls it to make the change non-breaking.
+
 ## [7.10.1-exp.1] - 2022-10-17
 - Added `GenerateCodeCoverage` class that contains the method used to automate the code coverage analysis on the scene-based graphics tests using the `com.unity.testtools.codecoverage` package's on demand recording.
 
