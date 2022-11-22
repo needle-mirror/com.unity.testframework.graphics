@@ -77,6 +77,7 @@ namespace UnityEngine.TestTools.Graphics
 
             int width = settings.TargetWidth;
             int height = settings.TargetHeight;
+            int samples = settings.TargetMSAASamples;
             var format = expected != null ? expected.format : TextureFormat.ARGB32;
 
             // Some HDRP test fail with HDRP batcher because shaders variant are compiled "on the fly" in editor mode.
@@ -87,7 +88,7 @@ namespace UnityEngine.TestTools.Graphics
 
             var defaultFormat = (settings.UseHDR) ? SystemInfo.GetGraphicsFormat(DefaultFormat.HDR) : SystemInfo.GetGraphicsFormat(DefaultFormat.LDR);
             RenderTextureDescriptor desc = new RenderTextureDescriptor(width, height, defaultFormat, 24);
-
+            desc.msaaSamples = samples;
             var rt = RenderTexture.GetTemporary(desc);
             UnityEngine.Graphics.SetRenderTarget(rt);
             UnityEngine.GL.Clear(true, true, UnityEngine.Color.black);

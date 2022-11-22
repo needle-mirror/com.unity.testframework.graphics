@@ -23,6 +23,11 @@ namespace UnityEngine.TestTools.Graphics
         public int TargetHeight = 512;
 
         /// <summary>
+        /// The sample count needed for the test scene to be compared
+        /// </summary>
+        public int TargetMSAASamples = 1;
+        
+        /// <summary>
         /// The permitted perceptual difference between individual pixels of the images.
         /// 
         /// The deltaE for each pixel of the image is compared and any differences below this
