@@ -5,15 +5,15 @@ namespace UnityEngine.TestTools.Graphics.Tests
 #if TEST_FRAMEWORK_2_0_0_OR_NEWER
     [RequiresPlayMode]
 #endif
-    public class FailedImageMessageTests
+    public class ImageMessageTests
     {
         [Test]
         public void SerializationRoundtrip_DefaultInstance()
         {
-            var message = new FailedImageMessage();
+            var message = new ImageMessage();
 
             var data = message.Serialize();
-            var deserialized = FailedImageMessage.Deserialize(data);
+            var deserialized = ImageMessage.Deserialize(data);
 
             AssertAreEqual(deserialized, message);
         }
@@ -26,7 +26,7 @@ namespace UnityEngine.TestTools.Graphics.Tests
         [TestCase("Foo", "Bar", new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 }, new byte[] { 42, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 }, new byte[] { 42, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 })]
         public void SerializationRoundtrip_AllFieldsAreSerializedAndDeserialized(string pathName, string imageName, byte[] expectedImage,  byte[] actualImage, byte[] diffImage)
         {
-            var message = new FailedImageMessage
+            var message = new ImageMessage
             {
                 PathName = pathName,
                 ImageName = imageName,
@@ -39,7 +39,7 @@ namespace UnityEngine.TestTools.Graphics.Tests
         }
 #endif
 
-        private static void AssertAreEqual(FailedImageMessage deserialized, FailedImageMessage message)
+        private static void AssertAreEqual(ImageMessage deserialized, ImageMessage message)
         {
             Assert.That(deserialized.ImageName, Is.EqualTo(message.ImageName));
             Assert.That(deserialized.PathName, Is.EqualTo(message.PathName));

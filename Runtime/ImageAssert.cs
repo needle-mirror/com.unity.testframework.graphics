@@ -223,11 +223,12 @@ namespace UnityEngine.TestTools.Graphics
             var dirName = Path.Combine(actualImagePath, TestUtils.GetCurrentTestResultsFolderPath());
 
             var imageName = TestContext.CurrentContext.Test.MethodName != null ? TestContext.CurrentContext.Test.Name : "NoName";
-            var failedImageMessage = new FailedImageMessage
+            var imageMessage = new ImageMessage
             {
                 PathName = dirName,
                 ImageName = StripParametricTestCharacters(imageName),
             };
+            imageMessage.ActualImage = actual.EncodeToEXR();
 
             try
             {
@@ -290,23 +291,31 @@ namespace UnityEngine.TestTools.Graphics
                         diffImage.SetPixels(diffPixelsArray, 0);
                         diffImage.Apply(false);
 
-                        failedImageMessage.DiffImage = diffImage.EncodeToEXR();
-                        failedImageMessage.ExpectedImage = expected.EncodeToEXR();
+                        imageMessage.DiffImage = diffImage.EncodeToEXR();
+                        imageMessage.ExpectedImage = expected.EncodeToEXR();
                         throw;
                     }
+                }
+                if (RuntimeSettings.saveActualImages)
+                {
+#if UNITY_EDITOR
+                    ImageHandler.TextureImporterSettings importSettings = new ImageHandler.TextureImporterSettings(); 
+                    ImageHandler.instance.SaveImage(imageMessage, true, importSettings);
+#else
+                    PlayerConnection.instance.Send(ImageMessage.MessageId, imageMessage.Serialize());
+#endif
                 }
             }
             catch (AssertionException)
             {
-                failedImageMessage.ActualImage = actual.EncodeToEXR();
 #if UNITY_EDITOR
                 if (saveFailedImage)
                 {
                     ImageHandler.TextureImporterSettings importSettings = new ImageHandler.TextureImporterSettings(); 
-                    ImageHandler.instance.SaveImage(failedImageMessage, true, importSettings);
+                    ImageHandler.instance.SaveImage(imageMessage, true, importSettings);
                 }
 #else
-                PlayerConnection.instance.Send(FailedImageMessage.MessageId, failedImageMessage.Serialize());
+                PlayerConnection.instance.Send(ImageMessage.MessageId, imageMessage.Serialize());
 #endif
                 throw;
             }
@@ -336,11 +345,12 @@ namespace UnityEngine.TestTools.Graphics
             var dirName = Path.Combine(actualImagePath, TestUtils.GetCurrentTestResultsFolderPath());
 
             var imageName = TestContext.CurrentContext.Test.MethodName != null ? TestContext.CurrentContext.Test.Name : "NoName";
-            var failedImageMessage = new FailedImageMessage
+            var imageMessage = new ImageMessage
             {
                 PathName = dirName,
                 ImageName = StripParametricTestCharacters(imageName),
             };
+            imageMessage.ActualImage = actual.EncodeToPNG();
 
             try
             {
@@ -408,20 +418,27 @@ namespace UnityEngine.TestTools.Graphics
                         diffImage.SetPixels32(diffPixelsArray, 0);
                         diffImage.Apply(false);
 
-                        failedImageMessage.DiffImage = diffImage.EncodeToPNG();
-                        failedImageMessage.ExpectedImage = expected.EncodeToPNG();
+                        imageMessage.DiffImage = diffImage.EncodeToPNG();
+                        imageMessage.ExpectedImage = expected.EncodeToPNG();
                         throw;
                     }
+                }
+                if (RuntimeSettings.saveActualImages)
+                {
+#if UNITY_EDITOR
+                    ImageHandler.instance.SaveImage(imageMessage);
+#else
+                    PlayerConnection.instance.Send(ImageMessage.MessageId, imageMessage.Serialize());
+#endif
                 }
             }
             catch (AssertionException)
             {
-                failedImageMessage.ActualImage = actual.EncodeToPNG();
 #if UNITY_EDITOR
                 if (saveFailedImage)
-                    ImageHandler.instance.SaveImage(failedImageMessage);
+                    ImageHandler.instance.SaveImage(imageMessage);
 #else
-                PlayerConnection.instance.Send(FailedImageMessage.MessageId, failedImageMessage.Serialize());
+                PlayerConnection.instance.Send(ImageMessage.MessageId, imageMessage.Serialize());
 #endif
                 throw;
             }
@@ -850,10 +867,10 @@ If the callstack is not exploitable you can try to find the allocation by follow
 public class ImageHandler : ScriptableSingleton<ImageHandler>
 {
     public string ImageResultsPath;
-    public void HandleFailedImageEvent(MessageEventArgs messageEventArgs)
+    public void HandleImageEvent(MessageEventArgs messageEventArgs)
     {
-        var failedImageMessage = FailedImageMessage.Deserialize(messageEventArgs.data);
-        SaveImage(failedImageMessage);
+        var imageMessage = ImageMessage.Deserialize(messageEventArgs.data);
+        SaveImage(imageMessage);
     }
 
 #if UNITY_EDITOR
@@ -881,32 +898,32 @@ public class ImageHandler : ScriptableSingleton<ImageHandler>
     }
 #endif
 
-    public void SaveImage(FailedImageMessage failedImageMessage, bool hdr = false, TextureImporterSettings textureImporterSettings = null)
+    public void SaveImage(ImageMessage imageMessage, bool hdr = false, TextureImporterSettings textureImporterSettings = null)
     {
-        var saveDir = string.IsNullOrEmpty(ImageResultsPath) ? failedImageMessage.PathName : ImageResultsPath;
+        var saveDir = string.IsNullOrEmpty(ImageResultsPath) ? imageMessage.PathName : ImageResultsPath;
 
         if (!Directory.Exists(saveDir))
         {
             Directory.CreateDirectory(saveDir);
         }
         string extension = hdr ? "exr" : "png";
-        var actualImagePath = Path.Combine(saveDir, $"{failedImageMessage.ImageName}.{extension}");
-        File.WriteAllBytes(actualImagePath, failedImageMessage.ActualImage);
+        var actualImagePath = Path.Combine(saveDir, $"{imageMessage.ImageName}.{extension}");
+        File.WriteAllBytes(actualImagePath, imageMessage.ActualImage);
         ReportArtifact(actualImagePath);
         if (textureImporterSettings != null)
             ReImportTextureWithSettings(actualImagePath, textureImporterSettings);
 
-        if (failedImageMessage.DiffImage != null)
+        if (imageMessage.DiffImage != null)
         {
-            var diffImagePath = Path.Combine(saveDir, $"{failedImageMessage.ImageName}.diff.{extension}");
-            File.WriteAllBytes(diffImagePath, failedImageMessage.DiffImage);
+            var diffImagePath = Path.Combine(saveDir, $"{imageMessage.ImageName}.diff.{extension}");
+            File.WriteAllBytes(diffImagePath, imageMessage.DiffImage);
             ReportArtifact(diffImagePath);
             if (textureImporterSettings != null)
                 ReImportTextureWithSettings(diffImagePath, textureImporterSettings);
 
             var expectedImagesPath =
-                Path.Combine(saveDir, $"{failedImageMessage.ImageName}.expected.{extension}");
-            File.WriteAllBytes(expectedImagesPath, failedImageMessage.ExpectedImage);
+                Path.Combine(saveDir, $"{imageMessage.ImageName}.expected.{extension}");
+            File.WriteAllBytes(expectedImagesPath, imageMessage.ExpectedImage);
             ReportArtifact(expectedImagesPath);
             if (textureImporterSettings != null)
                 ReImportTextureWithSettings(expectedImagesPath, textureImporterSettings);

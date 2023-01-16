@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Tests Framework",
-  "version": "7.11.1-exp.1",
+  "version": "7.12.0-exp.1",
   "unity": "2019.4",
   "unityRelease": "0a23",
   "description": "Provides test framework helpers for writing tests for graphics code, such as image comparison assertions and automatic management of reference images.",
@@ -23,13 +23,16 @@
     "com.unity.modules.imageconversion": "1.0.0",
     "com.unity.testtools.codecoverage": "1.2.0"
   },
-  "upmCi": {
-    "footprint": "34d210f8d9291e09044a14b6b6d90a4f9a30fe69"
+  "_upm": {
+    "changelog": "- Added GUI setting option, which enabled, saves actual images even if the tests pass. Added an extra \"-save-actual-images\" command line option to the player so that the feature can be enabled while running the tests form command line.\n- Renamed `HandleFailedImageEvent` method to `HandleImageEvent`, `FailedImageMessage` class to `ImageMessage`"
   },
-  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@7.11/manual/index.html",
+  "upmCi": {
+    "footprint": "5b532d90e218bedcee2a9be271dc33c116c5e2dc"
+  },
+  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@7.12/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "c098dd07f695fbe828345faf3fefdec578398ac6"
+    "revision": "cab6083bd4dc6993ba89576f89378cc0efe867f1"
   }
 }

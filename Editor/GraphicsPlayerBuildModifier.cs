@@ -15,6 +15,11 @@ public class GraphicsPlayerBuildModifier : ITestPlayerBuildModifier
         if (RuntimeSettings.reuseTestsForRenderGraph)
             AddExtraScriptingDefine(ref playerOptions, "RENDER_GRAPH_REUSE_TESTS_STANDALONE");
 
+        if (RuntimeSettings.saveActualImages)
+        {
+            AddExtraScriptingDefine(ref playerOptions, "SAVE_ACTUAL_IMAGES_STANDALONE");
+        }
+
         return playerOptions;
     }
 

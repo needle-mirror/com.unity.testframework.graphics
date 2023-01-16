@@ -2,12 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.Compilation;
 using UnityEditor.AnimatedValues;
 using UnityEngine.TestTools.Graphics;
 
 namespace UnityEditor.TestTools.Graphics
 {
-    public class GraphicsTestSettingsWindow : EditorWindow
+    internal class GraphicsTestSettingsWindow : EditorWindow
     {
         private Rect menuBar;
         private Rect upperPanel;
@@ -22,7 +23,6 @@ namespace UnityEditor.TestTools.Graphics
         private Texture2D boxBgSelected;
         private Texture2D icon;
 
-        float secs;
         float t = 0f;
         private float menuBarHeight = 20f;
         private float sizeRatio = 0.7f;
@@ -56,7 +56,27 @@ namespace UnityEditor.TestTools.Graphics
             }
         }
 
-        [MenuItem("Window/General/Graphics Test Setup")]
+        private const string SettingPrefKey = "SaveActualImages";
+        private const string SettingMenuPath = "Window/General/Graphics Test Framework/Save Actual Images Enabled";
+
+        private static bool IsSaveEnabled {
+            get => EditorPrefs.GetBool(SettingPrefKey);
+            set => EditorPrefs.SetBool(SettingPrefKey, value);
+        }
+
+        [MenuItem(SettingMenuPath)]
+        private static void Setting() {
+            IsSaveEnabled = !IsSaveEnabled;
+            CompilationPipeline.RequestScriptCompilation();
+        }
+
+        [MenuItem(SettingMenuPath, true)]
+        private static bool SettingValidate() {
+            Menu.SetChecked(SettingMenuPath, IsSaveEnabled);
+            return true;
+        }
+
+        [MenuItem("Window/General/Graphics Test Framework/Reference Image Optimization")]
         private static void OpenWindow()
         {
             GraphicsTestSettingsWindow window = GetWindow<GraphicsTestSettingsWindow>();

@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 
-public class FailedImageMessage
+public class ImageMessage
 {
     public static Guid MessageId { get; } = new Guid("40c7a8e2-ad5d-475f-8119-af022a13b84c");
 
@@ -34,13 +34,13 @@ public class FailedImageMessage
         }
     }
 
-    public static FailedImageMessage Deserialize(byte[] data)
+    public static ImageMessage Deserialize(byte[] data)
     {
         using (var messageStream = new MemoryStream(data))
         {
             using (var reader = new BinaryReader(messageStream))
             {
-                return new FailedImageMessage
+                return new ImageMessage
                 {
                     PathName = reader.GetString(),
                     ImageName = reader.GetString(),
