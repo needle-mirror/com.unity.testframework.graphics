@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Tests Framework",
-  "version": "7.12.0-exp.1",
+  "version": "7.12.0-exp.2",
   "unity": "2019.4",
   "unityRelease": "0a23",
   "description": "Provides test framework helpers for writing tests for graphics code, such as image comparison assertions and automatic management of reference images.",
@@ -24,15 +24,15 @@
     "com.unity.testtools.codecoverage": "1.2.0"
   },
   "_upm": {
-    "changelog": "- Added GUI setting option, which enabled, saves actual images even if the tests pass. Added an extra \"-save-actual-images\" command line option to the player so that the feature can be enabled while running the tests form command line.\n- Renamed `HandleFailedImageEvent` method to `HandleImageEvent`, `FailedImageMessage` class to `ImageMessage`"
+    "changelog": "- Wrap Stadia platform and GLES2 graphics API in !2023_1_OR_NEWER due to deprecation in 2023.1 and higher."
   },
   "upmCi": {
-    "footprint": "5b532d90e218bedcee2a9be271dc33c116c5e2dc"
+    "footprint": "dd8d6b031086f4b690347a6d67906eb4ed14366f"
   },
   "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@7.12/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "cab6083bd4dc6993ba89576f89378cc0efe867f1"
+    "revision": "84d2d12ed27c6adfa6040c537ac0c21afa4f9e82"
   }
 }

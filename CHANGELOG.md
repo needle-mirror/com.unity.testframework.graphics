@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.12.0-exp.2] - 2023-01-16
+- Wrap Stadia platform and GLES2 graphics API in !2023_1_OR_NEWER due to deprecation in 2023.1 and higher.
+
 ## [7.12.0-exp.1] - 2023-01-16
 - Added GUI setting option, which enabled, saves actual images even if the tests pass. Added an extra "-save-actual-images" command line option to the player so that the feature can be enabled while running the tests form command line.
 - Renamed `HandleFailedImageEvent` method to `HandleImageEvent`, `FailedImageMessage` class to `ImageMessage`

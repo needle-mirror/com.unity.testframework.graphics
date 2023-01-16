@@ -29,7 +29,9 @@ namespace UnityEditor.TestTools.Graphics
             { "metal", () => SetGraphicsAPI(GraphicsDeviceType.Metal) },
             { "vulkan", () => SetGraphicsAPI(GraphicsDeviceType.Vulkan) },
             { "gles3", () => SetGraphicsAPI(GraphicsDeviceType.OpenGLES3) },
+#if !UNITY_2023_1_OR_NEWER
             { "gles2", () => SetGraphicsAPI(GraphicsDeviceType.OpenGLES2) },
+#endif
             { "ps4", () => SetGraphicsAPI(GraphicsDeviceType.PlayStation4) },
 #if UNITY_PS5
             { "ps5", () => SetGraphicsAPI(GraphicsDeviceType.PlayStation5) },

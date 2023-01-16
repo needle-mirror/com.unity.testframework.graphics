@@ -46,7 +46,7 @@ namespace UnityEditor.TestTools.Graphics
                 case BuildTarget.LinuxHeadlessSimulation:
                     return RuntimePlatform.LinuxPlayer;
 #endif
-#if UNITY_2019_3_OR_NEWER
+#if (UNITY_2019_3_OR_NEWER && !UNITY_2023_1_OR_NEWER)
                 case BuildTarget.Stadia:
                     return RuntimePlatform.Stadia;
 #endif
@@ -108,7 +108,7 @@ namespace UnityEditor.TestTools.Graphics
                     return BuildTarget.WSAPlayer;
                 case RuntimePlatform.XboxOne:
                     return BuildTarget.XboxOne;
-#if UNITY_2019_3_OR_NEWER
+#if (UNITY_2019_3_OR_NEWER && !UNITY_2023_1_OR_NEWER)
                 case RuntimePlatform.Stadia:
                     return BuildTarget.Stadia;
 #endif

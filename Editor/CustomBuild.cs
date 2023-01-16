@@ -7,6 +7,7 @@ using UnityEngine.TestTools.Graphics;
 public static class CustomBuild
 {
 
+#if !UNITY_2023_1_OR_NEWER
     [MenuItem("Tools/Build Android (GLES2)")]
     static void BuildAndroidGLES2()
     {
@@ -18,6 +19,7 @@ public static class CustomBuild
         GraphicsDeviceType[] graphicsAPIs = { GraphicsDeviceType.OpenGLES2 };
         BuildScenes(path, graphicsAPIs[0].ToString(), buildTarget);
     }
+#endif
 
     [MenuItem("Tools/Build Android (Vulkan)")]
     static void BuildAndroidVulkan()
