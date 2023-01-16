@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Tests Framework",
-  "version": "7.12.0-exp.3",
+  "version": "7.13.0-exp.1",
   "unity": "2019.4",
   "unityRelease": "0a23",
   "description": "Provides test framework helpers for writing tests for graphics code, such as image comparison assertions and automatic management of reference images.",
@@ -24,15 +24,15 @@
     "com.unity.testtools.codecoverage": "1.2.0"
   },
   "_upm": {
-    "changelog": "- Fixed XR filter check that returned true even with 0 loaders selected.\n- Added functionality to allow setting the resolution in code instead of per-scene assets."
+    "changelog": "- Add Graphics Test Shader Stripping system, when used in test projects, allows to speed up a lot the shader compilation by removing unused shader variants."
   },
   "upmCi": {
-    "footprint": "51894465410e23eb5a346d29f01c376400379510"
+    "footprint": "4ab4aec122921a36de13e04cfe3baf9ab70740f9"
   },
-  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@7.12/manual/index.html",
+  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@7.13/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "95af9158e16b3d6ad5a1139a9e1f462c3e1951b2"
+    "revision": "bc7d5c99615c409f03392e27f10831cc224ad6ec"
   }
 }
