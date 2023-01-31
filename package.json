@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Tests Framework",
-  "version": "7.12.0-exp.2",
+  "version": "7.12.0-exp.3",
   "unity": "2019.4",
   "unityRelease": "0a23",
   "description": "Provides test framework helpers for writing tests for graphics code, such as image comparison assertions and automatic management of reference images.",
@@ -24,15 +24,15 @@
     "com.unity.testtools.codecoverage": "1.2.0"
   },
   "_upm": {
-    "changelog": "- Wrap Stadia platform and GLES2 graphics API in !2023_1_OR_NEWER due to deprecation in 2023.1 and higher."
+    "changelog": "- Fixed XR filter check that returned true even with 0 loaders selected.\n- Added functionality to allow setting the resolution in code instead of per-scene assets."
   },
   "upmCi": {
-    "footprint": "dd8d6b031086f4b690347a6d67906eb4ed14366f"
+    "footprint": "51894465410e23eb5a346d29f01c376400379510"
   },
   "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@7.12/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "84d2d12ed27c6adfa6040c537ac0c21afa4f9e82"
+    "revision": "95af9158e16b3d6ad5a1139a9e1f462c3e1951b2"
   }
 }

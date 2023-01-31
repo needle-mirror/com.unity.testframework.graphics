@@ -95,6 +95,7 @@ namespace UnityEditor.TestTools.Graphics
 #endif
 
             var xrsettings = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildPipeline.GetBuildTargetGroup(buildPlatform));
+            bool xrActive = false;
 
             // Since the settings are null when using NoTarget for the BuildTargetGroup which editor playmode seems to do
             // just use Standalone settings instead.
@@ -103,7 +104,8 @@ namespace UnityEditor.TestTools.Graphics
 
             if (xrsettings != null && xrsettings.InitManagerOnStart && !RuntimeSettings.reuseTestsForXR)
             {
-                if (xrsettings.AssignedSettings.loaders.Count > 0)
+                xrActive = (xrsettings.AssignedSettings?.loaders?.Count ?? 0) > 0;
+                if (xrActive)
                 {
                     // since we don't really know which runtime loader will actually be used at runtime,
                     // just take the first one assuming it will work and if it isn't loaded the
@@ -117,6 +119,7 @@ namespace UnityEditor.TestTools.Graphics
                     }
                 }
             }
+            Debug.Log("XR Active: " + (xrActive ? "true" : "false"));
 
             ImageHandler.instance.ImageResultsPath = imageResultsPath;
 
@@ -243,7 +246,7 @@ namespace UnityEditor.TestTools.Graphics
                             (filter.ColorSpace == colorSpace || filter.ColorSpace == ColorSpace.Uninitialized))
                         {
                             // Non vr filter matched if none of the VR settings are present.
-                            if ((!PlayerSettings.virtualRealitySupported || !(xrsettings != null && xrsettings.InitManagerOnStart)) &&
+                            if ((!PlayerSettings.virtualRealitySupported || !(xrsettings != null && xrActive)) &&
                                 (string.IsNullOrEmpty(filter.XrSdk) || string.Compare(filter.XrSdk, "None", true) == 0) &&
                                 filter.StereoModes == StereoRenderingModeFlags.None)
                             {
@@ -251,7 +254,7 @@ namespace UnityEditor.TestTools.Graphics
                                 filterReasons += filter.Reason + "\n";
                             }
                             // If VR is enabled then the VR specific filters need to match the filter too.
-                            else if ((PlayerSettings.virtualRealitySupported || (xrsettings != null && xrsettings.InitManagerOnStart)) &&
+                            else if ((PlayerSettings.virtualRealitySupported || (xrsettings != null && xrActive)) &&
                                 (filter.StereoModes == StereoRenderingModeFlags.None || (filter.StereoModes & stereoModeFlag) == stereoModeFlag) &&
                                 (filter.XrSdk == xrsdk || string.IsNullOrEmpty(filter.XrSdk)))
                             {

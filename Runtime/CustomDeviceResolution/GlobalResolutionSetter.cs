@@ -11,17 +11,55 @@ using UnityEngine;
 public class GlobalResolutionSetter : MonoBehaviour
 {
     public CustomResolutionSettings customResolutionSettings;
+
+    // Used for per-scene asset-style resolution setting.
     void Awake()
     {
-        var currentPlatform = Application.platform;
         foreach (var resolutionSettingsField in customResolutionSettings.fields)
         {
-            if (resolutionSettingsField.Platform == currentPlatform)
+            if (SetResolution(resolutionSettingsField))
             {
-                Debug.Log($"Setting new rendering resolution: {resolutionSettingsField.Width}x{resolutionSettingsField.Height}");
-                Screen.SetResolution(resolutionSettingsField.Width, resolutionSettingsField.Height, resolutionSettingsField.isFullScreen);
                 break;
             }
         }
+    }
+
+    public static bool SetResolution(CustomResolutionFields resolutionFields)
+    {
+        if (resolutionFields.Platform != Application.platform)
+        {
+            Debug.Log(
+                $"Skipping setting rendering resolution, target platform: {resolutionFields.Platform}, current platform: {Application.platform}"
+            );
+            return false;
+        }
+
+        Debug.Log(
+            $"Setting new rendering resolution: {resolutionFields.Width}x{resolutionFields.Height}"
+        );
+        Screen.SetResolution(
+            resolutionFields.Width,
+            resolutionFields.Height,
+            resolutionFields.isFullScreen
+        );
+        return true;
+    }
+
+    public static bool SetResolution(
+        RuntimePlatform platformFilter,
+        int width = 1920,
+        int height = 1080,
+        bool fullscreen = true
+    )
+    {
+        return SetResolution(
+            new CustomResolutionFields
+            {
+                Platform = platformFilter,
+                Width = width,
+                Height = height,
+                isFullScreen = fullscreen,
+            }
+        );
     }
 }

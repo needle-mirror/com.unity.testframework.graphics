@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.12.0-exp.3] - 2023-01-31
+- Fixed XR filter check that returned true even with 0 loaders selected.
+- Added functionality to allow setting the resolution in code instead of per-scene assets.
+
 ## [7.12.0-exp.2] - 2023-01-16
 - Wrap Stadia platform and GLES2 graphics API in !2023_1_OR_NEWER due to deprecation in 2023.1 and higher.
 
