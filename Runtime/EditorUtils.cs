@@ -60,6 +60,14 @@ namespace UnityEditor.TestTools.Graphics
                 case BuildTarget.PS5:
                     return RuntimePlatform.PS5;
 #endif
+#if UNITY_EMBEDDED_LINUX
+                case BuildTarget.EmbeddedLinux:
+                    return RuntimePlatform.EmbeddedLinuxArm64;
+#endif
+#if UNITY_QNX
+                case BuildTarget.QNX:
+                    return RuntimePlatform.QNXArm64;
+#endif
             }
 
             throw new ArgumentOutOfRangeException("target", target, "Unknown BuildTarget");
