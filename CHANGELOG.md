@@ -4,10 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.14.1-exp.1] - 2023-03-08
+- Fixed DXR shaders not compatible with graphics test stripper.
+
 ## [7.14.0-exp.1] - 2023-03-06
 - Add EmbeddedLinux and QNX to EditorUtils
 
-## [7.13.0-exp.1] - 2023-01-16
+## [7.13.0-exp.1] - 2023-03-06
 - Add Graphics Test Shader Stripping system, when used in test projects, allows to speed up a lot the shader compilation by removing unused shader variants.
 
 ## [7.12.0-exp.3] - 2023-01-31

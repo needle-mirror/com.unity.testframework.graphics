@@ -144,7 +144,7 @@ namespace UnityEditor.TestTools.Graphics
                     case "domain":
                         return ShaderType.Domain;
                     case "raytracing":
-                        return ShaderType.RayTracing;
+                        return ShaderType.Surface; // For some reason raytracing shader end-up being marked as Surface Shader Type during the stripping
                     default:
                         throw new Exception("Unhandled shader stage: " + stage);
                 }

@@ -81,7 +81,6 @@ namespace UnityEditor.TestTools.Graphics
             {
                 var useGfxTestStripper = Environment.GetEnvironmentVariable(GenerateShaderVariantList.k_UseGraphicsTestStripperEnv);
                 s_UseGraphicsTestStripper = useGfxTestStripper == null || useGfxTestStripper.ToLower() == "true";
-                Debug.Log("USE_GFX_TEST_STRIPPER: " + useGfxTestStripper);
             }
 
             if (!s_UseGraphicsTestStripper.Value)
