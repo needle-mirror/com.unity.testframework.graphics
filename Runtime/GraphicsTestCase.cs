@@ -11,11 +11,12 @@ namespace UnityEngine.TestTools.Graphics
     {
         private readonly string _name;
         private readonly string _scenePath;
+        private readonly string _referenceImagePathLog;
         private readonly CodeBasedGraphicsTestAttribute _codeBasedGraphicsTestAttribute;
         private readonly Texture2D _referenceImage;
         private readonly RenderPipelineAsset _srpAsset;
 
-        public GraphicsTestCase(string scenePath, Texture2D referenceImage, RenderPipelineAsset srpAsset = null)
+        public GraphicsTestCase(string scenePath, Texture2D referenceImage, RenderPipelineAsset srpAsset = null, string referenceImagePathLog = null)
         {
             var nameExt = string.Empty;
             if (srpAsset != null)
@@ -27,9 +28,10 @@ namespace UnityEngine.TestTools.Graphics
             _codeBasedGraphicsTestAttribute = null;
             _referenceImage = referenceImage;
             _srpAsset = srpAsset;
+            _referenceImagePathLog = referenceImagePathLog;
         }
 
-        public GraphicsTestCase(string name, CodeBasedGraphicsTestAttribute codeBasedGraphicsTestAttrib, Texture2D referenceImage, RenderPipelineAsset srpAsset = null)
+        public GraphicsTestCase(string name, CodeBasedGraphicsTestAttribute codeBasedGraphicsTestAttrib, Texture2D referenceImage, RenderPipelineAsset srpAsset = null, string referenceImagePathLog = null)
         {
             var nameExt = string.Empty;
             if (srpAsset != null)
@@ -41,6 +43,7 @@ namespace UnityEngine.TestTools.Graphics
             _codeBasedGraphicsTestAttribute = codeBasedGraphicsTestAttrib;
             _referenceImage = referenceImage;
             _srpAsset = srpAsset;
+            _referenceImagePathLog = referenceImagePathLog;
         }
         
         /// <summary>
@@ -67,5 +70,10 @@ namespace UnityEngine.TestTools.Graphics
         /// The Scriptable Render Pipeline Asset used for this test case.
         /// </summary>
         public RenderPipelineAsset SRPAsset => _srpAsset;
+
+        /// <summary>
+        /// The log message that communicates the path to the reference image of this test case.
+        /// </summary>
+        public string ReferenceImagePathLog { get { return _referenceImagePathLog; } }
     }
 }

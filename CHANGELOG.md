@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.15.0-exp.1] - 2023-03-22
+- Added log message for the expected image path to the test failure
+
 ## [7.14.1-exp.1] - 2023-03-08
 - Fixed DXR shaders not compatible with graphics test stripper.
 

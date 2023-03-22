@@ -53,12 +53,12 @@ namespace UnityEngine.TestTools.Graphics
         /// <param name="expected">The expected image that should be rendered by the camera.</param>
         /// <param name="camera">The camera to render from.</param>
         /// <param name="settings">Optional settings that control how the image comparison is performed. Can be null, in which case the rendered image is required to be exactly identical to the reference.</param>
-        public static void AreEqual(Texture2D expected, Camera camera, ImageComparisonSettings settings = null)
+        public static void AreEqual(Texture2D expected, Camera camera, ImageComparisonSettings settings = null, string expectedImagePathLog = null)
         {
             if (camera == null)
                 throw new ArgumentNullException(nameof(camera));
 
-            AreEqual(expected, new List<Camera> { camera }, settings);
+            AreEqual(expected, new List<Camera> { camera }, settings, expectedImagePathLog);
         }
 
         /// <summary>
@@ -67,7 +67,7 @@ namespace UnityEngine.TestTools.Graphics
         /// <param name="expected">The expected image that should be rendered by the camera.</param>
         /// <param name="cameras">The cameras to render from.</param>
         /// <param name="settings">Optional settings that control how the image comparison is performed. Can be null, in which case the rendered image is required to be exactly identical to the reference.</param>
-        public static void AreEqual(Texture2D expected, IEnumerable<Camera> cameras, ImageComparisonSettings settings = null)
+        public static void AreEqual(Texture2D expected, IEnumerable<Camera> cameras, ImageComparisonSettings settings = null, string expectedImagePathLog = null)
         {
             if (cameras == null)
                 throw new ArgumentNullException(nameof(cameras));
@@ -152,7 +152,7 @@ namespace UnityEngine.TestTools.Graphics
                         }
 					}
                 }
-                AreEqual(expected, actual, settings);
+                AreEqual(expected, actual, settings, expectedImagePathLog);
 
             }
             finally
@@ -201,7 +201,7 @@ namespace UnityEngine.TestTools.Graphics
         /// <param name="expected">What the image is supposed to look like.</param>
         /// <param name="actual">What the image actually looks like.</param>
         /// <param name="settings">Optional settings that control how the comparison is performed. Can be null, in which case the images are required to be exactly identical.</param>
-        public static void AreEqualLinearHDR(Texture2D expected, Texture2D actual, ImageComparisonSettings settings = null, bool saveFailedImage = true)
+        public static void AreEqualLinearHDR(Texture2D expected, Texture2D actual, ImageComparisonSettings settings = null, string expectedImagePathLog = null, bool saveFailedImage = true)
         {
             if (actual == null)
                 throw new ArgumentNullException(nameof(actual));
@@ -235,14 +235,14 @@ namespace UnityEngine.TestTools.Graphics
                 Assert.That(expected, Is.Not.Null, "No reference image was provided. Path: " + dirName);
 
                 Assert.That(actual.width, Is.EqualTo(expected.width),
-                    "The expected image had width {0}px, but the actual image had width {1}px.", expected.width,
+                    "{0} The expected image had width {1}px, but the actual image had width {2}px.", expectedImagePathLog, expected.width,
                     actual.width);
                 Assert.That(actual.height, Is.EqualTo(expected.height),
-                    "The expected image had height {0}px, but the actual image had height {1}px.", expected.height,
+                    "{0} The expected image had height {1}px, but the actual image had height {2}px.", expectedImagePathLog, expected.height,
                     actual.height);
 
                 Assert.That(actual.format, Is.EqualTo(expected.format),
-                    "The expected image had format {0} but the actual image had format {1}.", expected.format,
+                    "{0} The expected image had format {1} but the actual image had format {2}.", expectedImagePathLog, expected.format,
                     actual.format);
 
                 using (var expectedPixels = new NativeArray<Color>(expected.GetPixels(0), Allocator.TempJob))
@@ -279,11 +279,11 @@ namespace UnityEngine.TestTools.Graphics
                     try
                     {
                         if (testRMSE)
-                            Assert.That(rmse, Is.LessThanOrEqualTo(settings.RMSEThreshold), "Failed RMSE threshold test.");
+                            Assert.That(rmse, Is.LessThanOrEqualTo(settings.RMSEThreshold), "Failed RMSE threshold test. {0}", expectedImagePathLog);
                         if (testBadPixelsCount)
-                            Assert.That(badPixelsMean, Is.LessThanOrEqualTo(settings.IncorrectPixelsThreshold), "Failed per pixel threshold test.");
+                            Assert.That(badPixelsMean, Is.LessThanOrEqualTo(settings.IncorrectPixelsThreshold), "Failed per pixel threshold test. {0}", expectedImagePathLog);
                     }
-                    catch (AssertionException)
+                    catch (AssertionException e)
                     {
                         var diffImage = new Texture2D(expected.width, expected.height, TextureFormat.RGBAHalf, false);
                         var diffPixelsArray = new Color[expected.width * expected.height];
@@ -293,6 +293,8 @@ namespace UnityEngine.TestTools.Graphics
 
                         imageMessage.DiffImage = diffImage.EncodeToEXR();
                         imageMessage.ExpectedImage = expected.EncodeToEXR();
+
+                        Debug.Log(e.Message);
                         throw;
                     }
                 }
@@ -327,11 +329,11 @@ namespace UnityEngine.TestTools.Graphics
         /// <param name="expected">What the image is supposed to look like.</param>
         /// <param name="actual">What the image actually looks like.</param>
         /// <param name="settings">Optional settings that control how the comparison is performed. Can be null, in which case the images are required to be exactly identical.</param>
-        public static void AreEqual(Texture2D expected, Texture2D actual, ImageComparisonSettings settings = null, bool saveFailedImage = true)
+        public static void AreEqual(Texture2D expected, Texture2D actual, ImageComparisonSettings settings = null, string expectedImagePathLog = null, bool saveFailedImage = true)
         {
             if (actual == null)
                 throw new ArgumentNullException(nameof(actual));
-            
+
             var actualImagePath = "";
 
             if (saveFailedImage == true)
@@ -357,14 +359,14 @@ namespace UnityEngine.TestTools.Graphics
                 Assert.That(expected, Is.Not.Null, "No reference image was provided. Path: " + dirName);
 
                 Assert.That(actual.width, Is.EqualTo(expected.width),
-                    "The expected image had width {0}px, but the actual image had width {1}px.", expected.width,
+                    "{0} The expected image had width {1}px, but the actual image had width {2}px.", expectedImagePathLog, expected.width,
                     actual.width);
                 Assert.That(actual.height, Is.EqualTo(expected.height),
-                    "The expected image had height {0}px, but the actual image had height {1}px.", expected.height,
+                    "{0} The expected image had height {1}px, but the actual image had height {2}px.", expectedImagePathLog, expected.height,
                     actual.height);
 
                 Assert.That(actual.format, Is.EqualTo(expected.format),
-                    "The expected image had format {0} but the actual image had format {1}.", expected.format,
+                    "{0} The expected image had format {1} but the actual image had format {2}.", expectedImagePathLog, expected.format,
                     actual.format);
 
                 using (var expectedPixels = new NativeArray<Color32>(expected.GetPixels32(0), Allocator.TempJob))
@@ -406,11 +408,11 @@ namespace UnityEngine.TestTools.Graphics
                     try
                     {
                         if (testAverageDeltaE)
-                            Assert.That(averageDeltaE, Is.LessThanOrEqualTo(settings.AverageCorrectnessThreshold));
+                            Assert.That(averageDeltaE, Is.LessThanOrEqualTo(settings.AverageCorrectnessThreshold), "{0}", expectedImagePathLog);
                         if (testBadPixelsCount)
-                            Assert.That(badPixelsCount, Is.LessThanOrEqualTo(settings.IncorrectPixelsThreshold));
+                            Assert.That(badPixelsCount, Is.LessThanOrEqualTo(settings.IncorrectPixelsThreshold), "{0}", expectedImagePathLog);
                     }
-                    catch (AssertionException)
+                    catch (AssertionException e)
                     {
                         var diffImage = new Texture2D(expected.width, expected.height, TextureFormat.RGB24, false);
                         var diffPixelsArray = new Color32[expected.width * expected.height];
@@ -420,6 +422,8 @@ namespace UnityEngine.TestTools.Graphics
 
                         imageMessage.DiffImage = diffImage.EncodeToPNG();
                         imageMessage.ExpectedImage = expected.EncodeToPNG();
+
+                        Debug.Log(e.Message);
                         throw;
                     }
                 }

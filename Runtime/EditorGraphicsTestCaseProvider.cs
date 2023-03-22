@@ -54,6 +54,7 @@ namespace UnityEditor.TestTools.Graphics
             foreach (var scenePath in scenes)
             {
                 Texture2D referenceImage = null;
+                string referenceImagePathLog = null;
                 string imagePath;
                 bool srpTestSceneAssetUsed = false;
                 // Need to check if this scene is part of the SRPTestScene Asset,
@@ -71,10 +72,13 @@ namespace UnityEditor.TestTools.Graphics
                                 
                                 // If no scenePath_srpAssetName reference image is found, fall back to scenePath only
                                 if(!allImagesSpecific.TryGetValue(refImageName, out imagePath))
-                                    allImagesSpecific.TryGetValue($"{Path.GetFileNameWithoutExtension(scenePath)}", out imagePath);
+                                    if(!allImagesBase.TryGetValue(refImageName, out imagePath))
+                                        if(!allImagesSpecific.TryGetValue($"{Path.GetFileNameWithoutExtension(scenePath)}", out imagePath))
+                                            allImagesBase.TryGetValue($"{Path.GetFileNameWithoutExtension(scenePath)}", out imagePath);
                                 
                                 referenceImage = AssetDatabase.LoadAssetAtPath<Texture2D>(imagePath);
-                                yield return new GraphicsTestCase(scenePath, referenceImage, srpAsset);
+                                referenceImagePathLog = $"Expected reference image path: {imagePath}";
+                                yield return new GraphicsTestCase(scenePath, referenceImage, srpAsset, referenceImagePathLog);
                             }
                             break;
                         }
@@ -92,8 +96,9 @@ namespace UnityEditor.TestTools.Graphics
                         imagePath = $"{ReferenceImagesBaseRoot}/{Path.GetFileNameWithoutExtension(scenePath)}.png";
                         referenceImage = AssetDatabase.LoadAssetAtPath<Texture2D>(imagePath);
                     }
-                
-                    yield return new GraphicsTestCase(scenePath, referenceImage);
+                    referenceImagePathLog = $"Expected reference image path: {imagePath}";
+
+                    yield return new GraphicsTestCase(scenePath, referenceImage, referenceImagePathLog: referenceImagePathLog);
                 }
             }
         }
@@ -106,6 +111,7 @@ namespace UnityEditor.TestTools.Graphics
                 UseGraphicsTestCasesAttribute.ColorSpace, UseGraphicsTestCasesAttribute.Platform, UseGraphicsTestCasesAttribute.GraphicsDevice);
 
             Texture2D referenceImage = null;
+            string referenceImagePathLog = null;
 
             string imagePath;
             if (allImagesSpecific.TryGetValue(Path.GetFileNameWithoutExtension(scenePath), out imagePath))
@@ -115,8 +121,9 @@ namespace UnityEditor.TestTools.Graphics
                 imagePath = $"{ReferenceImagesBaseRoot}/{Path.GetFileNameWithoutExtension(scenePath)}.png";
                 referenceImage = AssetDatabase.LoadAssetAtPath<Texture2D>(imagePath);
             }
+            referenceImagePathLog = $"Expected reference image path: {imagePath}";
 
-            output = new GraphicsTestCase(scenePath, referenceImage);
+            output = new GraphicsTestCase(scenePath, referenceImage, referenceImagePathLog: referenceImagePathLog);
 
             return output;
         }
@@ -130,6 +137,9 @@ namespace UnityEditor.TestTools.Graphics
                 return result;
 
             var fullPathPrefix = $"{referenceImageRoot}/{TestUtils.GetTestResultsFolderPath(colorSpace, runtimePlatform, graphicsApi, xrsdk)}/";
+
+            if (!Directory.Exists(fullPathPrefix))
+                Debug.Log($"{fullPathPrefix} reference images folder does not exist.");
 
             foreach (var assetPath in AssetDatabase.GetAllAssetPaths()
                 .Where(p => p.StartsWith(fullPathPrefix, StringComparison.OrdinalIgnoreCase))

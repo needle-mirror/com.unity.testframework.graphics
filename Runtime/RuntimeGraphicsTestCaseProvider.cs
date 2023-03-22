@@ -10,21 +10,22 @@ namespace UnityEngine.TestTools.Graphics
 {
     internal class RuntimeGraphicsTestCaseProvider : IGraphicsTestCaseProvider
     {
-        void GetAssetBundlesAndScenePaths(out AssetBundle referenceImagesBundle, out AssetBundle referenceImagesBaseBundle, out string[] scenePaths)
+        void GetAssetBundlesAndScenePaths(out AssetBundle referenceImagesBundle, out AssetBundle referenceImagesBaseBundle, out string 
+           referenceImagesBundlePath, out string referenceImagesBaseBundlePath, out string[] scenePaths)
         {
             referenceImagesBundle = null;
             referenceImagesBaseBundle = null;
             scenePaths = null;
             
             // apparently unity automatically saves the asset bundle as all lower case
-            var referenceImagesBundlePath = string.Format("referenceimages-{0}-{1}-{2}-{3}",
+            referenceImagesBundlePath = string.Format("referenceimages-{0}-{1}-{2}-{3}",
                 UseGraphicsTestCasesAttribute.ColorSpace,
                 UseGraphicsTestCasesAttribute.Platform.ToUniqueString(),
                 UseGraphicsTestCasesAttribute.GraphicsDevice,
                 UseGraphicsTestCasesAttribute.LoadedXRDevice).ToLower();
             referenceImagesBundlePath = Path.Combine(Application.streamingAssetsPath, referenceImagesBundlePath);
 
-            var referenceImagesBaseBundlePath = "referenceimagesbase";
+            referenceImagesBaseBundlePath = "referenceimagesbase";
             referenceImagesBaseBundlePath = Path.Combine(Application.streamingAssetsPath, referenceImagesBaseBundlePath);
             
 #if UNITY_ANDROID
@@ -54,11 +55,12 @@ namespace UnityEngine.TestTools.Graphics
             SRPTestSceneAsset srpTestSceneAsset = null;
             srpTestSceneAsset = Resources.Load<SRPTestSceneAsset>("SRPTestSceneSO");
             
-            GetAssetBundlesAndScenePaths(out AssetBundle referenceImagesBundle, out AssetBundle referenceImagesBaseBundle, out string[] scenePaths);
+            GetAssetBundlesAndScenePaths(out AssetBundle referenceImagesBundle, out AssetBundle referenceImagesBaseBundle, out string referenceImagesBundlePath, out string referenceImagesBaseBundlePath, out string[] scenePaths);
             
             foreach (var scenePath in scenePaths)
             {
                 Texture2D referenceImage = null;
+                string referenceImagePathLog = null;
                 bool srpTestSceneAssetUsed = false;
                 if (srpTestSceneAsset != null)
                 {
@@ -72,26 +74,38 @@ namespace UnityEngine.TestTools.Graphics
                                 var imagePath = $"{Path.GetFileNameWithoutExtension(scenePath)}_{srpAsset.name}";
 
                                 // The bundle might not exist if there are no reference images for this configuration yet
-                                
+
                                 // First look for a scenePath_srpAssetName reference image in both bundles
                                 if (referenceImagesBundle != null && referenceImagesBundle.Contains(imagePath))
+                                {
                                     referenceImage = referenceImagesBundle.LoadAsset<Texture2D>(imagePath);
+                                    referenceImagePathLog = "Expected reference image loaded from ReferenceImages bundle";
+                                }
                                 else if (referenceImagesBaseBundle != null && referenceImagesBaseBundle.Contains(imagePath))
+                                {
                                     referenceImage = referenceImagesBaseBundle.LoadAsset<Texture2D>(imagePath);
+                                    referenceImagePathLog = "Expected reference image loaded from ReferenceImagesBase bundle";
+                                }
 
                                 // If no scenePath_srpAssetName reference image was found, fall back to scenePath only
                                 if (!referenceImage)
                                 {
                                     var baseImagePath = $"{Path.GetFileNameWithoutExtension(scenePath)}";
-                                    
+
                                     if (referenceImagesBundle != null && referenceImagesBundle.Contains(baseImagePath))
+                                    {
                                         referenceImage = referenceImagesBundle.LoadAsset<Texture2D>(baseImagePath);
+                                        referenceImagePathLog = "Expected reference image loaded from ReferenceImages bundle";
+                                    }
                                     else if (referenceImagesBaseBundle != null && referenceImagesBaseBundle.Contains(baseImagePath))
+                                    {
                                         referenceImage = referenceImagesBaseBundle.LoadAsset<Texture2D>(baseImagePath);
+                                        referenceImagePathLog = "Expected reference image loaded from ReferenceImagesBase bundle";
+                                    }
                                 }
                                     
                             
-                                yield return new GraphicsTestCase(scenePath, referenceImage, srpAsset);
+                                yield return new GraphicsTestCase(scenePath, referenceImage, srpAsset, referenceImagePathLog);
                             }
                             break;
                         }
@@ -104,12 +118,18 @@ namespace UnityEngine.TestTools.Graphics
                     // The bundle might not exist if there are no reference images for this configuration yet
 
                     if (referenceImagesBundle != null && referenceImagesBundle.Contains(imagePath))
+                    {
                         referenceImage = referenceImagesBundle.LoadAsset<Texture2D>(imagePath);
+                        referenceImagePathLog = "Expected reference image loaded from ReferenceImages bundle";
+                    }
 
                     else if (referenceImagesBaseBundle != null && referenceImagesBaseBundle.Contains(imagePath))
+                    {
                         referenceImage = referenceImagesBaseBundle.LoadAsset<Texture2D>(imagePath);
+                        referenceImagePathLog = "Expected reference image loaded from ReferenceImagesBase bundle";
+                    }
 
-                    yield return new GraphicsTestCase(scenePath, referenceImage);
+                    yield return new GraphicsTestCase(scenePath, referenceImage, referenceImagePathLog: referenceImagePathLog);
                 }
             }
         }
@@ -144,15 +164,21 @@ namespace UnityEngine.TestTools.Graphics
             var imagePath = Path.GetFileNameWithoutExtension(scenePath);
 
             Texture2D referenceImage = null;
+            string referenceImagePathLog = null;
 
             // The bundle might not exist if there are no reference images for this configuration yet
-            if (referenceImagesBundle != null)
+            if (referenceImagesBundle != null && referenceImagesBundle.Contains(imagePath))
+            {
                 referenceImage = referenceImagesBundle.LoadAsset<Texture2D>(imagePath);
-
+                referenceImagePathLog = "Expected reference image loaded from ReferenceImages bundle";
+            }
             else if (referenceImagesBaseBundle != null)
+            {
                 referenceImage = referenceImagesBaseBundle.LoadAsset<Texture2D>(imagePath);
+                referenceImagePathLog = "Expected reference image loaded from ReferenceImagesBase bundle";
+            }
 
-            output = new GraphicsTestCase(scenePath, referenceImage);
+            output = new GraphicsTestCase(scenePath, referenceImage, referenceImagePathLog: referenceImagePathLog);
 
             return output;
         }

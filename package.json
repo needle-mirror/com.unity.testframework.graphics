@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Tests Framework",
-  "version": "7.14.1-exp.1",
+  "version": "7.15.0-exp.1",
   "unity": "2019.4",
   "unityRelease": "0a23",
   "description": "Provides test framework helpers for writing tests for graphics code, such as image comparison assertions and automatic management of reference images.",
@@ -24,15 +24,15 @@
     "com.unity.testtools.codecoverage": "1.2.0"
   },
   "_upm": {
-    "changelog": "- Fixed DXR shaders not compatible with graphics test stripper."
+    "changelog": "- Added log message for the expected image path to the test failure"
   },
   "upmCi": {
-    "footprint": "73bf1a82b49bc17a7960d9c9edfd9d9cbf3b77c6"
+    "footprint": "66b5b489837f78a753d685d8bcc9b6c53f39b28e"
   },
-  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@7.14/manual/index.html",
+  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@7.15/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "0ae536e784948a4c4203aefd216538bc92cd112e"
+    "revision": "4fe4f4d385cac1aaf59f005b605a3c848c827133"
   }
 }
