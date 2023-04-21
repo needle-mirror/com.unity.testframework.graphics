@@ -34,7 +34,7 @@ namespace UnityEditor.TestTools.Graphics
                 case BuildTarget.WebGL:
                     return RuntimePlatform.WebGLPlayer;
                 case BuildTarget.WSAPlayer:
-                    return RuntimePlatform.WSAPlayerX64;
+                    return RuntimePlatform.WSAPlayerARM;
                 case BuildTarget.StandaloneWindows:
                 case BuildTarget.StandaloneWindows64:
                     return RuntimePlatform.WindowsPlayer;
@@ -71,6 +71,12 @@ namespace UnityEditor.TestTools.Graphics
             }
 
             throw new ArgumentOutOfRangeException("target", target, "Unknown BuildTarget");
+        }
+
+        // Overload function to return custom Runtime Platform when provided one
+        public static RuntimePlatform BuildTargetToRuntimePlatform(RuntimePlatform customRuntimePlatform)
+        {
+            return customRuntimePlatform;
         }
 
         public static BuildTarget RuntimePlatformToBuildTarget(RuntimePlatform platform)

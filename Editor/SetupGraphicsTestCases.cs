@@ -43,7 +43,7 @@ namespace UnityEditor.TestTools.Graphics
             }
         }
 
-        public static void Setup(string rootImageTemplatePath = EditorGraphicsTestCaseProvider.ReferenceImagesRoot, string imageResultsPath = "")
+        public static void Setup(string rootImageTemplatePath = EditorGraphicsTestCaseProvider.ReferenceImagesRoot, string imageResultsPath = "", bool useCustomRuntimePlatform = false, RuntimePlatform customRuntimePlatform = RuntimePlatform.WindowsPlayer)
         {
             ColorSpace colorSpace;
             BuildTarget buildPlatform;
@@ -67,7 +67,10 @@ namespace UnityEditor.TestTools.Graphics
             else
             {
                 buildPlatform = EditorUserBuildSettings.activeBuildTarget;
-                runtimePlatform = EditorUtils.BuildTargetToRuntimePlatform(buildPlatform);
+                if(useCustomRuntimePlatform)
+                    runtimePlatform = EditorUtils.BuildTargetToRuntimePlatform(customRuntimePlatform);
+                else
+                    runtimePlatform = EditorUtils.BuildTargetToRuntimePlatform(buildPlatform);
                 colorSpace = PlayerSettings.colorSpace;
                 graphicsDevices = PlayerSettings.GetGraphicsAPIs(buildPlatform);
             }
