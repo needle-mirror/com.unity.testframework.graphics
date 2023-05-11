@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -50,6 +51,11 @@ namespace UnityEditor.TestTools.Graphics
     
         void BuildFastAccessStructures()
         {
+            // For vulkan, all shader stages are combined, so the stripper needs to have a list of keywords for all the stages
+            // combined otherwise, some variants are going to be stripped as their keyword config don't exist across all stages.
+            bool fusedStageBuild = PlayerSettings.GetGraphicsAPIs(EditorUserBuildSettings.activeBuildTarget).Any(t => t == GraphicsDeviceType.Vulkan);
+            var allStages = new List<ShaderType> { ShaderType.Vertex, ShaderType.Fragment, ShaderType.Geometry, ShaderType.Hull, ShaderType.Domain, ShaderType.RayTracing };
+                    
             foreach (var variant in serializedShaderVariants)
             {
                 if (!variantListPerShader.TryGetValue(variant.shaderName, out var variantList))
@@ -61,6 +67,16 @@ namespace UnityEditor.TestTools.Graphics
                 foreach (var keyword in variant.keywords)
                     keywordSet.Add(new ShaderKeyword(keyword));
                 keywordSetList.Add(keywordSet);
+
+                // Generate a key for all the other stages
+                if (fusedStageBuild)
+                {
+                    foreach (var stage in allStages)
+                    {
+                        var stageKey = (stage, variant.passName);
+                        variantList[stageKey] = keywordSetList;
+                    }
+                }
             }
             
             foreach (var variant in serializedComputeShaderVariants)

@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.17.0-exp.1] - 2023-05-11
+- Fixed Shader Variant stripper not correctly supported on Vulkan.
+
 ## [7.16.0-exp.1] - 2023-04-21
 - Added a custom runtimeplayer platform parameter as overload to the method BuildTargetToRuntimePlatform.
 

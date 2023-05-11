@@ -60,8 +60,20 @@ namespace UnityEngine.TestTools.Graphics
 
                 if (!ignoreValidShadersAndCompute)
                 {
-                    if (s_CompiledShaderRegex.IsMatch(lineTrimmed))
+                    var compiledShaderMatch = s_CompiledShaderRegex.Match(lineTrimmed);
+                    if (compiledShaderMatch.Success)
+                    {
+                        // In case there is already the same line with all stages, then we don't need to add one for a specific stage
+                        var allStageLine = s_CompiledShaderRegex.Replace(lineTrimmed, "Compiled shader: $1, pass: $2, stage: all, keywords $4");
+                        if (existingFileContent.Contains(allStageLine))
+                            continue;
+                        
+                        // Replace fragment by pixel to avoid duplication in the file
+                        if (compiledShaderMatch.Groups["stage"].Value == "fragment")
+                            lineTrimmed = s_CompiledShaderRegex.Replace(lineTrimmed, "Compiled shader: $1, pass: $2, stage: pixel, keywords $4");
+                        
                         existingFileContent.Add(lineTrimmed);
+                    }
                     if (s_CompiledComputeShaderRegex.IsMatch(lineTrimmed))
                         existingFileContent.Add(lineTrimmed);
                 }
