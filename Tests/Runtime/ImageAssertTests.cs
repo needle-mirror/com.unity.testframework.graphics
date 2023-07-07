@@ -244,6 +244,62 @@ namespace UnityEngine.TestTools.Graphics.Tests
                 Object.DestroyImmediate(act);
             }
         }
+
+        [Test]
+        public void TextureWithNaNReturnsError()
+        {
+            float nan = float.NaN;
+
+            var texture = new Texture2D(1, 1, TextureFormat.RGBAFloat, false);
+            texture.SetPixel(0, 0, new Color(nan, nan, nan, nan));
+            texture.Apply();
+
+            try
+            {
+                ImageAssert.AreEqualLinearHDR(texture, texture, null);
+                Assert.Fail("Expected ImageAssert to throw an exception");
+            }
+            catch (AssertionException e)
+            {
+                // Expected
+                Debug.Log(e + " (expected)");
+            }
+        }
+
+        [Test]
+        public void LargeHDRTextureWithRandomNaNReturnsError()
+        {
+            int width = 2048;
+            int height = 2048;
+            int numPixels = width * height;
+            int nan = (int) UnityEngine.Random.Range(0, numPixels);
+
+            var expected = new Texture2D(width, height, TextureFormat.RGBAFloat, false);
+            var actual = new Texture2D(width, height, TextureFormat.RGBAFloat, false);
+            
+            var pixels = new Color[numPixels];
+            for (int i = 0; i < numPixels; i++)
+            {
+                if (i == nan)
+                    pixels[i] = new Color(float.NaN, float.NaN, float.NaN, float.NaN);
+                else
+                    pixels[i] = new Color(UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value);
+            }
+
+            actual.SetPixels(pixels);
+            actual.Apply();
+
+            try
+            {
+                ImageAssert.AreEqualLinearHDR(expected, actual, null);
+                Assert.Fail("Expected ImageAssert to throw an exception");
+            }
+            catch (AssertionException e)
+            {
+                // Expected
+                TestContext.WriteLine(e + " (expected)");
+            }
+        }
 #endif // UNITY_EDITOR
     }
 }

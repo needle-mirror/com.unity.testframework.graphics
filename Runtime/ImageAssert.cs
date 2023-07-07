@@ -245,6 +245,9 @@ namespace UnityEngine.TestTools.Graphics
                     "{0} The expected image had format {1} but the actual image had format {2}.", expectedImagePathLog, expected.format,
                     actual.format);
 
+                Assert.That(ContainsNaN(expected), Is.False, "{0} Expected image contains NaN values.", expectedImagePathLog);
+                Assert.That(ContainsNaN(actual), Is.False, "Actual image contains NaN values.");
+                
                 using (var expectedPixels = new NativeArray<Color>(expected.GetPixels(0), Allocator.TempJob))
                 using (var actualPixels = new NativeArray<Color>(actual.GetPixels(0), Allocator.TempJob))
                 using (var diffPixels = new NativeArray<Color>(expectedPixels.Length, Allocator.TempJob))
@@ -321,6 +324,21 @@ namespace UnityEngine.TestTools.Graphics
 #endif
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Checks if the given image contains NaN values.
+        /// </summary>
+        /// <param name="pixels">The image to check.</param>
+        static bool ContainsNaN(Texture2D pixels)
+        {
+            Color[] pixelArray = pixels.GetPixels(0);
+            for (int i = 0; i < pixelArray.Length; i++)
+            {
+                if (float.IsNaN(pixelArray[i].r) || float.IsNaN(pixelArray[i].g) || float.IsNaN(pixelArray[i].b) || float.IsNaN(pixelArray[i].a))
+                    return true;
+            }
+            return false;
         }
 
         /// <summary>
