@@ -148,9 +148,11 @@ public static class CustomBuild
                 scenesToBuild.Add(scene.path);
         
         string suffix = (buildTarget == BuildTarget.Android) ? ".apk" : "";
+#if !UNITY_STANDALONE
         BuildOptions buildOptions = BuildOptions.None;    
 
         BuildPipeline.BuildPlayer(scenesToBuild.ToArray(), string.Format("{0}/{1}{2}", path, buildName, suffix), buildTarget, buildOptions);
+#endif
     }
 
     [MenuItem("Tools/Set Color Space - Linear")]

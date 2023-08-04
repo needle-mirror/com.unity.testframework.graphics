@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Tests Framework",
-  "version": "7.17.3-exp.1",
+  "version": "7.17.4-exp.1",
   "unity": "2019.4",
   "unityRelease": "0a23",
   "description": "Provides test framework helpers for writing tests for graphics code, such as image comparison assertions and automatic management of reference images.",
@@ -24,15 +24,15 @@
     "com.unity.testtools.codecoverage": "1.2.0"
   },
   "_upm": {
-    "changelog": "- Added a check in the HDR image comparison to avoid propagating NaNs in the image comparison."
+    "changelog": "- Added conditional for the custom BuildPlayer, to avoid executing it when running in the standalone mode."
   },
   "upmCi": {
-    "footprint": "86c5c96e4cec09268e121022ba4bd87db4dc888e"
+    "footprint": "141e25490b5831415c91c8850332577311aa32a3"
   },
   "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@7.17/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "ca8c7b81ccace33db6ed834d2c9c1a2ebe924985"
+    "revision": "9bc112473464072ef82ad3b27f4993a6b62cd5e8"
   }
 }
