@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Rendering;
+﻿using UnityEngine.Rendering;
 
 namespace UnityEngine.TestTools.Graphics
 {
@@ -11,10 +9,15 @@ namespace UnityEngine.TestTools.Graphics
     {
         private readonly string _name;
         private readonly string _scenePath;
-        private readonly string _referenceImagePathLog;
         private readonly CodeBasedGraphicsTestAttribute _codeBasedGraphicsTestAttribute;
-        private readonly Texture2D _referenceImage;
         private readonly RenderPipelineAsset _srpAsset;
+
+        public override string ToString()
+        {
+            return Name;
+        }
+
+        public GraphicsTestCase(string scenePath, RenderPipelineAsset srpAsset = null) : this(scenePath, null, srpAsset) { }
 
         public GraphicsTestCase(string scenePath, Texture2D referenceImage, RenderPipelineAsset srpAsset = null, string referenceImagePathLog = null)
         {
@@ -26,9 +29,9 @@ namespace UnityEngine.TestTools.Graphics
             _name = System.IO.Path.GetFileNameWithoutExtension(scenePath) + nameExt;
             _scenePath = scenePath;
             _codeBasedGraphicsTestAttribute = null;
-            _referenceImage = referenceImage;
+            ReferenceImage = referenceImage;
             _srpAsset = srpAsset;
-            _referenceImagePathLog = referenceImagePathLog;
+            ReferenceImagePathLog = referenceImagePathLog;
         }
 
         public GraphicsTestCase(string name, CodeBasedGraphicsTestAttribute codeBasedGraphicsTestAttrib, Texture2D referenceImage, RenderPipelineAsset srpAsset = null, string referenceImagePathLog = null)
@@ -41,9 +44,9 @@ namespace UnityEngine.TestTools.Graphics
             _name = name + nameExt;
             _scenePath = null;
             _codeBasedGraphicsTestAttribute = codeBasedGraphicsTestAttrib;
-            _referenceImage = referenceImage;
+            ReferenceImage = referenceImage;
             _srpAsset = srpAsset;
-            _referenceImagePathLog = referenceImagePathLog;
+            ReferenceImagePathLog = referenceImagePathLog;
         }
         
         /// <summary>
@@ -64,7 +67,7 @@ namespace UnityEngine.TestTools.Graphics
         /// <summary>
         /// The reference image that represents the expected output for this test case.
         /// </summary>
-        public Texture2D ReferenceImage {  get { return _referenceImage; } }
+        public Texture2D ReferenceImage { get; set; }
 
         /// <summary>
         /// The Scriptable Render Pipeline Asset used for this test case.
@@ -74,6 +77,6 @@ namespace UnityEngine.TestTools.Graphics
         /// <summary>
         /// The log message that communicates the path to the reference image of this test case.
         /// </summary>
-        public string ReferenceImagePathLog { get { return _referenceImagePathLog; } }
+        public string ReferenceImagePathLog { get; set; }
     }
 }

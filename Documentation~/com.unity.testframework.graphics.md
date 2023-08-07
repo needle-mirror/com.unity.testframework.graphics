@@ -40,6 +40,10 @@ Your test method should also take a single `GraphicsTestCase` parameter. You wil
 
 With this in place, any scene added to the build systems will result in a test case for the scene being generated in the test runner.
 
+**Important Note for Android and WebGL Platforms**
+
+For Android and WebGL Platforms, you'll need to use a slightly different test setup pattern that uses asynchronous reference image loading. Please refer to the [Using the Graphics Test Framework with Android and WebGL](#using-the-graphics-test-framework-with-android-and-webgl) section below for instructions.
+
 ### Test Filters
 Since test cases are automatically generated based on the scenes in the project build settings the usual way of filtering test cases may not work.  To filter scenes out of specific configurations create a test filter scriptable object by right clicking in the asset list and choosing Create -> Testing -> Test Filter ScriptableObject.  This will create a filter asset which you may want to place in the Editor directory as it is not used at runtime.  Select this newly created object in the inspector then add a scene in the scene asset field to exclude from the configuration specified.  If multiple scenes need to be excluded in the same configuration you can add them to the filter by incrementing the number next to the scene field and adding additional scenes to the fields that appear.  Remove scenes by decrementing the number, this will remove entries at the bottom of the list.
 
@@ -91,6 +95,44 @@ public IEnumerator MyTest()
 {
     ...
 }
+```
+
+## Using the Graphics Test Framework with Android and WebGL
+*For all platforms other than Android and WebGL*, the reference images used in the Graphics Test Framework are loaded synchronously from Unity asset bundles by NUnit (via a custom test case creation override) in a custom test case constructor. 
+
+However, for Android and WebGL, these reference image asset bundles need to be loaded using an asynchronous web request to avoid locking the main Unity runtime thread. The Graphics Test Framework provides async methods for the purpose, but you'll need to call them correctly in your test setup and methods.
+
+The additional setup and test code needed to use the Graphics Test Framework on the Android and WebGL platform can be described as
+
+1. Loading the reference image asset bundles asynchronously from a UnitySetUp method in your test class, then
+2. Associating each test case with its corresponding reference image loaded in the UnitySetUp method. 
+
+Below are actual examples used in the `com.unity.test.urp` test package for this purpose. Please use them as a guide for your own tests.
+
+### **1. Example: How to load the reference image asset bundles asynchronously from a UnitySetUp method in your test class**
+```CSharp
+#if UNITY_WEBGL || UNITY_ANDROID
+    [UnitySetUp]
+    public IEnumerator SetUp()
+    {
+        yield return RuntimeGraphicsTestCaseProvider.EnsureGetReferenceImageBundlesAsync();
+    }
+#endif
+```
+
+### **2. Example: How to associate each test case with its corresponding reference image loaded in the UnitySetUp method**
+```CSharp
+    [UnityTest, Category("UniversalRP")]
+    [PrebuildSetup("SetupGraphicsTestCases")]
+    [UseGraphicsTestCases(universalPackagePath)]
+    public IEnumerator Run(GraphicsTestCase testCase)
+    {
+#if UNITY_WEBGL || UNITY_ANDROID
+        // Do this near the beginning of the test case method before you test or assert
+        RuntimeGraphicsTestCaseProvider.AssociateReferenceImageWithTest(testCase);
+#endif
+...
+    }
 ```
 
 # Technical details

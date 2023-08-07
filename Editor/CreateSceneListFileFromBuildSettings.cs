@@ -1,14 +1,21 @@
 using System.IO;
-using System.Linq;
 using UnityEngine.TestTools;
 
 namespace UnityEditor.TestTools.Graphics
 {
     internal class CreateSceneListFileFromBuildSettings : IPrebuildSetup
     {
+        private readonly string assetsResourcesDirectory = "Assets/Resources";
+        private readonly string sceneListFileName = "SceneList.txt";
+
         public void Setup()
         {
-            File.WriteAllLines("Assets/StreamingAssets/SceneList.txt", EditorGraphicsTestCaseProvider.GetTestScenePaths());
+            if (!Directory.Exists(assetsResourcesDirectory))
+            {
+                Directory.CreateDirectory(assetsResourcesDirectory);
+            }
+
+            File.WriteAllLines($"{assetsResourcesDirectory}/{sceneListFileName}", EditorGraphicsTestCaseProvider.GetTestScenePaths());
         }
     }
 }

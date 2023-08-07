@@ -1,9 +1,9 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Tests Framework",
-  "version": "7.17.4-exp.1",
-  "unity": "2019.4",
-  "unityRelease": "0a23",
+  "version": "8.0.0-exp.1",
+  "unity": "2021.3",
+  "unityRelease": "0a1",
   "description": "Provides test framework helpers for writing tests for graphics code, such as image comparison assertions and automatic management of reference images.",
   "keywords": [
     "qa",
@@ -24,15 +24,15 @@
     "com.unity.testtools.codecoverage": "1.2.0"
   },
   "_upm": {
-    "changelog": "- Added conditional for the custom BuildPlayer, to avoid executing it when running in the standalone mode."
+    "changelog": "- Enable asynchronous AssetBundle loading for WebGL and Android platforms"
   },
   "upmCi": {
-    "footprint": "141e25490b5831415c91c8850332577311aa32a3"
+    "footprint": "2c8e9ac569b6969211d121100b161718dfe74d27"
   },
-  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@7.17/manual/index.html",
+  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@8.0/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "9bc112473464072ef82ad3b27f4993a6b62cd5e8"
+    "revision": "73ffe271061b53a65cf0491f8bc8f9613f48acfb"
   }
 }

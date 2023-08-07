@@ -52,6 +52,8 @@ namespace UnityEditor.TestTools.Graphics
 
             string xrsdk = "None";
 
+            PlayerSettings.WebGL.useEmbeddedResources = true;
+
             UnityEditor.EditorPrefs.SetBool("AsynchronousShaderCompilation", false);
 
             // Figure out if we're preparing to run in Editor playmode, or if we're building to run outside the Editor

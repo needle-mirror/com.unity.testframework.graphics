@@ -361,8 +361,9 @@ namespace UnityEngine.TestTools.Graphics
             } else {
                 actualImagePath = "Assets/ActualImages";
             };
-            
-            var dirName = Path.Combine(actualImagePath, TestUtils.GetCurrentTestResultsFolderPath());
+
+            var currentTestResultsFolderPath = TestUtils.GetCurrentTestResultsFolderPath();
+            var dirName = Path.Combine(actualImagePath, currentTestResultsFolderPath);
 
             var imageName = TestContext.CurrentContext.Test.MethodName != null ? TestContext.CurrentContext.Test.Name : "NoName";
             var imageMessage = new ImageMessage
@@ -374,7 +375,7 @@ namespace UnityEngine.TestTools.Graphics
 
             try
             {
-                Assert.That(expected, Is.Not.Null, "No reference image was provided. Path: " + dirName);
+                Assert.That(expected, Is.Not.Null, $"No reference image was provided. Path: {dirName}, actualImagePath = {actualImagePath}, currentTestResultsFolderPath = {currentTestResultsFolderPath}");
 
                 Assert.That(actual.width, Is.EqualTo(expected.width),
                     "{0} The expected image had width {1}px, but the actual image had width {2}px.", expectedImagePathLog, expected.width,
