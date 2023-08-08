@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Tests Framework",
-  "version": "8.0.0-exp.1",
+  "version": "8.0.1-exp.1",
   "unity": "2021.3",
   "unityRelease": "0a1",
   "description": "Provides test framework helpers for writing tests for graphics code, such as image comparison assertions and automatic management of reference images.",
@@ -24,15 +24,15 @@
     "com.unity.testtools.codecoverage": "1.2.0"
   },
   "_upm": {
-    "changelog": "- Enable asynchronous AssetBundle loading for WebGL and Android platforms"
+    "changelog": "- Update the BuildScenes method, in that way so it also cover consoles behavior"
   },
   "upmCi": {
-    "footprint": "2c8e9ac569b6969211d121100b161718dfe74d27"
+    "footprint": "e4e6394d9f3e02a7367c295320ac7666d6663367"
   },
   "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@8.0/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "73ffe271061b53a65cf0491f8bc8f9613f48acfb"
+    "revision": "5204712ad162d5fc60ce9172b5993228bcd0ab2d"
   }
 }

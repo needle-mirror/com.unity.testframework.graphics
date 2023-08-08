@@ -58,7 +58,7 @@ namespace UnityEditor.TestTools.Graphics
                 }
             }
 
-            CustomBuild.BuildScenes(".", apiName, EditorUserBuildSettings.activeBuildTarget);
+            CustomBuild.BuildScenes(".", apiName, EditorUserBuildSettings.activeBuildTarget, false);
         }
         static void SetGraphicsAPI(GraphicsDeviceType api)
         {

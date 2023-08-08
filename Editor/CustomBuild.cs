@@ -131,7 +131,7 @@ public static class CustomBuild
     }
 #endif
 
-    public static void BuildScenes(string path, string name, BuildTarget buildTarget)
+    public static void BuildScenes(string path, string name, BuildTarget buildTarget, bool buildPlayer=true)
     {
         string buildName = string.Format("{0}{1}", "TestScenes", name);
 
@@ -142,17 +142,19 @@ public static class CustomBuild
         PlayerSettings.defaultScreenHeight = ImageAssert.kBackBufferHeight;
         PlayerSettings.defaultScreenWidth = ImageAssert.kBackBufferWidth;
 
-        List<string> scenesToBuild = new List<string>();
-        foreach (EditorBuildSettingsScene scene in EditorBuildSettings.scenes)
-            if (scene.enabled)
-                scenesToBuild.Add(scene.path);
-        
-        string suffix = (buildTarget == BuildTarget.Android) ? ".apk" : "";
-#if !UNITY_STANDALONE
-        BuildOptions buildOptions = BuildOptions.None;    
+        if (buildPlayer)
+        {
+            List<string> scenesToBuild = new List<string>();
+            foreach (EditorBuildSettingsScene scene in EditorBuildSettings.scenes)
+                if (scene.enabled)
+                    scenesToBuild.Add(scene.path);
 
-        BuildPipeline.BuildPlayer(scenesToBuild.ToArray(), string.Format("{0}/{1}{2}", path, buildName, suffix), buildTarget, buildOptions);
-#endif
+            string suffix = (buildTarget == BuildTarget.Android) ? ".apk" : "";
+
+            BuildOptions buildOptions = BuildOptions.None;    
+
+            BuildPipeline.BuildPlayer(scenesToBuild.ToArray(), string.Format("{0}/{1}{2}", path, buildName, suffix), buildTarget, buildOptions);
+        }
     }
 
     [MenuItem("Tools/Set Color Space - Linear")]
