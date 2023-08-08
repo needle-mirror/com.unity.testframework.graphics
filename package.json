@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Tests Framework",
-  "version": "8.0.1-exp.1",
+  "version": "8.1.0-exp.1",
   "unity": "2021.3",
   "unityRelease": "0a1",
   "description": "Provides test framework helpers for writing tests for graphics code, such as image comparison assertions and automatic management of reference images.",
@@ -27,12 +27,12 @@
     "changelog": "- Update the BuildScenes method, in that way so it also cover consoles behavior"
   },
   "upmCi": {
-    "footprint": "e4e6394d9f3e02a7367c295320ac7666d6663367"
+    "footprint": "6c434854878db5a27ad01c5395dbb0b6a247b9fa"
   },
-  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@8.0/manual/index.html",
+  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@8.1/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "5204712ad162d5fc60ce9172b5993228bcd0ab2d"
+    "revision": "8bfca3bfcb196c3d7dceef481bcfce2df10e4bc9"
   }
 }
