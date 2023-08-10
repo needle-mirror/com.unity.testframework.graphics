@@ -377,7 +377,7 @@ namespace UnityEngine.TestTools.Graphics
             }
         }
 #endif
-        private string[] GetScenePaths()
+        public static string[] GetScenePaths()
         {
             var sceneList = Resources.Load<TextAsset>("SceneList");
             var scenePaths = sceneList.text
