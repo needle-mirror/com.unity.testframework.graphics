@@ -11,7 +11,7 @@ using System.Reflection;
 // to re-enable it only at the end of the test run to correctly display the test results.
 [assembly:TestRunCallback(typeof(CustomTestRunCallback))]
 
-public class CustomTestRunCallback : MonoBehaviour, ITestRunCallback
+public class CustomTestRunCallback : ITestRunCallback
 {
     // Retrieve through reflection UTF types and method
     readonly static Type UTFPlayModeTestControllerType = Type.GetType("UnityEngine.TestTools.TestRunner.PlaymodeTestsController, UnityEngine.TestRunner, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"); // type: PlayModeRunner
