@@ -148,14 +148,6 @@ namespace UnityEngine.TestTools.Graphics
 
             foreach (var scenePath in scenePaths)
             {
-                // The Unity Test Framework creates a transient scene to run the test, so we skip it
-                // here if it's present.
-                // A race condition can occur where the scene is present and incorrectly included in the test run.
-                if (scenePath.ToLower().Contains("inittestscene"))
-                {
-                    continue;
-                }
-
 #if !UNITY_WEBGL && !UNITY_ANDROID // For non-WebGL and non-Android, reference images for each scene are associated with the test case as part of the test case creation flow
 
                 Texture2D referenceImage = null;
@@ -383,9 +375,21 @@ namespace UnityEngine.TestTools.Graphics
             var scenePaths = sceneList.text
                 .Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries)
                 .ToList();
+
             for (int i = 0; i < SceneManager.sceneCount; i++)
             {
-                scenePaths.Add(SceneManager.GetSceneAt(i).path);
+                // The Unity Test Framework creates a transient scene to run the test, so we skip it
+                // here if it's present.
+                // A race condition can occur where the scene is present and incorrectly included in the test run.
+                if (SceneManager.GetSceneAt(i).path.ToLower().Contains("inittestscene"))
+                {
+                    continue;
+                }
+
+                if (!scenePaths.Contains(SceneManager.GetSceneAt(i).path))
+                {
+                    scenePaths.Add(SceneManager.GetSceneAt(i).path);
+                }
             }
 
             return scenePaths.ToArray();

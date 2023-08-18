@@ -4,7 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [8.2.1-exp.1] - 2023-08-10
+## [8.2.2-exp.1] - 2023-08-18
+- Move scene filter into GetScenePaths method so all callers get the correct scene list.
+
+## [8.2.1-exp.1] - 2023-08-16
 - Make GetScenePaths method public for reuse outside of the class
 
 ## [8.2.0-exp.1] - 2023-08-10
