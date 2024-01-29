@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [8.3.2-exp.1] - 2024-01-29
+- Only bake scenes included in the build
+
+## [8.3.1-exp.1] - 2023-12-01
+- Force the Shader Variant List generator to always use Ordinal sorting (instead of undetermined comparer).
+
+## [8.3.0-exp.1] - 2023-09-29
+- Add the Architecture enum to TestFilterConfig
+- Update SetupGraphicsTestCases code to allow tests to be filtered according to processor architecture
+
 ## [8.2.2-exp.1] - 2023-08-18
 - Move scene filter into GetScenePaths method so all callers get the correct scene list.
 

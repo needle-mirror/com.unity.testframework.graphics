@@ -30,19 +30,21 @@ public class TestFiltersEditor : Editor
         EditorGUILayout.LabelField(new GUIContent("Platform", "The build platform to filter, No Target will filter all platforms."), fieldLayoutOptions);
         EditorGUILayout.LabelField(new GUIContent("Graphics API", "The graphics api to filter, Null filters all apis."), fieldLayoutOptions);
         EditorGUILayout.LabelField(new GUIContent("XR SDK", "Which XR platform to filter, use the same string as found in the VR SDK options.  Blank will filter all (including non-xr configs) and None will filter only non-vr configs."), fieldLayoutOptions);
+        EditorGUILayout.LabelField(new GUIContent("CPU Architecture", "The CPU architecture to filter, Unknown filters all architectures."), fieldLayoutOptions);
         EditorGUILayout.LabelField(new GUIContent("Stereo Rendering Mode", "Stereo rendering mode to filter, mp for Multi Pass, sp for Single Pass and spi for Instancing."), GUILayout.MinWidth(120));
-        
+
         EditorGUILayout.EndHorizontal();
 
         for (int i = 0; i < filters.arraySize; i++)
         {
             var filterElement = filters.GetArrayElementAtIndex(i);
-            
+
             var scene = filterElement.FindPropertyRelative("FilteredScene");
             var scenes = filterElement.FindPropertyRelative("FilteredScenes");
             var colorSpace = filterElement.FindPropertyRelative("ColorSpace");
             var buildPlatform = filterElement.FindPropertyRelative("BuildPlatform");
             var graphicsType = filterElement.FindPropertyRelative("GraphicsDevice");
+            var architecture = filterElement.FindPropertyRelative("Architecture");
             var xrsdk = filterElement.FindPropertyRelative("XrSdk");
             var stereoModes = filterElement.FindPropertyRelative("StereoModes");
             var reason = filterElement.FindPropertyRelative("Reason");
@@ -54,7 +56,7 @@ public class TestFiltersEditor : Editor
                 continue;
             }
 
-            // This is here to convert old test filters which did not have the scenes in 
+            // This is here to convert old test filters which did not have the scenes in
             // an array to be converted to the new data structure.
             if (scene.objectReferenceValue != null)
             {
@@ -95,8 +97,9 @@ public class TestFiltersEditor : Editor
             EditorGUILayout.PropertyField(buildPlatform, GUIContent.none, fieldLayoutOptions);
             EditorGUILayout.PropertyField(graphicsType, GUIContent.none, fieldLayoutOptions);
             EditorGUILayout.PropertyField(xrsdk, GUIContent.none, fieldLayoutOptions);
+            EditorGUILayout.PropertyField(architecture, GUIContent.none, fieldLayoutOptions);
 
-            if (EditorGUILayout.ToggleLeft("mp", 
+            if (EditorGUILayout.ToggleLeft("mp",
                 ((StereoRenderingModeFlags)stereoModes.intValue & StereoRenderingModeFlags.MultiPass) == StereoRenderingModeFlags.MultiPass,
                 GUILayout.MaxWidth(40)))
             {
@@ -107,8 +110,8 @@ public class TestFiltersEditor : Editor
                 stereoModes.intValue &= ~(int)StereoRenderingModeFlags.MultiPass;
             }
 
-            if(EditorGUILayout.ToggleLeft("sp", 
-                ((StereoRenderingModeFlags)stereoModes.intValue & StereoRenderingModeFlags.SinglePass) == StereoRenderingModeFlags.SinglePass, 
+            if(EditorGUILayout.ToggleLeft("sp",
+                ((StereoRenderingModeFlags)stereoModes.intValue & StereoRenderingModeFlags.SinglePass) == StereoRenderingModeFlags.SinglePass,
                 GUILayout.MaxWidth(40)))
             {
                 stereoModes.intValue |= (int)StereoRenderingModeFlags.SinglePass;
@@ -118,8 +121,8 @@ public class TestFiltersEditor : Editor
                 stereoModes.intValue &= ~(int)StereoRenderingModeFlags.SinglePass;
             }
 
-            if (EditorGUILayout.ToggleLeft("spi", 
-                ((StereoRenderingModeFlags)stereoModes.intValue & StereoRenderingModeFlags.Instancing) == StereoRenderingModeFlags.Instancing, 
+            if (EditorGUILayout.ToggleLeft("spi",
+                ((StereoRenderingModeFlags)stereoModes.intValue & StereoRenderingModeFlags.Instancing) == StereoRenderingModeFlags.Instancing,
                 GUILayout.MaxWidth(40)))
             {
                 stereoModes.intValue |= (int)StereoRenderingModeFlags.Instancing;
@@ -128,7 +131,7 @@ public class TestFiltersEditor : Editor
             {
                 stereoModes.intValue &= ~(int)StereoRenderingModeFlags.Instancing;
             }
-            
+
             EditorGUILayout.EndHorizontal();
         }
 
@@ -160,6 +163,9 @@ public class TestFiltersEditor : Editor
 
             lastFilter.serializedObject.FindProperty("filters.Array.data[" + (filters.arraySize - 1) + "]." +
                 "StereoModes").intValue = (int)StereoRenderingModeFlags.None;
+
+            lastFilter.serializedObject.FindProperty("filters.Array.data[" + (filters.arraySize - 1) + "]." +
+                "Architecture").intValue = (int)Architecture.Unknown;
         }
 
         serializedObject.ApplyModifiedProperties();

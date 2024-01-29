@@ -17,7 +17,7 @@ namespace UnityEngine.TestTools.Graphics
         public static readonly string s_NoKeywordText = "<no keywords>";
         public static readonly string k_UseGraphicsTestStripperEnv = "USE_GFX_TEST_STRIPPER";
         public static readonly string k_UseFastShaderVariantListGeneration = "FAST_SHADER_TRACE_GENERATION";
-        
+
     #if !UNITY_EDITOR
         [RuntimeInitializeOnLoadMethod]
         static void RunOnStart()
@@ -31,7 +31,7 @@ namespace UnityEngine.TestTools.Graphics
         static void ConvertShaderErrorsToLog()
         {
             string logFilePath = Application.consoleLogPath;
-    
+
             StringBuilder finalList;
             // Read log while the handle is still controlled by Unity
             using (var logFile = new FileStream(logFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
@@ -40,20 +40,20 @@ namespace UnityEngine.TestTools.Graphics
                     AppendAllShaderLines(out finalList, reader.ReadToEnd(), true);
             }
             Debug.Log("The following list of Compiled Shaders are directly converted from shader not found errors. You can ignore them as it's only used for the Graphics Test Shader Variants Stripper system.");
-            
+
             Debug.Log(finalList);
         }
 
         public static void AppendAllShaderLines(out StringBuilder finalFile, string playerLogContent, bool ignoreValidShadersAndCompute = false)
         {
-            var lines = new SortedSet<string>();
+            var lines = new SortedSet<string>(StringComparer.Ordinal);
             AppendAllShaderLines(out finalFile, playerLogContent, lines, ignoreValidShadersAndCompute);
         }
 
         public static void AppendAllShaderLines(out StringBuilder finalFile, string playerLogContent, SortedSet<string> existingFileContent, bool ignoreValidShadersAndCompute = false)
         {
             var notFoundMatchSet = new HashSet<string>();
-            
+
             foreach (var line in playerLogContent.Split('\n'))
             {
                 var lineTrimmed = line.Trim();
@@ -63,25 +63,38 @@ namespace UnityEngine.TestTools.Graphics
                     var compiledShaderMatch = s_CompiledShaderRegex.Match(lineTrimmed);
                     if (compiledShaderMatch.Success)
                     {
-                        // In case there is already the same line with all stages, then we don't need to add one for a specific stage
-                        var allStageLine = s_CompiledShaderRegex.Replace(lineTrimmed, "Compiled shader: $1, pass: $2, stage: all, keywords $4");
+                        var sanitizedLine = compiledShaderMatch.Value;
+                        var allStageLine = s_CompiledShaderRegex.Replace(sanitizedLine, "Compiled shader: $1, pass: $2, stage: all, keywords $4");
+
                         if (existingFileContent.Contains(allStageLine))
                             continue;
-                        
+
                         // Replace fragment by pixel to avoid duplication in the file
                         if (compiledShaderMatch.Groups["stage"].Value == "fragment")
-                            lineTrimmed = s_CompiledShaderRegex.Replace(lineTrimmed, "Compiled shader: $1, pass: $2, stage: pixel, keywords $4");
-                        
-                        existingFileContent.Add(lineTrimmed);
+                            sanitizedLine = s_CompiledShaderRegex.Replace(sanitizedLine, "Compiled shader: $1, pass: $2, stage: pixel, keywords $4");
+
+                        if (existingFileContent.Contains(sanitizedLine))
+                            continue;
+
+                        existingFileContent.Add(sanitizedLine);
                     }
-                    if (s_CompiledComputeShaderRegex.IsMatch(lineTrimmed))
-                        existingFileContent.Add(lineTrimmed);
+
+                    var computeShaderMatch = s_CompiledComputeShaderRegex.Match(lineTrimmed);
+                    if (computeShaderMatch.Success)
+                    {
+                        var sanitizedLine = computeShaderMatch.Value;
+
+                        if (existingFileContent.Contains(sanitizedLine))
+                            continue;
+
+                        existingFileContent.Add(sanitizedLine);
+                    }
                 }
 #if !UNITY_EDITOR
                 // Shader not found error can be spammed quite a bit in the log, causing this process to stall with 10000s of calls
                 if (notFoundMatchSet.Contains(lineTrimmed))
                     continue;
-                
+
                 var notFoundMatch = s_ShaderVariantNotFoundRegex.Match(lineTrimmed);
                 if (notFoundMatch.Success)
                 {

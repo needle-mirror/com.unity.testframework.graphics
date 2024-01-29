@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Globalization;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
@@ -10,6 +11,7 @@ using UnityEditor.XR.Management;
 using UnityEngine.TestTools.Graphics;
 using EditorSceneManagement = UnityEditor.SceneManagement;
 using UnityEditor.TestTools.TestRunner.Api;
+using UnityEditor.TestTools.TestRunner;
 
 namespace UnityEditor.TestTools.Graphics
 {
@@ -49,6 +51,7 @@ namespace UnityEditor.TestTools.Graphics
             BuildTarget buildPlatform;
             RuntimePlatform runtimePlatform;
             GraphicsDeviceType[] graphicsDevices;
+            Architecture architecture;
 
             string xrsdk = "None";
 
@@ -211,7 +214,7 @@ namespace UnityEditor.TestTools.Graphics
                             {
                                 testFilter.FilteredScenes.Concat(new[] { testFilter.FilteredScene }).ToArray();
                             }
-                            
+
                         }
 
                         foreach(var filteredScene in testFilter.FilteredScenes)
@@ -231,7 +234,7 @@ namespace UnityEditor.TestTools.Graphics
 
                     foreach (var filter in filtersForScene)
                     {
-                        StereoRenderingModeFlags stereoModeFlag = 0;
+                        StereoRenderingModeFlags stereoModeFlag = StereoRenderingModeFlags.None;
 
                         switch (PlayerSettings.stereoRenderingPath)
                         {
@@ -246,9 +249,26 @@ namespace UnityEditor.TestTools.Graphics
                                 break;
                         }
 
+                        if  (CultureInfo.InvariantCulture.CompareInfo.IndexOf(SystemInfo.processorType, "ARM", CompareOptions.IgnoreCase) >= 0 ||
+                             CultureInfo.InvariantCulture.CompareInfo.IndexOf(SystemInfo.processorType, "Apple M", CompareOptions.IgnoreCase) >= 0)
+						{
+							if (Environment.Is64BitProcess)
+                                architecture = Architecture.ARM64;
+							else
+                                architecture = Architecture.ARM;
+						}
+						else
+						{
+							if (Environment.Is64BitProcess)
+                                architecture = Architecture.x86_64;
+							else
+                                architecture = Architecture.x86;
+						}
+
                         if ((filter.BuildPlatform == buildPlatform || filter.BuildPlatform == BuildTarget.NoTarget) &&
                             (filter.GraphicsDevice == graphicsDevices.First() || filter.GraphicsDevice == GraphicsDeviceType.Null) &&
-                            (filter.ColorSpace == colorSpace || filter.ColorSpace == ColorSpace.Uninitialized))
+                            (filter.ColorSpace == colorSpace || filter.ColorSpace == ColorSpace.Uninitialized) &&
+                            (filter.Architecture == architecture || filter.Architecture == Architecture.Unknown))
                         {
                             // Non vr filter matched if none of the VR settings are present.
                             if ((!PlayerSettings.virtualRealitySupported || !(xrsettings != null && xrActive)) &&
@@ -267,8 +287,8 @@ namespace UnityEditor.TestTools.Graphics
                                 filterReasons += filter.Reason + "\n";
                             }
                         }
-                    }                       
-                    
+                    }
+
                     if (!scene.enabled)
                     {
                         Debug.Log(string.Format("Removed scene {0} from build settings because:\n{1}", Path.GetFileNameWithoutExtension(scene.path), filterReasons));
@@ -278,7 +298,7 @@ namespace UnityEditor.TestTools.Graphics
 
                 SceneAsset sceneAsset = AssetDatabase.LoadAssetAtPath<SceneAsset>(scene.path);
                 var labels = new System.Collections.Generic.List<string>(AssetDatabase.GetLabels(sceneAsset));
-                
+
                 // if we successfully retrieved the names of the selected scenes, we filter using this list
                 if (selectedScenes.Length > 0 && !selectedScenes.Contains(sceneAsset.name))
                     continue;
@@ -320,23 +340,19 @@ namespace UnityEditor.TestTools.Graphics
             try {
                 var testRunnerWindowType = Type.GetType("UnityEditor.TestTools.TestRunner.TestRunnerWindow, UnityEditor.TestRunner, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"); // type: TestRunnerWindow
                 var testRunnerWindow = EditorWindow.GetWindow(testRunnerWindowType);
-                var playModeListGUI = testRunnerWindowType.GetField("m_PlayModeTestListGUI", BindingFlags.NonPublic | BindingFlags.Instance); // type: PlayModeTestListGUI
-                var testListTree = playModeListGUI.FieldType.BaseType.GetField("m_TestListTree", BindingFlags.NonPublic | BindingFlags.Instance); // type: TreeViewController
+                var testListGUI = testRunnerWindowType.GetField("m_SelectedTestTypes", BindingFlags.NonPublic | BindingFlags.Instance); // type: TestListGUI
+                var testListGUIValue = testListGUI.GetValue(testRunnerWindow);
 
-                // internal treeview GetSelection:
-                var getSelectionMethod = testListTree.FieldType.GetMethod("GetSelection", BindingFlags.Public | BindingFlags.Instance); // int[] GetSelection();
-                var playModeListGUIValue = playModeListGUI.GetValue(testRunnerWindow);
-                var testListTreeValue = testListTree.GetValue(playModeListGUIValue);
-
-                var selectedItems = getSelectionMethod.Invoke(testListTreeValue, null);
-
-                var getSelectedTestsAsFilterMethod = playModeListGUI.FieldType.BaseType.GetMethod(
-                    "GetSelectedTestsAsFilter",
+                var getSelectedTestsAsFilterMethod = testListGUI.FieldType.GetMethod(
+                    "ConstructFilter",
                     BindingFlags.NonPublic | BindingFlags.Instance
                 );
 
-                dynamic testRunnerFilterArray = getSelectedTestsAsFilterMethod.Invoke(playModeListGUIValue, new object[] { selectedItems });
-                
+                var enumType = testListGUI.FieldType.GetNestedType("RunFilterType", BindingFlags.NonPublic);
+                object enumValue = Enum.Parse(enumType, "RunSelected");
+
+                dynamic testRunnerFilterArray = getSelectedTestsAsFilterMethod.Invoke(testListGUIValue, new object[] { enumValue, null });
+
                 var testNamesField = testRunnerFilterArray[0].GetType().GetField("testNames", BindingFlags.Instance | BindingFlags.Public);
 
                 List< string > testNames = new List<string>();
@@ -395,7 +411,7 @@ ReflectionProbe-*";
                     EditorSceneManagement.EditorSceneManager.OpenScene(scenePath, EditorSceneManagement.OpenSceneMode.Single);
                     EditorSceneManagement.EditorSceneManager.SetActiveScene(EditorSceneManagement.EditorSceneManager.GetSceneAt(0));
 #if !UNITY_2023_2_OR_NEWER
-                    Lightmapping.giWorkflowMode = Lightmapping.GIWorkflowMode.OnDemand;           
+                    Lightmapping.giWorkflowMode = Lightmapping.GIWorkflowMode.OnDemand;
 #endif
                     EditorSceneManagement.EditorSceneManager.SaveScene(EditorSceneManagement.EditorSceneManager.GetSceneAt(0));
                 }
