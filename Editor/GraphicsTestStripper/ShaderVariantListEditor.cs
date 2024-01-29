@@ -55,7 +55,7 @@ namespace UnityEditor.TestTools.Graphics
                     AggregateVariantsFromLog(playerLog);
                 }
             }
-            
+
             EditorGUILayout.Space();
 
             using (new GUILayout.VerticalScope("HelpBox"))
@@ -75,7 +75,7 @@ namespace UnityEditor.TestTools.Graphics
                     EditorGUIUtility.ShowObjectPicker<ShaderVariantCollection>(null, false, "", m_AggregateFromSCVEventID);
                 }
             }
-            
+
             EditorGUILayout.Space();
 
             var oldColor = GUI.backgroundColor;
@@ -90,7 +90,7 @@ namespace UnityEditor.TestTools.Graphics
             if (Event.current.commandName == "ObjectSelectorUpdated")
             {
                 ShaderVariantCollection pickedCollection = null;
-                
+
                 if (EditorGUIUtility.GetObjectPickerControlID() == m_UpdateFromSCVEventID)
                 {
                     pickedCollection = EditorGUIUtility.GetObjectPickerObject() as ShaderVariantCollection;
@@ -129,7 +129,7 @@ namespace UnityEditor.TestTools.Graphics
         void UpdateVariantsFromSVC(ShaderVariantCollection svc)
         {
             var svcLog = TransformSVCToLog(svc);
-            
+
             GenerateShaderVariantList.AppendAllShaderLines(out var finalFile, svcLog.ToString());
             WriteAllTextToSVL(AssetDatabase.GetAssetPath(target), finalFile);
         }
@@ -140,13 +140,13 @@ namespace UnityEditor.TestTools.Graphics
             var serializedSVC = new SerializedObject(svc);
             var shaders = serializedSVC.FindProperty("m_Shaders");
             var svcLog = new StringBuilder();
-            
+
             for (int i = 0; i < shaders.arraySize; i++)
             {
                 var shaderVariants = shaders.GetArrayElementAtIndex(i);
                 Shader shader = (Shader)shaderVariants.FindPropertyRelative("first").objectReferenceValue;
                 var shaderPassNames = GetAllPassNamesInShader(shader);
-                
+
                 // Shader name and button to remove it
                 var variantsProp = shaderVariants.FindPropertyRelative("second.variants");
                 for (int variantIndex = 0; variantIndex < variantsProp.arraySize; ++variantIndex)
@@ -155,10 +155,10 @@ namespace UnityEditor.TestTools.Graphics
                     var keywords = prop.FindPropertyRelative("keywords").stringValue;
                     if (string.IsNullOrEmpty(keywords))
                         keywords = "<no keywords>";
-                    
+
                     // Ignore pass type as it's useless in SRPs and hardcode all stage instead because we don't have the info
                     foreach (var passName in shaderPassNames)
-                        svcLog.AppendLine($"Compiled shader: {shader.name}, pass: {passName}, stage: all, keywords {keywords}");
+                        svcLog.AppendLine($"{GenerateShaderVariantList.k_CompiledShaderString}: {shader.name}, pass: {passName}, stage: all, keywords {keywords}");
                 }
             }
 
@@ -198,7 +198,7 @@ namespace UnityEditor.TestTools.Graphics
         {
             var path = AssetDatabase.GetAssetPath(target);
             var existingLines = new SortedSet<string>();
-            
+
             if (File.Exists(path))
             {
                 var lines = File.ReadAllLines(path).ToList();
@@ -208,7 +208,7 @@ namespace UnityEditor.TestTools.Graphics
                     if (settingsLine != null)
                         lines.RemoveAt(0);
                 } catch {}
-                
+
                 // Deduplicate entries
                 foreach (var line in lines)
                     existingLines.Add(line.Trim());

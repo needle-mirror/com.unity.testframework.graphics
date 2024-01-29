@@ -24,7 +24,7 @@ namespace UnityEditor.TestTools.Graphics
             var action = ScriptableObject.CreateInstance< CreateShaderVariantListAsset >();
             ProjectWindowUtil.StartNameEditingIfProjectWindowExists(0, action, "variants.shadervariantlist", null, null);
         }
-        
+
         class CreateShaderVariantListAsset : EndNameEditAction
         {
             public override void Action(int instanceId, string pathName, string resourceFile)
@@ -33,13 +33,13 @@ namespace UnityEditor.TestTools.Graphics
                 AssetDatabase.ImportAsset(pathName);
             }
         }
-    
+
         public override void OnImportAsset(AssetImportContext ctx)
         {
             // Example of the log we try to parse:
-            // Compiled shader: Custom/MyTestShader, pass: MyTestShader/Pass, stage: vertex, keywords <no keywords>
-            // Compiled compute shader: ProbeVolumeBlendStates, kernel: BlendScenarios, keywords 
-            // Original format: "Compiled shader: %s, pass: %s, stage: %s, keywords %s\n", shaderName, passName, stageDesc, keywordNames
+            // {k_CompiledShaderString}: Custom/MyTestShader, pass: MyTestShader/Pass, stage: vertex, keywords <no keywords>
+            // Compiled compute shader: ProbeVolumeBlendStates, kernel: BlendScenarios, keywords
+            // Original format: "{k_CompiledShaderString}: %s, pass: %s, stage: %s, keywords %s\n", shaderName, passName, stageDesc, keywordNames
             // "Compiled compute shader: %s, kernel: %s, keywords %s\n", Name, kernelName, keywordNames);
 
             var shaderVariantListAsset = ScriptableObject.CreateInstance<ShaderVariantList>();

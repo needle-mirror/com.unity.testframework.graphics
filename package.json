@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Tests Framework",
-  "version": "8.3.2-exp.1",
+  "version": "8.3.3-exp.1",
   "unity": "2021.3",
   "unityRelease": "0a1",
   "description": "Provides test framework helpers for writing tests for graphics code, such as image comparison assertions and automatic management of reference images.",
@@ -24,15 +24,15 @@
     "com.unity.testtools.codecoverage": "1.2.0"
   },
   "_upm": {
-    "changelog": "- Only bake scenes included in the build"
+    "changelog": "- Update the regex used to match the shader variant compilation to reflect changes in the editor logger."
   },
   "upmCi": {
-    "footprint": "e9a4ae532440fc97ac37c78f09081425e95ee395"
+    "footprint": "208accf513eb8aebc4bc9294d780f13450b9d934"
   },
   "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@8.3/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/unity.git",
     "type": "git",
-    "revision": "39463e0685b670f39af4390bcb4291d8e3199b8b"
+    "revision": "5fc7baa85c19032c090d4af6d1437ee0cd0aae76"
   }
 }

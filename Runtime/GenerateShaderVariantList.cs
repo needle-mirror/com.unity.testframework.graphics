@@ -11,7 +11,8 @@ namespace UnityEngine.TestTools.Graphics
 {
     public static class GenerateShaderVariantList
     {
-        public static readonly Regex s_CompiledShaderRegex = new Regex(@"Compiled shader: (?<shaderName>[^,]*), pass: (?<passName>[^,]*), stage: (?<stage>[^,]*), keywords (?<keywords>.*)");
+        public static readonly string k_CompiledShaderString = "Uploaded shader variant to the GPU driver";
+        public static readonly Regex s_CompiledShaderRegex = new Regex(@$"({k_CompiledShaderString}|Compiled shader): (?<shaderName>[^,]*), pass: (?<passName>[^,]*), stage: (?<stage>[^,]*), keywords (?<keywords>.*)");
         public static readonly Regex s_CompiledComputeShaderRegex = new Regex("Compiled compute shader: (?<computeName>[^,]*), kernel: (?<kernelName>[^,]*), keywords (?<keywords>.*)");
         public static readonly Regex s_ShaderVariantNotFoundRegex = new Regex("Shader (?<shaderName>[^,]*), subshader (?<subShaderIndex>\\d+), pass (?<passIndex>\\d+), stage (?<stage>[^,]*): variant (?<keywords>.*) not found.");
         public static readonly string s_NoKeywordText = "<no keywords>";
@@ -64,14 +65,14 @@ namespace UnityEngine.TestTools.Graphics
                     if (compiledShaderMatch.Success)
                     {
                         var sanitizedLine = compiledShaderMatch.Value;
-                        var allStageLine = s_CompiledShaderRegex.Replace(sanitizedLine, "Compiled shader: $1, pass: $2, stage: all, keywords $4");
+                        var allStageLine = s_CompiledShaderRegex.Replace(sanitizedLine, $"{k_CompiledShaderString}: $1, pass: $2, stage: all, keywords $4");
 
                         if (existingFileContent.Contains(allStageLine))
                             continue;
 
                         // Replace fragment by pixel to avoid duplication in the file
                         if (compiledShaderMatch.Groups["stage"].Value == "fragment")
-                            sanitizedLine = s_CompiledShaderRegex.Replace(sanitizedLine, "Compiled shader: $1, pass: $2, stage: pixel, keywords $4");
+                            sanitizedLine = s_CompiledShaderRegex.Replace(sanitizedLine, $"{k_CompiledShaderString}: $1, pass: $2, stage: pixel, keywords $4");
 
                         if (existingFileContent.Contains(sanitizedLine))
                             continue;
@@ -109,7 +110,7 @@ namespace UnityEngine.TestTools.Graphics
                     }
                     var dummyMaterial = new Material(shader);
                     int.TryParse(notFoundMatch.Groups["passIndex"].Value, out int passIndex);
-                    existingFileContent.Add($"Compiled shader: {shaderName}, pass: {dummyMaterial.GetPassName(passIndex)}, stage: {notFoundMatch.Groups["stage"]}, keywords {notFoundMatch.Groups["keywords"]}");
+                    existingFileContent.Add($"{k_CompiledShaderString}: {shaderName}, pass: {dummyMaterial.GetPassName(passIndex)}, stage: {notFoundMatch.Groups["stage"]}, keywords {notFoundMatch.Groups["keywords"]}");
                     Object.DestroyImmediate(dummyMaterial);
                 }
 #endif
