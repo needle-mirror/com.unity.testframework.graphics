@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine.UIElements;
 
-namespace UnityEngine.TestTools.Graphics.Tests
+namespace UnityEngine.TestTools.Graphics.PackageValidationTests
 {
 #if TEST_FRAMEWORK_2_0_0_OR_NEWER
     [RequiresPlayMode]
@@ -276,7 +276,7 @@ namespace UnityEngine.TestTools.Graphics.Tests
 
             var expected = new Texture2D(width, height, TextureFormat.RGBAFloat, false);
             var actual = new Texture2D(width, height, TextureFormat.RGBAFloat, false);
-            
+
             var pixels = new Color[numPixels];
             for (int i = 0; i < numPixels; i++)
             {

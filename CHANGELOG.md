@@ -4,7 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [8.3.3-exp.1] - 2024-01-29
+## [8.4.1-exp.1] - 2024-03-08
+- Moved and renamed the Validation Tests to be more descriptive
+
+## [8.4.0-exp.1] - 2024-03-07
+- Introduce VisionOS support.
+
+## [8.3.3-exp.1] - 2024-03-06
 - Update the regex used to match the shader variant compilation to reflect changes in the editor logger.
 
 ## [8.3.2-exp.1] - 2024-01-29
@@ -159,7 +165,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [7.8.17-exp.1] - 2021-11-18
 - Add support for tests on Apple Silicon (M1) devices.
 - Moves reference images for M1 macs under OSXPlayer_AppleSilicon and OSXEditor_AppleSilicon.
-- Leaves reference image paths for Intel macs untouched (they remain under OSXPlayer and OSXEditor). 
+- Leaves reference image paths for Intel macs untouched (they remain under OSXPlayer and OSXEditor).
 
 ## [7.8.16-preview] - 2021-08-06
 - Fixed an issue where the framework would build asset bundles for standalone when running in the editor, when using 1.2 version of Unity Test Framework package.

@@ -1,6 +1,6 @@
 using NUnit.Framework;
 
-namespace UnityEngine.TestTools.Graphics.Tests
+namespace UnityEngine.TestTools.Graphics.PackageValidationTests
 {
 #if TEST_FRAMEWORK_2_0_0_OR_NEWER
     [RequiresPlayMode]

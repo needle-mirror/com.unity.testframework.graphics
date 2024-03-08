@@ -68,6 +68,11 @@ namespace UnityEditor.TestTools.Graphics
                 case BuildTarget.QNX:
                     return RuntimePlatform.QNXArm64;
 #endif
+
+#if (UNITY_2022_3_OR_NEWER && !UNITY_2023_1_OR_NEWER) || UNITY_2023_3_OR_NEWER
+                case BuildTarget.VisionOS:
+                    return RuntimePlatform.VisionOS;
+#endif
             }
 
             throw new ArgumentOutOfRangeException("target", target, "Unknown BuildTarget");
@@ -125,6 +130,10 @@ namespace UnityEditor.TestTools.Graphics
 #if (UNITY_2019_3_OR_NEWER && !UNITY_2023_1_OR_NEWER)
                 case RuntimePlatform.Stadia:
                     return BuildTarget.Stadia;
+#endif
+#if (UNITY_2022_3_OR_NEWER && !UNITY_2023_1_OR_NEWER) || UNITY_2023_3_OR_NEWER
+                case RuntimePlatform.VisionOS:
+                    return BuildTarget.VisionOS;
 #endif
             }
 
