@@ -4,11 +4,15 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+
+## [8.5.0-exp.1] - 2024-03-12
+- Introduced GraphicsDeviceInfo class to provide information about the graphics device used in the test run.
+
 ## [8.4.1-exp.1] - 2024-03-08
 - Moved and renamed the Validation Tests to be more descriptive
 
 ## [8.4.0-exp.1] - 2024-03-07
-- Introduce VisionOS support.
+- Introduced VisionOS support.
 
 ## [8.3.3-exp.1] - 2024-03-06
 - Update the regex used to match the shader variant compilation to reflect changes in the editor logger.
