@@ -47,7 +47,7 @@ namespace UnityEditor.TestTools.Graphics
             var platform = GetEnumPropertyValue<RuntimePlatform>(doc, "RuntimePlatform");
             var graphicsDevice = GetEnumPropertyValue<GraphicsDeviceType>(doc, "GraphicsDevice");
 
-            var path = Path.Combine(ActualImagesRoot, string.Format("{0}/{1}/{2}", colorSpace, platform.ToUniqueString(), graphicsDevice));
+            var path = Path.Combine(ActualImagesRoot, string.Format("{0}/{1}/{2}", colorSpace, platform.ToUniqueString(TestPlatform.GetCurrent().Arch), graphicsDevice));
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
 
@@ -86,7 +86,7 @@ namespace UnityEditor.TestTools.Graphics
             if (!(test.Properties.ContainsKey("Image") ||
                   test.Properties.ContainsKey("DiffImage")))
                 return;
-            
+
             var dirName = Path.Combine(ActualImagesRoot, TestUtils.GetCurrentTestResultsFolderPath());
 
             if (!Directory.Exists(dirName))

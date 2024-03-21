@@ -143,7 +143,7 @@ namespace UnityEditor.TestTools.Graphics
 
                     bundleBuilds.Add(new AssetBundleBuild
                     {
-                        assetBundleName = string.Format("referenceimages-{0}-{1}-{2}-{3}", colorSpace, runtimePlatform.ToUniqueString(), api, xrsdk),
+                        assetBundleName = string.Format("referenceimages-{0}-{1}-{2}-{3}", colorSpace, runtimePlatform.ToUniqueString(TestPlatform.GetCurrent().Arch), api, xrsdk),
                         addressableNames = images.Keys.ToArray(),
                         assetNames = images.Values.ToArray()
                     });
@@ -251,19 +251,19 @@ namespace UnityEditor.TestTools.Graphics
 
                         if  (CultureInfo.InvariantCulture.CompareInfo.IndexOf(SystemInfo.processorType, "ARM", CompareOptions.IgnoreCase) >= 0 ||
                              CultureInfo.InvariantCulture.CompareInfo.IndexOf(SystemInfo.processorType, "Apple M", CompareOptions.IgnoreCase) >= 0)
-						{
-							if (Environment.Is64BitProcess)
+                        {
+                            if (Environment.Is64BitProcess)
                                 architecture = Architecture.ARM64;
-							else
+                            else
                                 architecture = Architecture.ARM;
-						}
-						else
-						{
-							if (Environment.Is64BitProcess)
+                        }
+                        else
+                        {
+                            if (Environment.Is64BitProcess)
                                 architecture = Architecture.x86_64;
-							else
+                            else
                                 architecture = Architecture.x86;
-						}
+                        }
 
                         if ((filter.BuildPlatform == buildPlatform || filter.BuildPlatform == BuildTarget.NoTarget) &&
                             (filter.GraphicsDevice == graphicsDevices.First() || filter.GraphicsDevice == GraphicsDeviceType.Null) &&

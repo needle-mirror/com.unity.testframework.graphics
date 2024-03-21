@@ -1,45 +1,52 @@
 using System;
+using System.Runtime.InteropServices;
 using System.Globalization;
 using UnityEngine;
 
 namespace UnityEngine.TestTools.Graphics
 {
-    internal static class RuntimePlatformExtension
+    /// <summary>
+    /// Extension methods for the RuntimePlatform enum.
+    /// </summary>
+    public static class RuntimePlatformExtensions
     {
-        // this method is required to generate backward compatible unique string values for duplicated RuntimePlatform enum values
-        public static string ToUniqueString(this RuntimePlatform platform)
+        /// <summary>
+        /// Converts the RuntimePlatform to a unique string value.
+        /// </summary>
+        /// <param name="platform">The RuntimePlatform to convert.</param>
+        /// <param name="architecture">The architecture of the platform.</param>
+        /// <returns>A unique string value for the RuntimePlatform.</returns>
+        /// <remarks>
+        /// This method is required to generate backward compatible unique string values for duplicated RuntimePlatform enum values.
+        /// </remarks>
+        public static string ToUniqueString(this RuntimePlatform platform, System.Runtime.InteropServices.Architecture architecture)
         {
-            switch (platform)
+            string platformUniqueString = platform switch
             {
-                case RuntimePlatform.OSXPlayer:
+                RuntimePlatform.WSAPlayerX86 => "MetroPlayerX86", //duplicate RuntimePlatform.MetroPlayerX86
+                RuntimePlatform.WSAPlayerX64 => "MetroPlayerX64", //duplicate RuntimePlatform.MetroPlayerX64
+                RuntimePlatform.WSAPlayerARM => "MetroPlayerARM", //duplicate RuntimePlatform.MetroPlayerARM
+                _ => platform.ToString(), // Use the default enum value
+            };
 
-                    if (CultureInfo.InvariantCulture.CompareInfo.IndexOf(SystemInfo.processorType, "Apple M1", CompareOptions.IgnoreCase) >= 0)
-                    {
-                        return "OSXPlayer_AppleSilicon";
-                    }
-                    else
-                    {
-                        return platform.ToString();
-                    }
-                case RuntimePlatform.OSXEditor:
-
-                    if (CultureInfo.InvariantCulture.CompareInfo.IndexOf(SystemInfo.processorType, "Apple M1", CompareOptions.IgnoreCase) >= 0)
-                    {
-                        return "OSXEditor_AppleSilicon";
-                    }
-                    else
-                    {
-                        return platform.ToString();
-                    }
-                case RuntimePlatform.WSAPlayerX86: //duplicate RuntimePlatform.MetroPlayerX86
-                    return "MetroPlayerX86";
-                case RuntimePlatform.WSAPlayerX64: //duplicate RuntimePlatform.MetroPlayerX64
-                    return "MetroPlayerX64";
-                case RuntimePlatform.WSAPlayerARM: //duplicate RuntimePlatform.MetroPlayerARM
-                    return "MetroPlayerARM";
-                default:
-                    return platform.ToString();
+            if (architecture is System.Runtime.InteropServices.Architecture.Arm64)
+            {
+                switch (platform)
+                {
+                    case RuntimePlatform.OSXPlayer:
+                    case RuntimePlatform.OSXEditor:
+                        platformUniqueString += "_AppleSilicon";
+                        break;
+                    case RuntimePlatform.WindowsPlayer:
+                    case RuntimePlatform.WindowsEditor:
+                        platformUniqueString += "_ARM64";
+                        break;
+                    default:
+                        break;
+                }
             }
+
+            return platformUniqueString;
         }
     }
 }

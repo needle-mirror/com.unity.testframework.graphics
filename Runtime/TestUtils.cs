@@ -13,7 +13,7 @@ namespace UnityEngine.TestTools.Graphics
         /// <param name="graphicsApi">The graphics API the current test is running</param>
         /// <param name="xrsdk">The XR SDK for the current test</param>
         public static string GetTestResultsFolderPath(ColorSpace colorSpace, RuntimePlatform runtimePlatform, GraphicsDeviceType graphicsApi, string xrsdk = "None")
-            => $"{colorSpace}/{runtimePlatform.ToUniqueString()}/{graphicsApi}/{xrsdk}";
+            => $"{colorSpace}/{runtimePlatform.ToUniqueString(TestPlatform.GetCurrent().Arch)}/{graphicsApi}/{xrsdk}";
 
         /// <summary>
         /// Returns the test result folder path for the current test configuration.

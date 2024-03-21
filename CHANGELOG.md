@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [8.5.1-exp.1] - 2024-03-21
+- Added Windows ARM64 support.
+- Added TestPlatform as an abstraction of the platform used in the test run.
+- Added tests for the RuntimePlatformExtensions class.
 
 ## [8.5.0-exp.1] - 2024-03-12
 - Introduced GraphicsDeviceInfo class to provide information about the graphics device used in the test run.

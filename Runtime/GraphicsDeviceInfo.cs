@@ -122,9 +122,7 @@ namespace UnityEngine.TestTools.Graphics
         /// <summary>
         /// Returns a string representation of the current graphics device information.
         /// </summary>
-        public static string PrintDeviceInfo()
-        {
-            return $"\n==== Graphics Device Information ====\nName: {Name}\nType: {Type}\nVendor: {Vendor}\nVendorID: {VendorID}\nVersion: {Version}\nMemorySize: {MemorySize}\nShaderLevel: {ShaderLevel}\n=====================================\n";
-        }
+    public static string PrintDeviceInfo()
+        => $"\n==== Graphics Device Information ====\nName: {Name}\nType: {Type}\nVendor: {Vendor}\nVendorID: {VendorID}\nDeviceID: {DeviceID}\nVersion: {Version}\nMemorySize: {MemorySize}\nShaderLevel: {ShaderLevel}\n=====================================\n";
     }
 }

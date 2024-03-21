@@ -150,7 +150,7 @@ namespace UnityEngine.TestTools.Graphics
 
                             actual.Apply();
                         }
-					}
+                    }
                 }
                 AreEqual(expected, actual, settings, expectedImagePathLog);
 
@@ -168,7 +168,7 @@ namespace UnityEngine.TestTools.Graphics
                 }
             }
         }
-        
+
         private static string StripParametricTestCharacters(string name)
         {
             {
@@ -247,7 +247,7 @@ namespace UnityEngine.TestTools.Graphics
 
                 Assert.That(ContainsNaN(expected), Is.False, "{0} Expected image contains NaN values.", expectedImagePathLog);
                 Assert.That(ContainsNaN(actual), Is.False, "Actual image contains NaN values.");
-                
+
                 using (var expectedPixels = new NativeArray<Color>(expected.GetPixels(0), Allocator.TempJob))
                 using (var actualPixels = new NativeArray<Color>(actual.GetPixels(0), Allocator.TempJob))
                 using (var diffPixels = new NativeArray<Color>(expectedPixels.Length, Allocator.TempJob))
@@ -304,7 +304,7 @@ namespace UnityEngine.TestTools.Graphics
                 if (RuntimeSettings.saveActualImages)
                 {
 #if UNITY_EDITOR
-                    ImageHandler.TextureImporterSettings importSettings = new ImageHandler.TextureImporterSettings(); 
+                    ImageHandler.TextureImporterSettings importSettings = new ImageHandler.TextureImporterSettings();
                     ImageHandler.instance.SaveImage(imageMessage, true, importSettings);
 #else
                     PlayerConnection.instance.Send(ImageMessage.MessageId, imageMessage.Serialize());
@@ -316,7 +316,7 @@ namespace UnityEngine.TestTools.Graphics
 #if UNITY_EDITOR
                 if (saveFailedImage)
                 {
-                    ImageHandler.TextureImporterSettings importSettings = new ImageHandler.TextureImporterSettings(); 
+                    ImageHandler.TextureImporterSettings importSettings = new ImageHandler.TextureImporterSettings();
                     ImageHandler.instance.SaveImage(imageMessage, true, importSettings);
                 }
 #else
@@ -530,7 +530,7 @@ namespace UnityEngine.TestTools.Graphics
                 RenderTexture.ReleaseTemporary(rt);
             }
         }
-        
+
         /// <summary>
         /// Render an image from the given camera and check if it allocated memory while doing so. Also outputs the callstack of the GC.Alloc found
         /// </summary>
@@ -561,13 +561,13 @@ namespace UnityEngine.TestTools.Graphics
                 ProfilerDriver.ClearAllFrames();
                 ProfilerDriver.memoryRecordMode = ProfilerMemoryRecordMode.GCAlloc;
                 ProfilerDriver.enabled = true;
-                
+
                 // Wait for memoryRecordMode to apply
                 yield return new WaitForEndOfFrame();
-               
+
                 // Render the camera
                 yield return new WaitForEndOfFrame();
-                
+
                 ProfilerDriver.enabled = false;
                 // Wait for results to be available in the profiler
                 yield return new WaitForEndOfFrame();
@@ -583,11 +583,11 @@ namespace UnityEngine.TestTools.Graphics
                         yield break;
 
                     int gcAllocMarkerId = frameData.GetMarkerId("GC.Alloc");
-                    
+
                     // Check if there is a GC Alloc marker in the frame
                     if (gcAllocMarkerId == FrameDataView.invalidMarkerId)
                         yield break;
-                    
+
                     // Check if there is the srp marker in the frame
                     var srpMarker = frameData.GetMarkerId(overrideSRPMarkerName ?? "UnityEngine.CoreModule.dll!UnityEngine.Rendering::RenderPipelineManager.DoRenderLoop_Internal() [Invoke]");
                     if (srpMarker == FrameDataView.invalidMarkerId)
@@ -598,15 +598,15 @@ namespace UnityEngine.TestTools.Graphics
                         if (srpMarker == frameData.GetSampleMarkerId(i))
                         {
                             var endMarkerIndex = frameData.GetSampleChildrenCountRecursive(i) + i;
-                            
+
                             if (i >= endMarkerIndex)
                                 continue;
-                            
+
                             for (; i < endMarkerIndex; i++)
                             {
                                 if (gcAllocMarkerId != frameData.GetSampleMarkerId(i))
                                     continue;
-                                
+
                                 var callstack = new List<ulong>();
                                 frameData.GetSampleCallstack(i, callstack);
                                 foreach (var callAddress in callstack)
@@ -616,9 +616,9 @@ namespace UnityEngine.TestTools.Graphics
                                         continue;
                                     humanReadableCallstack.AppendLine(methodInfo.methodName);
                                 }
-                                
+
                                 humanReadableCallstack.AppendLine();
-                                
+
                                 long gcAllocSize = frameData.GetSampleMetadataAsLong(i, 0);
                                 totalGcAllocSize += gcAllocSize;
                             }
@@ -785,7 +785,7 @@ If the callstack is not exploitable you can try to find the allocation by follow
                 batchMSE[batch] += deltaA * deltaA;
                 diff[index] = new Color(maxDelta, maxDelta, maxDelta, 1.0f);
             }
-        } 
+        }
 
         // Linear RGB to XYZ using D65 ref. white
         static Vector3 RGBtoXYZ(Color color)
