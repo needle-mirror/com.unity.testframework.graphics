@@ -4,7 +4,7 @@ Use the Graphics Test Framework package to create automated tests for rendering 
 
 # Installing the Graphics Test Framework
 
-To install this package, follow the instructions in the [Package Manager documentation](https://docs.unity3d.com/Packages/com.unity.package-manager-ui@latest/index.html). 
+To install this package, follow the instructions in the [Package Manager documentation](https://docs.unity3d.com/Packages/com.unity.package-manager-ui@latest/index.html).
 
 <a name="UsingPackageName"></a>
 # Using the Graphics Test Framework
@@ -32,7 +32,7 @@ Using this feature requires a little bit of setup. Firstly, on your test method 
 [UseGraphicsTestCases]
 public IEnumerator DoTest(GraphicsTestCase testCase)
 {
-   
+
 }
 ```
 
@@ -82,9 +82,21 @@ Once you're happy that the images look correct, you should rename the `ActualIma
 
 By default, reference images will be set up in a three-level hierarchy of folders: `ColorSpace/Platform/GraphicsAPI`. If you want to use the same reference image across multiple graphics APIs, you can put it directly into the `ColorSpace/Platform` folder.
 
-## Scene view tests
+## Capturing Editor Windows
 
-To capture from the scene view instead of the game view, use `yield return CaptureSceneView.Capture()` or `yield return CaptureSceneView.CaptureFromMainCamera()` in a `UnityTest`. This will return an `IEnumerator` that will follow this procedure: 1. Instantiate a scene view window in the specified width and height (default is 512), 2. Match the camera with the specified transform (or `Camera.main`) and 3. Read the Scene View window's output from the back-buffer. The captured Texture2D will be accessible as `CaptureSceneView.Result`.
+To capture from the scene view instead of the game view, use:
+
+```csharp
+Texture2D capturedTexture = await EditorWindowCapture.CaptureAsync(customWindow, EditorWindowCaptureSettings.Default);
+```
+
+in an `async` test. This will capture the scene view from the specified window.
+
+The `EditorWindowCaptureSettings` class allows you to specify the resolution of the capture, what timeout to use for certain waiting operations (like async shader compilation). The default settings are 512x512 resolution and a 10-second timeout for async tasks when targeting a `SceneView`.
+
+When testing the SceneView window specifically, you can also set the Image Comparison Viewpoint to set which view to capture from. If you wish to execute additional actions before the capture, you can add a list of `Action<EditorWindow>` to the `EditorWindowCaptureSettings.AdditionalSetupActions`.
+
+By extending the `EditorWindowCaptureSettings` class, you can create custom settings for your tests and pass them to the `CaptureAsync` method.
 
 ## Code-Based Graphics Tests
 To use the Graphics Test Framework using code-based tests instead of scene-based tests, use the `[CodeBasedGraphicsTest]` attribute. You must specify the reference image directory and optionally specify the actual image directory. Here's an example:
@@ -98,14 +110,14 @@ public IEnumerator MyTest()
 ```
 
 ## Using the Graphics Test Framework with Android and WebGL
-*For all platforms other than Android and WebGL*, the reference images used in the Graphics Test Framework are loaded synchronously from Unity asset bundles by NUnit (via a custom test case creation override) in a custom test case constructor. 
+*For all platforms other than Android and WebGL*, the reference images used in the Graphics Test Framework are loaded synchronously from Unity asset bundles by NUnit (via a custom test case creation override) in a custom test case constructor.
 
 However, for Android and WebGL, these reference image asset bundles need to be loaded using an asynchronous web request to avoid locking the main Unity runtime thread. The Graphics Test Framework provides async methods for the purpose, but you'll need to call them correctly in your test setup and methods.
 
 The additional setup and test code needed to use the Graphics Test Framework on the Android and WebGL platform can be described as
 
 1. Loading the reference image asset bundles asynchronously from a UnitySetUp method in your test class, then
-2. Associating each test case with its corresponding reference image loaded in the UnitySetUp method. 
+2. Associating each test case with its corresponding reference image loaded in the UnitySetUp method.
 
 Below are actual examples used in the `com.unity.test.urp` test package for this purpose. Please use them as a guide for your own tests.
 

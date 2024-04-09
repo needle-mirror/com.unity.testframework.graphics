@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [8.6.0-exp.1] - 2024-04-09
+- Added EditorWindowCapture class to capture the content of an EditorWindow.
+- Made CaptureSceneView methods obsolete as it was replaced by EditorWindowCapture.
+
 ## [8.5.1-exp.1] - 2024-03-21
 - Added Windows ARM64 support.
 - Added TestPlatform as an abstraction of the platform used in the test run.

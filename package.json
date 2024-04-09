@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Tests Framework",
-  "version": "8.5.1-exp.1",
+  "version": "8.6.0-exp.1",
   "unity": "2021.3",
   "unityRelease": "0a1",
   "description": "Provides test framework helpers for writing tests for graphics code, such as image comparison assertions and automatic management of reference images.",
@@ -24,15 +24,15 @@
     "com.unity.testtools.codecoverage": "1.2.0"
   },
   "_upm": {
-    "changelog": "- Added Windows ARM64 support.\n- Added TestPlatform as an abstraction of the platform used in the test run.\n- Added tests for the RuntimePlatformExtensions class."
+    "changelog": "- Added EditorWindowCapture class to capture the content of an EditorWindow.\n- Made CaptureSceneView methods obsolete as it was replaced by EditorWindowCapture."
   },
   "upmCi": {
-    "footprint": "010093a9411c6a7afa05f491bc08536773b16b3e"
+    "footprint": "682ec4f2b759642006d39b0ba13c13413d83e8af"
   },
-  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@8.5/manual/index.html",
+  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@8.6/manual/index.html",
   "repository": {
     "url": "git@github.cds.internal.unity3d.com:unity/unity.git",
     "type": "git",
-    "revision": "3053e3451d4fd1d7186c21898667d0cefbcb8c65"
+    "revision": "cf2c65c766d9159263a734b5cda6b78dda366800"
   }
 }

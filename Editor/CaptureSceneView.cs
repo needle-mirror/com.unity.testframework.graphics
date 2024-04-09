@@ -17,7 +17,6 @@ namespace UnityEditor.TestTools.Graphics
         /// <summary>
         /// Returns the result of the Scene View capture
         /// </summary>
-        /// 
         public static Texture2D Result { get => CapturedTexture; }
 
         /// <summary>
@@ -28,6 +27,9 @@ namespace UnityEditor.TestTools.Graphics
         /// <param name="sceneViewHeight"> The height (in pixels) for the captured scene view image. Defaults to 512. </param>
         /// <param name="delayBeforeCapture"> The delay between setting up the camera and capturing. Defaults to 100. </param>
         /// <returns> an IEnumerator to yield return to UnityTests </returns>
+        #if UNITY_6000_0_OR_NEWER
+        [Obsolete("CaptureFromMainCamera is deprecated, please use EditorWindowCapture.CaptureAsync instead.")]
+        #endif
         public static IEnumerator CaptureFromMainCamera(SceneView sceneView = null, int sceneViewWidth = 512, int sceneViewHeight = 512, int delayBeforeCapture = 100)
         {
             yield return Capture(Camera.main.transform, sceneView, sceneViewWidth, sceneViewHeight, delayBeforeCapture);
@@ -42,6 +44,9 @@ namespace UnityEditor.TestTools.Graphics
         /// <param name="sceneViewHeight"> The height (in pixels) for the captured scene view image. Defaults to 512. </param>
         /// <param name="delayBeforeCapture"> The delay between setting up the camera and capturing. Defaults to 100. </param>
         /// <returns> an IEnumerator to yield return to UnityTests </returns>
+        #if UNITY_6000_0_OR_NEWER
+        [Obsolete("Capture is deprecated, please use EditorWindowCapture.CaptureAsync instead.")]
+        #endif
         public static IEnumerator Capture(Transform imageComparisonViewpoint, SceneView sceneView = null, int sceneViewWidth = 512, int sceneViewHeight = 512, int delayBeforeCapture = 100)
         {
             GameObject.DestroyImmediate(CapturedTexture);
@@ -87,7 +92,11 @@ namespace UnityEditor.TestTools.Graphics
             RenderTexture backBufferCapture = RenderTexture.GetTemporary(width, height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
 
             // Capture and set to the active RenderTexture
+            #if UNITY_6000_0_OR_NEWER
+            InternalEditorUtility.CaptureEditorWindow(sceneView, backBufferCapture);
+            #else
             InternalEditorUtility.CaptureSceneView(sceneView, backBufferCapture);
+            #endif
             RenderTexture.active = backBufferCapture;
 
             // Apply to our Tex2D

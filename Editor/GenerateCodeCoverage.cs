@@ -10,7 +10,6 @@ public class GenerateCodeCoverage : MonoBehaviour
 
     public static void SceneBasedCoverage()
     {
-        EditorSettings.enterPlayModeOptionsEnabled = true;
         EditorSettings.enterPlayModeOptions = EnterPlayModeOptions.DisableDomainReload;
 
         scenes = GetScenes();
@@ -51,8 +50,8 @@ public class GenerateCodeCoverage : MonoBehaviour
                 CodeCoverage.PauseRecording();
 
                 EditorApplication.update -= Processing;
-                
-                EditorSettings.enterPlayModeOptionsEnabled = false;
+
+                EditorSettings.enterPlayModeOptions = EnterPlayModeOptions.None;
 
                 EditorApplication.Exit(0);
             }
