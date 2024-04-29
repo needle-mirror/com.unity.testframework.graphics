@@ -180,6 +180,9 @@ namespace UnityEditor.TestTools.Graphics
 
             string[] selectedScenes = GetSelectedScenes();
 
+            int disabledSceneCountBeforeFiltering = 0;
+            int disabledSceneCountDueFiltering = 0;
+
             var sceneIndex = 0;
             var buildSettingsScenes = EditorBuildSettings.scenes;
             var totalScenes = EditorBuildSettings.scenes.Length;
@@ -193,7 +196,11 @@ namespace UnityEditor.TestTools.Graphics
 
             foreach (var scene in buildSettingsScenes)
             {
-                if (!scene.enabled) continue;
+                if (!scene.enabled)
+                {
+                    disabledSceneCountBeforeFiltering++;
+                    continue;
+                }
 
                 if (filterConfigs != null)
                 {
@@ -276,6 +283,7 @@ namespace UnityEditor.TestTools.Graphics
                                 filter.StereoModes == StereoRenderingModeFlags.None)
                             {
                                 scene.enabled = false;
+                                disabledSceneCountDueFiltering++;
                                 filterReasons += filter.Reason + "\n";
                             }
                             // If VR is enabled then the VR specific filters need to match the filter too.
@@ -284,6 +292,7 @@ namespace UnityEditor.TestTools.Graphics
                                 (filter.XrSdk == xrsdk || string.IsNullOrEmpty(filter.XrSdk)))
                             {
                                 scene.enabled = false;
+                                disabledSceneCountDueFiltering++;
                                 filterReasons += filter.Reason + "\n";
                             }
                         }
@@ -325,6 +334,12 @@ namespace UnityEditor.TestTools.Graphics
                 }
                 sceneIndex++;
             }
+
+            // Log Into File
+            GraphicsTestLogger.Log(LogType.Log, $"Total number of scenes in build settings: {totalScenes}");
+            GraphicsTestLogger.Log(LogType.Log, $"Number of initially disabled scenes: {disabledSceneCountBeforeFiltering}");
+            GraphicsTestLogger.Log(LogType.Log, $"Number of scenes disabled by filtering: {disabledSceneCountDueFiltering}");
+            GraphicsTestLogger.Log(LogType.Log, $"Total disabled scenes after processing: {disabledSceneCountBeforeFiltering + disabledSceneCountDueFiltering}");
 
             // set the scene list in the build settings window.  Only updating the array will do this.
             EditorBuildSettings.scenes = buildSettingsScenes.Where(s => s.enabled).ToArray();

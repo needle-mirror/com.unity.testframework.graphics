@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Tests Framework",
-  "version": "8.6.0-exp.1",
+  "version": "8.6.1-exp.1",
   "unity": "2021.3",
   "unityRelease": "0a1",
   "description": "Provides test framework helpers for writing tests for graphics code, such as image comparison assertions and automatic management of reference images.",
@@ -24,15 +24,15 @@
     "com.unity.testtools.codecoverage": "1.2.0"
   },
   "_upm": {
-    "changelog": "- Added EditorWindowCapture class to capture the content of an EditorWindow.\n- Made CaptureSceneView methods obsolete as it was replaced by EditorWindowCapture."
+    "changelog": "- Added the GraphicsTestLogger class to log the graphics test-related information.\n- Added utility tool to copy image references to the appropriate folder."
   },
   "upmCi": {
-    "footprint": "682ec4f2b759642006d39b0ba13c13413d83e8af"
+    "footprint": "52693eb03205e8363087fbc0f3059d5deb9ef42f"
   },
   "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@8.6/manual/index.html",
   "repository": {
     "url": "git@github.cds.internal.unity3d.com:unity/unity.git",
     "type": "git",
-    "revision": "cf2c65c766d9159263a734b5cda6b78dda366800"
+    "revision": "0256f0f948ee12d6fa35825e128f1a3b9feccd38"
   }
 }
