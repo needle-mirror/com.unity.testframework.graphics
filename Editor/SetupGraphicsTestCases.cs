@@ -59,6 +59,8 @@ namespace UnityEditor.TestTools.Graphics
 
             UnityEditor.EditorPrefs.SetBool("AsynchronousShaderCompilation", false);
 
+            CliArgumentsCheck.CheckGfxApiAgainstArguments(System.Environment.GetCommandLineArgs().ToList());
+
             // Figure out if we're preparing to run in Editor playmode, or if we're building to run outside the Editor
             if (IsBuildingForEditorPlaymode)
             {

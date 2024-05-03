@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [8.6.2-exp.1] - 2024-05-03
+- Added CliArgumentsCheck class to validate graphics related command-line arguments.
+
 ## [8.6.1-exp.1] - 2024-04-29
 - Added the GraphicsTestLogger class to log the graphics test-related information.
 - Added utility tool to copy image references to the appropriate folder.

@@ -17,9 +17,7 @@ namespace UnityEditor.TestTools.Graphics
 {
     public static class SetupProject
     {
-        public static void ApplySettings()
-        {
-            var options = new Dictionary<string, Action>
+        public static Dictionary<string, Action> Options = new Dictionary<string, Action>
         {
             { "gamma", () => PlayerSettings.colorSpace = ColorSpace.Gamma },
             { "linear", () => PlayerSettings.colorSpace = ColorSpace.Linear },
@@ -33,25 +31,23 @@ namespace UnityEditor.TestTools.Graphics
             { "gles2", () => SetGraphicsAPI(GraphicsDeviceType.OpenGLES2) },
 #endif
             { "ps4", () => SetGraphicsAPI(GraphicsDeviceType.PlayStation4) },
-#if UNITY_PS5
             { "ps5", () => SetGraphicsAPI(GraphicsDeviceType.PlayStation5) },
             { "ps5nggc", () => SetGraphicsAPI(GraphicsDeviceType.PlayStation5NGGC) },
-#endif
             { "xb1d3d11", () => SetGraphicsAPI(GraphicsDeviceType.XboxOne) },
             { "xb1d3d12", () => SetGraphicsAPI(GraphicsDeviceType.XboxOneD3D12) },
-#if UNITY_GAMECORE
             { "gamecorexboxone", () => SetGraphicsAPI(GraphicsDeviceType.GameCoreXboxOne) },
             { "gamecorexboxseries", () => SetGraphicsAPI(GraphicsDeviceType.GameCoreXboxSeries) },
-#endif
             { "switch", () => SetGraphicsAPI(GraphicsDeviceType.Switch) }
         };
 
+        public static void ApplySettings()
+        {
             var args = Environment.GetCommandLineArgs();
             string apiName = "";
             foreach (var arg in args)
             {
                 Action action;
-                if (options.TryGetValue(arg, out action))
+                if (Options.TryGetValue(arg, out action))
                 {
                     apiName = arg;
                     action();
