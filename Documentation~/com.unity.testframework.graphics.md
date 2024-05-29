@@ -24,17 +24,26 @@ An optional third parameter allows you to configure the sensitivity of the check
 
 The framework can automatically generate test cases based on the scenes in the project and manage reference images for them.
 
-Using this feature requires a little bit of setup. Firstly, on your test method itself, you should add two attributes, `[PrebuildSetup("SetupGraphicsTestCases")]` and `[UseGraphicsTestCases]`, like this:
+Using this feature requires a little bit of setup. On your test method, you should add `[UseGraphicsTestCases]`. The class should implement `IPrebuildSetup` and call `UnityEditor.TestTools.Graphics.SetupGraphicsTestCases.Setup()` in the `Setup()` method. This will ensure that the test cases are generated and set up correctly.
 
-```
-[UnityTest]
-[PrebuildSetup("SetupGraphicsTestCases")]
-[UseGraphicsTestCases]
-public IEnumerator DoTest(GraphicsTestCase testCase)
+```csharp
+class MyTestClass : IPrebuildSetup
 {
+    public void Setup()
+    {
+        UnityEditor.TestTools.Graphics.SetupGraphicsTestCases.Setup();
+    }
 
+    [UnityTest]
+    [UseGraphicsTestCases]
+    public IEnumerator DoTest(GraphicsTestCase testCase)
+    {
+        // Your test code here
+    }
 }
 ```
+
+You can also use the `[PrebuildSetup("MySetupClass")]` attribute to automatically call a setup method for you if you're using a different class to manage your test setup.
 
 Your test method should also take a single `GraphicsTestCase` parameter. You will also usually want to use `[UnityTest]` and return `IEnumerator`, rather than using `[Test]` and returning `void`, because usually you will want to load a new scene in your test, and this requires yielding one frame for the load to complete.
 
