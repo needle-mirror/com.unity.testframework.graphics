@@ -13,11 +13,10 @@ using UnityEngine.TestTools.Graphics;
 
 namespace UnityEditor.TestTools.Graphics
 {
-#if UNITY_2020_2_OR_NEWER
     [ScriptedImporter(1, "shadervariantlist")]
     public class ShaderVariantListImporter : ScriptedImporter
     {
-        [MenuItem("Assets/Create/Testing/Shader Variant List", false, 1)]
+        [MenuItem("Assets/Create/Graphics Test Framework/Shader Variant List", false, 1)]
         public static void CreateEmptyShaderVariantList()
         {
             AssetDatabase.Refresh();
@@ -99,7 +98,7 @@ namespace UnityEditor.TestTools.Graphics
                     }
                     catch (Exception e)
                     {
-                        Debug.Log($"Unable to parse line {line}:");
+                        GraphicsTestLogger.Log(LogType.Log, $"Unable to parse line {line}:");
                         Debug.LogException(e);
                     }
                 }
@@ -122,7 +121,7 @@ namespace UnityEditor.TestTools.Graphics
                     }
                     catch (Exception e)
                     {
-                        Debug.LogError($"Unable to parse line {line}:");
+                        GraphicsTestLogger.Log(LogType.Error, $"Unable to parse line {line}:");
                         Debug.LogException(e);
                     }
                 }
@@ -164,5 +163,4 @@ namespace UnityEditor.TestTools.Graphics
             }
         }
     }
-#endif
 }

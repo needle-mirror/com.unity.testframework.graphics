@@ -24,7 +24,7 @@ namespace UnityEditor.TestTools.Graphics
             return (T) Enum.Parse(typeof(T), node.Attributes["value"].Value);
         }
 
-        [MenuItem("Tests/Extract images from TestResults.xml...")]
+        [MenuItem("Tools/Graphics Test Framework/Extract images from TestResults.xml...", false, 202)]
         internal static void ExtractImagesFromResultsXml()
         {
             var filePath =

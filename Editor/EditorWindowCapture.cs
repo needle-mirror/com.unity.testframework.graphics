@@ -7,6 +7,7 @@ using UnityEditorInternal;
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.Overlays;
+using UnityEngine.TestTools.Graphics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Threading;
@@ -186,7 +187,7 @@ namespace UnityEditor.TestTools.Graphics
                     if (action is not null)
                         action(window);
                     else
-                        Debug.LogWarning("Null action provided in the additional setup actions list");
+                        GraphicsTestLogger.Log(LogType.Warning, "Null action provided in the additional setup actions list");
 
             // Additional wait
             await Task.Delay((int) settings.DelayBeforeCapture.TotalMilliseconds);
@@ -197,7 +198,7 @@ namespace UnityEditor.TestTools.Graphics
 
             if (!result)
             {
-                Debug.LogError("Failed to capture the EditorWindow.");
+                GraphicsTestLogger.Log(LogType.Error, "Failed to capture the EditorWindow.");
                 RenderTexture.ReleaseTemporary(backBufferCapture);
                 return null;
             }
@@ -233,7 +234,7 @@ namespace UnityEditor.TestTools.Graphics
             {
                 if (timeoutMillis-- <= 0)
                 {
-                    Debug.LogError("Transforms did not align in time. Timeout exceeded.");
+                    GraphicsTestLogger.Log(LogType.Error, "Transforms did not align in time. Timeout exceeded.");
                     return;
                 }
                 await Task.Delay(1);
@@ -249,7 +250,7 @@ namespace UnityEditor.TestTools.Graphics
             {
                 if (timeoutMillis-- <= 0)
                 {
-                    Debug.LogError("Shaders did not finish compiling in time. Timeout exceeded.");
+                    GraphicsTestLogger.Log(LogType.Error, "Shaders did not finish compiling in time. Timeout exceeded.");
                     return;
                 }
                 await Task.Delay(1);

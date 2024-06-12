@@ -42,15 +42,14 @@ namespace UnityEditor.TestTools.Graphics
             }
         }
 
-#if UNITY_EDITOR
-        [MenuItem("Tests/Graphics Test Stripper Mode/Enabled")]
+        [MenuItem("Tools/Graphics Test Framework/Graphics Test Stripper Mode/Enabled", false, 400)]
         static void EnableGraphicsTestStripper() => EnableGraphicsTestStripper(true);
-        [MenuItem("Tests/Graphics Test Stripper Mode/Disabled")]
+        [MenuItem("Tools/Graphics Test Framework/Graphics Test Stripper Mode/Disabled", false, 400)]
         static void DisableGraphicsTestStripper() => EnableGraphicsTestStripper(false);
 
-        [MenuItem("Tests/Graphics Test Stripper Mode/Enabled", true)]
+        [MenuItem("Tools/Graphics Test Framework/Graphics Test Stripper Mode/Enabled", true, 400)]
         static bool EnableGraphicsTestStripperValidate() => !EditorPrefs.GetBool(k_EnableStripperKey, true);
-        [MenuItem("Tests/Graphics Test Stripper Mode/Disabled", true)]
+        [MenuItem("Tools/Graphics Test Framework/Graphics Test Stripper Mode/Disabled", true, 400)]
         static bool DisableGraphicsTestStripperValidate() => EditorPrefs.GetBool(k_EnableStripperKey, true);
         static void EnableGraphicsTestStripper(bool enabled)
         {
@@ -59,18 +58,17 @@ namespace UnityEditor.TestTools.Graphics
             if (enabled)
             {
                 message = "Shader Stripper Enabled!";
-                Debug.Log($"<color=green>{message}</color>");
+                GraphicsTestLogger.Log(LogType.Log, $"<color=green>{message}</color>");
             }
             else
             {
                 message = "Shader Stripper Disabled!";
-                Debug.Log($"<color=red>{message}</color>");
+                GraphicsTestLogger.Log(LogType.Log, $"<color=red>{message}</color>");
             }
 
             foreach (SceneView scene in SceneView.sceneViews)
                 scene.ShowNotification(new GUIContent(message));
         }
-#endif
 
         static ShaderVariantList GetCurrentShaderVariantList()
         {
@@ -94,12 +92,12 @@ namespace UnityEditor.TestTools.Graphics
                 if (matchingVariant == null)
                 {
                     matchingVariant = s_AllVariantListAssets.FirstOrDefault(s => s.MatchSettings(ShaderCompilerPlatform.D3D, false));
-                    Debug.Log($"Couldn't find the Shader Variant List for the Graphics API {currentAPI}{(RuntimeSettings.reuseTestsForXR ? " in XR" : "")}. Falling back on the D3D platform file");
+                    GraphicsTestLogger.Log(LogType.Log, $"Couldn't find the Shader Variant List for the Graphics API {currentAPI}{(RuntimeSettings.reuseTestsForXR ? " in XR" : "")}. Falling back on the D3D platform file");
                 }
 
                 if (matchingVariant == null)
                 {
-                    Debug.Log("Couldn't find any Shader Variant List for this config, disabling Graphics Test Stripper");
+                    GraphicsTestLogger.Log(LogType.Log, "Couldn't find any Shader Variant List for this config, disabling Graphics Test Stripper");
                     s_UseGraphicsTestStripper = false;
                 }
                 s_CurrentVariantListInUse = matchingVariant;
@@ -134,7 +132,7 @@ namespace UnityEditor.TestTools.Graphics
                 case GraphicsDeviceType.Vulkan: return ShaderCompilerPlatform.Vulkan;
                 case (GraphicsDeviceType)22: return (ShaderCompilerPlatform)19;
                 case GraphicsDeviceType.XboxOneD3D12: return ShaderCompilerPlatform.XboxOneD3D12;
-#if UNITY_2022_2_OR_NEWER
+#if UNITY_2022_3_OR_NEWER
                 case GraphicsDeviceType.GameCoreXboxOne: return ShaderCompilerPlatform.GameCoreXboxOne;
                 case GraphicsDeviceType.GameCoreXboxSeries: return ShaderCompilerPlatform.GameCoreXboxSeries;
 #else
@@ -182,7 +180,6 @@ namespace UnityEditor.TestTools.Graphics
             }
         }
 
-#if UNITY_2020_2_OR_NEWER
         class GraphicsTestComputeShaderStripper : IPreprocessComputeShaders
         {
             public int callbackOrder => Int32.MinValue;
@@ -221,8 +218,6 @@ namespace UnityEditor.TestTools.Graphics
                 }
             }
         }
-#endif
-        
         static bool MatchKeywordSet(ShaderKeywordSet variantKeywordSet,
             List<ShaderVariantList.KeywordSet> keywordSetList)
         {

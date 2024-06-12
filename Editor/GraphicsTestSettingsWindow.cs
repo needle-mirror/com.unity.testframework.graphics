@@ -57,30 +57,30 @@ namespace UnityEditor.TestTools.Graphics
         }
 
         private const string SettingPrefKey = "SaveActualImages";
-        private const string SettingMenuPath = "Window/General/Graphics Test Framework/Save Actual Images Enabled";
+        private const string SettingMenuPath = "Tools/Graphics Test Framework/Save Actual Images";
 
         private static bool IsSaveEnabled {
             get => EditorPrefs.GetBool(SettingPrefKey);
             set => EditorPrefs.SetBool(SettingPrefKey, value);
         }
 
-        [MenuItem(SettingMenuPath)]
+        [MenuItem(SettingMenuPath, false, 201)]
         private static void Setting() {
             IsSaveEnabled = !IsSaveEnabled;
             CompilationPipeline.RequestScriptCompilation();
         }
 
-        [MenuItem(SettingMenuPath, true)]
+        [MenuItem(SettingMenuPath, true, 201)]
         private static bool SettingValidate() {
             Menu.SetChecked(SettingMenuPath, IsSaveEnabled);
             return true;
         }
 
-        [MenuItem("Window/General/Graphics Test Framework/Reference Image Optimization")]
+        [MenuItem("Tools/Graphics Test Framework/Reference Image Optimization", false, 2)]
         private static void OpenWindow()
         {
             GraphicsTestSettingsWindow window = GetWindow<GraphicsTestSettingsWindow>();
-            window.titleContent = new GUIContent("Graphics Test Setup");
+            window.titleContent = new GUIContent("Reference Image Optimization");
         }
 
         private void OnEnable()
@@ -240,7 +240,7 @@ namespace UnityEditor.TestTools.Graphics
 
         private void LogMessageReceived(string stackTrace, LogType type, float progress)
         {
-            EditorUtility.DisplayProgressBar("Reference images optimization", stackTrace, progress);
+            EditorUtility.DisplayProgressBar("Optimizing reference images...", stackTrace, progress);
 
             stackTrace = System.DateTime.Now.ToLongTimeString() + ": " + stackTrace;
             Log l = new Log(false, stackTrace, type);

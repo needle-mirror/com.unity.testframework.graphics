@@ -7,6 +7,7 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.TestTools.Graphics;
 
 namespace UnityEditor.TestTools.Graphics
 {
@@ -102,7 +103,7 @@ namespace UnityEditor.TestTools.Graphics
             foundArguments = foundArguments.Distinct().ToList();
             if (foundArguments.Count > 1)
             {
-                Debug.LogError($"Conflicting commandline arguments were found: {string.Join(" ", foundArguments)}. Only one argument should be passed to force the Editor graphics API.");
+                GraphicsTestLogger.Log(LogType.Error, $"Conflicting commandline arguments were found: {string.Join(" ", foundArguments)}. Only one argument should be passed to force the Editor graphics API.");
             }
 
             return foundArguments;
@@ -151,7 +152,7 @@ namespace UnityEditor.TestTools.Graphics
             foundApis = foundApis.Distinct().ToList();
             if (foundApis.Count > 1)
             {
-                Debug.LogError($"Conflicting commandline arguments are forcing multiple graphics APIs for the Player Settings: {string.Join(" ", foundApis)}. Only one argument should be passed to force the Player Settings graphics API.");
+                GraphicsTestLogger.Log(LogType.Error, $"Conflicting commandline arguments are forcing multiple graphics APIs for the Player Settings: {string.Join(" ", foundApis)}. Only one argument should be passed to force the Player Settings graphics API.");
             }
 
             return foundApis;
@@ -169,11 +170,11 @@ namespace UnityEditor.TestTools.Graphics
             {
                 if (currentEditorGfxApi == editorApis[editorForceGfxApiArgs.FindIndex(x => x.Equals(arg, StringComparison.CurrentCultureIgnoreCase))])
                 {
-                    Debug.Log($"{arg} argument was passed to the Editor. Running with {currentEditorGfxApi}");
+                    GraphicsTestLogger.Log(LogType.Log, $"{arg} argument was passed to the Editor. Running with {currentEditorGfxApi}");
                 }
                 else
                 {
-                    Debug.LogError($"Error: {arg} argument was passed to the Editor, but the Editor is running with {currentEditorGfxApi}");
+                    GraphicsTestLogger.Log(LogType.Error, $"{arg} argument was passed to the Editor, but the Editor is running with {currentEditorGfxApi}");
                 }
             }
         }
@@ -191,11 +192,11 @@ namespace UnityEditor.TestTools.Graphics
                 {
                     if (playerSettingsGfxApi == gfxDevice)
                     {
-                        Debug.Log($"\"playerGraphicsAPI\":\"{gfxDevice}\" was found in TestSettings.json, and the Player Settings Graphics API list starts with {playerSettingsGfxApi}");
+                        GraphicsTestLogger.Log(LogType.Log, $"\"playerGraphicsAPI\":\"{gfxDevice}\" was found in TestSettings.json, and the Player Settings Graphics API list starts with {playerSettingsGfxApi}");
                     }
                     else
                     {
-                        Debug.LogError($"Error: \"playerGraphicsAPI\":\"{gfxDevice}\" was found in TestSettings.json, but the Player Settings Graphics API list starts with {playerSettingsGfxApi}");
+                        GraphicsTestLogger.Log(LogType.Error, $"\"playerGraphicsAPI\":\"{gfxDevice}\" was found in TestSettings.json, but the Player Settings Graphics API list starts with {playerSettingsGfxApi}");
                     }
                 }
             }
@@ -215,11 +216,11 @@ namespace UnityEditor.TestTools.Graphics
             {
                 if (playerSettingsGfxApi == gtfApis[gtfGfxApiArgs.FindIndex(x => x.Equals(arg, StringComparison.CurrentCultureIgnoreCase))])
                 {
-                    Debug.Log($"{arg} argument was passed to the Editor, and the Player Settings Graphics API list starts with {playerSettingsGfxApi}");
+                    GraphicsTestLogger.Log(LogType.Log, $"{arg} argument was passed to the Editor, and the Player Settings Graphics API list starts with {playerSettingsGfxApi}");
                 }
                 else
                 {
-                    Debug.LogError($"Error: {arg} argument was passed to the Editor, but the Player Settings Graphics API list starts with {playerSettingsGfxApi}");
+                    GraphicsTestLogger.Log(LogType.Error, $"{arg} argument was passed to the Editor, but the Player Settings Graphics API list starts with {playerSettingsGfxApi}");
                 }
             }
         }
@@ -261,11 +262,11 @@ namespace UnityEditor.TestTools.Graphics
 
                 if (playerSettingsGfxApi.ToString().ToLower() == parsedArg.ToLower())
                 {
-                    Debug.Log($"{arg} argument was passed to the Editor, and the Player Settings Graphics API list starts with {playerSettingsGfxApi}");
+                    GraphicsTestLogger.Log(LogType.Log, $"{arg} argument was passed to the Editor, and the Player Settings Graphics API list starts with {playerSettingsGfxApi}");
                 }
                 else
                 {
-                    Debug.LogError($"Error: {arg} argument was passed to the Editor, but the Player Settings Graphics API list starts with {playerSettingsGfxApi}");
+                    GraphicsTestLogger.Log(LogType.Error, $"{arg} argument was passed to the Editor, but the Player Settings Graphics API list starts with {playerSettingsGfxApi}");
                 }
             }
         }

@@ -53,8 +53,6 @@ namespace UnityEngine.Experimental.Rendering
         private GUIContent deleteTemplateContent = new GUIContent() {text = "Delete Reference 🗑", tooltip = "Delete reference."};
         private GUIContent updateTemplateContent = new GUIContent() {text = "Update Reference", tooltip = "Update reference with current result."};
 
-        // pouet
-
         private TestResultTreeView _testResultTreeView;
 
         private TestResultTreeView testResultTreeView
@@ -71,7 +69,7 @@ namespace UnityEngine.Experimental.Rendering
             }
         }
 
-        [MenuItem("Tests/Graphics Tests Results")]
+        [MenuItem("Tools/Graphics Test Framework/Graphics Test Results", false, 1)]
         public static void OpenWindow()
         {
             OpenWindow( null );
@@ -79,7 +77,7 @@ namespace UnityEngine.Experimental.Rendering
 
         public static void OpenWindow( GraphicsTestCase _testCase )
         {
-            TestResultWindow window = GetWindow<TestResultWindow>();
+            TestResultWindow window = GetWindow<TestResultWindow>("Graphics Test Results");
             window.minSize = new Vector2(800f, 800f);
 
             window.Reload( _testCase );
@@ -95,8 +93,6 @@ namespace UnityEngine.Experimental.Rendering
             testCase = _testCase;
 
             if (testCase == null) return;
-
-            //Debug.Log("Show result for : " + _testCase.ScenePath);
 
             GetImages();
 
@@ -119,12 +115,11 @@ namespace UnityEngine.Experimental.Rendering
 
         private void OnDisable()
         {
+            // Nothing to do here
         }
 
         private void OnGUI()
         {
-            //EditorGUILayout.ObjectField( displayMaterial, typeof(Material), false );
-
             // tree view
             testResultTreeView.OnGUI(new Rect(0, 0, leftBarWidth, position.height));
 
@@ -256,8 +251,13 @@ namespace UnityEngine.Experimental.Rendering
 
         private void DeleteResults()
         {
-            AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(resultImage));
-            AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(diffImage));
+            string resultImagePath = AssetDatabase.GetAssetPath(resultImage);
+            string diffImagePath = AssetDatabase.GetAssetPath(diffImage);
+
+            if (File.Exists(resultImagePath))
+                AssetDatabase.DeleteAsset(resultImagePath);
+            if (File.Exists(diffImagePath))
+                AssetDatabase.DeleteAsset(diffImagePath);
         }
 
         private void UpdateReference()

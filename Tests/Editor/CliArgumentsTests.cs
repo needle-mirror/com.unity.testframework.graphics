@@ -8,7 +8,7 @@ using UnityEditor.TestTools.Graphics;
 using System;
 using UnityEngine.TestTools;
 
-namespace UnityEditor.TestTools.Graphics.PackageValidationTests
+namespace UnityEditor.TestTools.Graphics.Tests
 {
     public class CliArgumentsData
     {
@@ -69,7 +69,7 @@ namespace UnityEditor.TestTools.Graphics.PackageValidationTests
         public void CheckGfxApiAgainstArguments_EditorGfxApiMatchesForceArg_LogIsLogged(string arg, GraphicsDeviceType api)
         {
             CliArgumentsCheck.CheckGfxApiAgainstArguments(new List<string> { arg }, null, api);
-            LogAssert.Expect(LogType.Log, $"{arg} argument was passed to the Editor. Running with {api}");
+            LogAssert.Expect(LogType.Log, $"Graphics Tests: {arg} argument was passed to the Editor. Running with {api}");
         }
 
         [Test]
@@ -79,7 +79,7 @@ namespace UnityEditor.TestTools.Graphics.PackageValidationTests
             GraphicsDeviceType gfxApi = GraphicsDeviceType.Direct3D11;
 
             CliArgumentsCheck.CheckGfxApiAgainstArguments(new List<string> { cliArgument }, null, gfxApi);
-            LogAssert.Expect(LogType.Error, $"Error: {cliArgument} argument was passed to the Editor, but the Editor is running with {gfxApi}");
+            LogAssert.Expect(LogType.Error, $"Graphics Tests: {cliArgument} argument was passed to the Editor, but the Editor is running with {gfxApi}");
         }
 
         [Test]
@@ -87,7 +87,7 @@ namespace UnityEditor.TestTools.Graphics.PackageValidationTests
         public void CheckGfxApiAgainstArguments_PlayerGfxApiMatchesGtfArg_LogIsLogged(List<string> args, GraphicsDeviceType api)
         {
             CliArgumentsCheck.CheckGfxApiAgainstArguments(args, null, null, api);
-            LogAssert.Expect(LogType.Log, $"{args[1]} argument was passed to the Editor, and the Player Settings Graphics API list starts with {api}");
+            LogAssert.Expect(LogType.Log, $"Graphics Tests: {args[1]} argument was passed to the Editor, and the Player Settings Graphics API list starts with {api}");
         }
 
         [Test]
@@ -97,7 +97,7 @@ namespace UnityEditor.TestTools.Graphics.PackageValidationTests
             GraphicsDeviceType gfxApi = GraphicsDeviceType.Direct3D11;
 
             CliArgumentsCheck.CheckGfxApiAgainstArguments(cliArguments, null, null, gfxApi);
-            LogAssert.Expect(LogType.Error, $"Error: {cliArguments[1]} argument was passed to the Editor, but the Player Settings Graphics API list starts with {gfxApi}");
+            LogAssert.Expect(LogType.Error, $"Graphics Tests: {cliArguments[1]} argument was passed to the Editor, but the Player Settings Graphics API list starts with {gfxApi}");
         }
 
         [Test]
@@ -107,7 +107,7 @@ namespace UnityEditor.TestTools.Graphics.PackageValidationTests
             GraphicsDeviceType gfxApi = GraphicsDeviceType.PlayStation5NGGC;
 
             CliArgumentsCheck.CheckGfxApiAgainstArguments(cliArguments, null, null, gfxApi);
-            LogAssert.Expect(LogType.Log, $"{cliArguments[3]} argument was passed to the Editor, and the Player Settings Graphics API list starts with {gfxApi}");
+            LogAssert.Expect(LogType.Log, $"Graphics Tests: {cliArguments[3]} argument was passed to the Editor, and the Player Settings Graphics API list starts with {gfxApi}");
         }
 
         [Test]
@@ -115,7 +115,7 @@ namespace UnityEditor.TestTools.Graphics.PackageValidationTests
         public void CheckGfxApiAgainstArguments_PlayerGfxApiMatchesCliProjectSetupArg_LogIsLogged(string arg, GraphicsDeviceType api)
         {
             CliArgumentsCheck.CheckGfxApiAgainstArguments(new List<string> { arg }, null, null, api);
-            LogAssert.Expect(LogType.Log, $"{arg} argument was passed to the Editor, and the Player Settings Graphics API list starts with {api}");
+            LogAssert.Expect(LogType.Log, $"Graphics Tests: {arg} argument was passed to the Editor, and the Player Settings Graphics API list starts with {api}");
         }
 
         [Test]
@@ -125,7 +125,7 @@ namespace UnityEditor.TestTools.Graphics.PackageValidationTests
             GraphicsDeviceType gfxApi =  GraphicsDeviceType.Direct3D11;
 
             CliArgumentsCheck.CheckGfxApiAgainstArguments(new List<string> { cliArgument }, null, null, gfxApi);
-            LogAssert.Expect(LogType.Error, $"Error: {cliArgument} argument was passed to the Editor, but the Player Settings Graphics API list starts with {gfxApi}");
+            LogAssert.Expect(LogType.Error, $"Graphics Tests: {cliArgument} argument was passed to the Editor, but the Player Settings Graphics API list starts with {gfxApi}");
         }
 
         [Test]
@@ -133,7 +133,7 @@ namespace UnityEditor.TestTools.Graphics.PackageValidationTests
         public void CheckGfxApiAgainstArguments_PlayerGfxApiMatchesUtrArg_LogIsLogged(string testSettingsArg, string gfxApiArg, GraphicsDeviceType api)
         {
             CliArgumentsCheck.CheckGfxApiAgainstArguments(new List<string> { testSettingsArg }, new List<string> { "playerGraphicsAPI", gfxApiArg }, null, api);
-            LogAssert.Expect(LogType.Log, $"\"playerGraphicsAPI\":\"{gfxApiArg}\" was found in TestSettings.json, and the Player Settings Graphics API list starts with {api}");
+            LogAssert.Expect(LogType.Log, $"Graphics Tests: \"playerGraphicsAPI\":\"{gfxApiArg}\" was found in TestSettings.json, and the Player Settings Graphics API list starts with {api}");
         }
 
         [Test]
@@ -143,7 +143,7 @@ namespace UnityEditor.TestTools.Graphics.PackageValidationTests
             GraphicsDeviceType gfxApi = GraphicsDeviceType.Direct3D11;
 
             CliArgumentsCheck.CheckGfxApiAgainstArguments(new List<string> { "-testSettingsFile" }, new List<string> { "playerGraphicsAPI", cliArgument }, null, gfxApi);
-            LogAssert.Expect(LogType.Error, $"Error: \"playerGraphicsAPI\":\"{cliArgument}\" was found in TestSettings.json, but the Player Settings Graphics API list starts with {gfxApi}");
+            LogAssert.Expect(LogType.Error, $"Graphics Tests: \"playerGraphicsAPI\":\"{cliArgument}\" was found in TestSettings.json, but the Player Settings Graphics API list starts with {gfxApi}");
         }
 
         [Test]
@@ -152,7 +152,7 @@ namespace UnityEditor.TestTools.Graphics.PackageValidationTests
             List<string> cliArguments = new List<string>{ "-force-vulkan", "-force-d3d11", "-force-vulkan", "-force-d3d12" };
 
             var foundArgs = CliArgumentsCheck.CheckForConflictingEditorCliArgs(cliArguments);
-            LogAssert.Expect(LogType.Error, $"Conflicting commandline arguments were found: {string.Join(" ", foundArgs)}. Only one argument should be passed to force the Editor graphics API.");
+            LogAssert.Expect(LogType.Error, $"Graphics Tests: Conflicting commandline arguments were found: {string.Join(" ", foundArgs)}. Only one argument should be passed to force the Editor graphics API.");
         }
 
         [Test]
@@ -162,7 +162,7 @@ namespace UnityEditor.TestTools.Graphics.PackageValidationTests
             List<string> testSettings = new List<string> { "playerGraphicsAPI", "Vulkan" };
 
             var foundArgs = CliArgumentsCheck.CheckForConflictingPlayerCliArgs(cliArguments, testSettings);
-            LogAssert.Expect(LogType.Error, $"Conflicting commandline arguments are forcing multiple graphics APIs for the Player Settings: {string.Join(" ", foundArgs)}. Only one argument should be passed to force the Player Settings graphics API.");
+            LogAssert.Expect(LogType.Error, $"Graphics Tests: Conflicting commandline arguments are forcing multiple graphics APIs for the Player Settings: {string.Join(" ", foundArgs)}. Only one argument should be passed to force the Player Settings graphics API.");
         }
     }
 }

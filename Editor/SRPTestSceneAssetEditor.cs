@@ -1,4 +1,4 @@
-#if UNITY_2022_2_OR_NEWER
+#if UNITY_2022_3_OR_NEWER
 using UnityEngine;
 using System.Collections.Generic;
 using System.IO;
@@ -47,7 +47,7 @@ public class SRPTestSceneAssetEditor : Editor
         }
 
         m_WarningElement = new VisualElement();
-        // What about scenes that are not added? 
+        // What about scenes that are not added?
         Label warningText = new Label("Disabled Scenes in Editor Build Settings");
         m_WarningElement.Add(warningText);
         foreach (string disabledScene in disabledScenes)
@@ -77,7 +77,7 @@ public class SRPTestSceneAssetEditor : Editor
         m_Root.Add(buttonContainer);
 
         m_Root.Bind(serializedObject);
-        
+
         m_Root.Add(m_WarningElement);
         return m_Root;
     }
@@ -118,7 +118,7 @@ public class SRPTestSceneAssetEditor : Editor
             var scenes = EditorBuildSettings.scenes;
             string assetPath = AssetDatabase.GetAssetPath(evt.newValue);
             bool sceneAlreadyAdded = false;
-            
+
             foreach (EditorBuildSettingsScene settingsScene in scenes)
             {
                 if (settingsScene.path == assetPath)
@@ -134,11 +134,11 @@ public class SRPTestSceneAssetEditor : Editor
                 var editorBuildSettingsScenes = scenes.Append(editorBuildSettingsScene);
                 EditorBuildSettings.scenes = editorBuildSettingsScenes.ToArray();
             }
-            
+
             property.FindPropertyRelative("path").stringValue = assetPath;
             serializedObject.ApplyModifiedProperties();
         });
-        
+
         var removeButton = new Button(() =>
         {
             m_TestDatas.DeleteArrayElementAtIndex(index);
@@ -149,7 +149,7 @@ public class SRPTestSceneAssetEditor : Editor
             style= {marginLeft = 5, paddingLeft = 5},
             tooltip = "Delete Entry"
         };
-        
+
         removeButton.Add(new Image
         {
             image =  EditorGUIUtility.Load("TreeEditor.Trash") as Texture2D,
@@ -180,7 +180,7 @@ public class SRPTestSceneAssetEditor : Editor
         foldout.hierarchy[0].Add(headerContainer);
 
         foldout.BindProperty(property);
-        
+
         return foldout;
     }
 }

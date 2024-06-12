@@ -395,7 +395,7 @@ namespace UnityEditor.TestTools.Graphics
 LightingData.*
 ReflectionProbe-*";
 
-        [MenuItem("Assets/Tests/Toggle Scene for Bake")]
+        [MenuItem("Assets/Graphics Test Framework/Toggle Scene for Bake")]
         public static void LabelSceneForBake()
         {
             UnityEngine.Object[] sceneAssets = Selection.GetFiltered(typeof(SceneAsset), SelectionMode.DeepAssets);
@@ -443,7 +443,7 @@ ReflectionProbe-*";
                 EditorSceneManagement.EditorSceneManager.RestoreSceneManagerSetup(previousSceneSetup);
         }
 
-        [MenuItem("Assets/Tests/Toggle Scene for Bake", true)]
+        [MenuItem("Assets/Graphics Test Framework/Toggle Scene for Bake", true)]
         public static bool LabelSceneForBake_Test()
         {
             return IsSceneAssetSelected();

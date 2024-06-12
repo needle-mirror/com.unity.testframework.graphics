@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine.UIElements;
 
-namespace UnityEngine.TestTools.Graphics.PackageValidationTests
+namespace UnityEngine.TestTools.Graphics.Tests
 {
 #if TEST_FRAMEWORK_2_0_0_OR_NEWER
     [RequiresPlayMode]
@@ -262,7 +262,7 @@ namespace UnityEngine.TestTools.Graphics.PackageValidationTests
             catch (AssertionException e)
             {
                 // Expected
-                Debug.Log(e + " (expected)");
+                GraphicsTestLogger.Log(LogType.Log, e + " (expected)");
             }
         }
 

@@ -7,8 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [8.7.0-exp.1] - 2024-06-12
+
+- Enable the use of GraphicsTestLogger at Runtime for certain platforms.
+- Reorganized menu items in the Tools/Graphics Test Framework menu.
+- Several minor fixes and improvements.
+
 ## [8.6.3-exp.1] - 2024-05-29
 
+- Update ImageAssert to properly encode RGBAFloat images as full-precision EXR files, rather than half-precision.
 - Fixed UUM-73039: Error is thrown if reference image is not present on Android and WebGL
 
 ## [8.6.2-exp.2] - 2024-05-10

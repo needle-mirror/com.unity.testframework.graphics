@@ -1,29 +1,26 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.TestTools.Graphics;
 
 namespace UnityEditor.TestTools.Graphics
 {
-    static public class GameViewSize
+    public static class GameViewSize
     {
         static object s_InitialSizeObj;
 
         const int k_MiscSize = 1; // Used when no main GameView exists (ex: batchmode)
 
-#if UNITY_2019_3_OR_NEWER
         static Type s_GameViewType = Type.GetType("UnityEditor.PlayModeView,UnityEditor");
         static string s_GetGameViewFuncName = "GetMainPlayModeView";
-#else
-        static Type s_GameViewType = Type.GetType("UnityEditor.GameView,UnityEditor");
-        static string s_GetGameViewFuncName = "GetMainGameView";
-#endif
+
         static EditorWindow GetMainGameView()
         {
             var getMainGameView = s_GameViewType.GetMethod(s_GetGameViewFuncName, BindingFlags.NonPublic | BindingFlags.Static);
             if (getMainGameView == null)
             {
-                Debug.LogError(string.Format("Can't find the main Game View : {0} function was not found in {1} type ! Did API change ?",
+                GraphicsTestLogger.Log(LogType.Error, string.Format("Can't find the main Game View : {0} function was not found in {1} type ! Did API change ?",
                     s_GetGameViewFuncName, s_GameViewType));
                 return null;
             }

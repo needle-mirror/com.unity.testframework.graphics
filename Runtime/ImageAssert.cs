@@ -228,7 +228,8 @@ namespace UnityEngine.TestTools.Graphics
                 PathName = dirName,
                 ImageName = StripParametricTestCharacters(imageName),
             };
-            imageMessage.ActualImage = actual.EncodeToEXR();
+            Texture2D.EXRFlags actualExrFormat = actual.format == TextureFormat.RGBAHalf ? Texture2D.EXRFlags.None : Texture2D.EXRFlags.OutputAsFloat;
+            imageMessage.ActualImage = actual.EncodeToEXR(actualExrFormat);
 
             try
             {
@@ -294,10 +295,10 @@ namespace UnityEngine.TestTools.Graphics
                         diffImage.SetPixels(diffPixelsArray, 0);
                         diffImage.Apply(false);
 
-                        imageMessage.DiffImage = diffImage.EncodeToEXR();
-                        imageMessage.ExpectedImage = expected.EncodeToEXR();
+                        imageMessage.DiffImage = diffImage.EncodeToEXR(actualExrFormat);
+                        imageMessage.ExpectedImage = expected.EncodeToEXR(actualExrFormat);
 
-                        Debug.Log(e.Message);
+                        GraphicsTestLogger.Log(LogType.Log, e.Message);
                         throw;
                     }
                 }
@@ -442,7 +443,7 @@ namespace UnityEngine.TestTools.Graphics
                         imageMessage.DiffImage = diffImage.EncodeToPNG();
                         imageMessage.ExpectedImage = expected.EncodeToPNG();
 
-                        Debug.Log(e.Message);
+                        GraphicsTestLogger.Log(LogType.Log, e.Message);
                         throw;
                     }
                 }

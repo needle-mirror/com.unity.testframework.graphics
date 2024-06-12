@@ -4,6 +4,7 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEditor.TestTools.Graphics;
+using UnityEngine.TestTools.Graphics;
 
 namespace UnityEditor.TestTools.Graphics.Tests
 {
@@ -46,8 +47,8 @@ namespace UnityEditor.TestTools.Graphics.Tests
                 File.Delete(logFilePath);
             }
 
-            LogAssert.Expect(LogType.Warning, "Graphics Tests: Log path is empty. Using default log path.");
             LogAssert.Expect(LogType.Log, "Graphics Tests: Test message");
+            LogAssert.Expect(LogType.Warning, "Graphics Tests: Log path is empty. Using default log path.");
             GraphicsTestLogger.Log(LogType.Log, "Test message", null);
 
             Assert.That(Directory.Exists(realLogDirectory));
@@ -130,7 +131,7 @@ namespace UnityEditor.TestTools.Graphics.Tests
 
             string[] logFileContents = File.ReadAllLines(logFilePath);
 
-            Assert.AreEqual("[Error]:\tTest message", logFileContents[0].Substring(22));
+            Assert.AreEqual("[ERROR]:\tTest message", logFileContents[0].Substring(22));
         }
 
         [Test]
@@ -149,7 +150,7 @@ namespace UnityEditor.TestTools.Graphics.Tests
 
             string[] logFileContents = File.ReadAllLines(logFilePath);
 
-            Assert.AreEqual("[Warn]:\tTest message", logFileContents[0].Substring(22));
+            Assert.AreEqual("[WARN]:\tTest message", logFileContents[0].Substring(22));
         }
 
         [Test]
@@ -168,7 +169,7 @@ namespace UnityEditor.TestTools.Graphics.Tests
 
             string[] logFileContents = File.ReadAllLines(logFilePath);
 
-            Assert.AreEqual("[Info]:\tTest message", logFileContents[0].Substring(22));
+            Assert.AreEqual("[INFO]:\tTest message", logFileContents[0].Substring(22));
         }
 
         [Test]
@@ -190,8 +191,8 @@ namespace UnityEditor.TestTools.Graphics.Tests
             string[] logFileContents = File.ReadAllLines(logFilePath);
 
             Assert.AreEqual(2, logFileContents.Length);
-            Assert.AreEqual("[Info]:\tTest message 1", logFileContents[0].Substring(22));
-            Assert.AreEqual("[Info]:\tTest message 2", logFileContents[1].Substring(22));
+            Assert.AreEqual("[INFO]:\tTest message 1", logFileContents[0].Substring(22));
+            Assert.AreEqual("[INFO]:\tTest message 2", logFileContents[1].Substring(22));
         }
 
         [Test]
@@ -215,9 +216,9 @@ namespace UnityEditor.TestTools.Graphics.Tests
             string[] logFileContents = File.ReadAllLines(logFilePath);
 
             Assert.AreEqual(3, logFileContents.Length);
-            Assert.AreEqual("[Error]:\tTest message 1", logFileContents[0].Substring(22));
-            Assert.AreEqual("[Warn]:\tTest message 2", logFileContents[1].Substring(22));
-            Assert.AreEqual("[Info]:\tTest message 3", logFileContents[2].Substring(22));
+            Assert.AreEqual("[ERROR]:\tTest message 1", logFileContents[0].Substring(22));
+            Assert.AreEqual("[WARN]:\tTest message 2", logFileContents[1].Substring(22));
+            Assert.AreEqual("[INFO]:\tTest message 3", logFileContents[2].Substring(22));
         }
 
         [Test]

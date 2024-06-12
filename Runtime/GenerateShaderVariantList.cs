@@ -24,7 +24,7 @@ namespace UnityEngine.TestTools.Graphics
         static void RunOnStart()
         {
             GraphicsSettings.logWhenShaderIsCompiled = true;
-            Debug.Log("Register log file processing");
+            GraphicsTestLogger.Log(LogType.Log, "Register log file processing");
             Application.quitting += ConvertShaderErrorsToLog;
         }
     #endif
@@ -40,9 +40,9 @@ namespace UnityEngine.TestTools.Graphics
                 using (var reader = new StreamReader(logFile, Encoding.Default))
                     AppendAllShaderLines(out finalList, reader.ReadToEnd(), true);
             }
-            Debug.Log("The following list of Compiled Shaders are directly converted from shader not found errors. You can ignore them as it's only used for the Graphics Test Shader Variants Stripper system.");
+            GraphicsTestLogger.Log(LogType.Log, "The following list of Compiled Shaders are directly converted from shader not found errors. You can ignore them as it's only used for the Graphics Test Shader Variants Stripper system.");
 
-            Debug.Log(finalList);
+            GraphicsTestLogger.Log(LogType.Log, finalList.ToString());
         }
 
         public static void AppendAllShaderLines(out StringBuilder finalFile, string playerLogContent, bool ignoreValidShadersAndCompute = false)
@@ -105,7 +105,7 @@ namespace UnityEngine.TestTools.Graphics
                     var shader = Shader.Find(shaderName);
                     if (shader == null)
                     {
-                        Debug.LogError($"Could not find shader {shaderName}");
+                        GraphicsTestLogger.Log(LogType.Error, $"Could not find shader {shaderName}");
                         continue;
                     }
                     var dummyMaterial = new Material(shader);

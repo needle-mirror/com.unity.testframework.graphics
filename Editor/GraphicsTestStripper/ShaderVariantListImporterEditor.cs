@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEditor;
@@ -170,7 +170,6 @@ namespace UnityEditor.TestTools.Graphics
             var shaderData = ShaderUtil.GetShaderData(shader);
             var shaderPassNames = new List<string>();
 
-#if UNITY_2021_2_OR_NEWER
             // Gather pass names for the current shader, filtered using the current render pipeline
             for (int subShaderIndex = 0; subShaderIndex < shaderData.SubshaderCount; subShaderIndex++)
             {
@@ -189,7 +188,6 @@ namespace UnityEditor.TestTools.Graphics
                     }
                 }
             }
-#endif
 
             return shaderPassNames;
         }
@@ -207,7 +205,10 @@ namespace UnityEditor.TestTools.Graphics
                     var settingsLine = JsonUtility.FromJson<ShaderVariantList.Settings>(lines[0]);
                     if (settingsLine != null)
                         lines.RemoveAt(0);
-                } catch {}
+                } catch
+                {
+                    // Don't care if it fails
+                }
 
                 // Deduplicate entries
                 foreach (var line in lines)

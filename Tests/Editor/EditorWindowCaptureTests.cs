@@ -12,7 +12,7 @@ using UnityEditor.SceneManagement;
 using System.Linq;
 using System.Diagnostics;
 
-namespace UnityEditor.TestTools.Graphics.PackageValidationTests
+namespace UnityEditor.TestTools.Graphics.Tests
 {
     [TestOf(typeof(EditorWindowCapture))]
     public class EditorWindowCaptureTestsNullWindow
@@ -118,7 +118,7 @@ namespace UnityEditor.TestTools.Graphics.PackageValidationTests
             CustomEditorWindow customWindow = EditorWindow.CreateWindow<CustomEditorWindow>();
             var settings = EditorWindowCaptureSettings.Default;
             settings.AdditionalSetupActions.Add(null);
-            LogAssert.Expect(LogType.Warning, "Null action provided in the additional setup actions list");
+            LogAssert.Expect(LogType.Warning, "Graphics Tests: Null action provided in the additional setup actions list");
             Texture2D capturedTexture = await EditorWindowCapture.CaptureAsync(customWindow, settings);
         }
 
@@ -189,7 +189,7 @@ namespace UnityEditor.TestTools.Graphics.PackageValidationTests
             var settings = EditorWindowCaptureSettings.Default;
             settings.AdditionalSetupActions.Add(lostFocus);
             LogAssert.Expect(LogType.Error, "CaptureEditorWindow: window must have focus");
-            LogAssert.Expect(LogType.Error, "Failed to capture the EditorWindow.");
+            LogAssert.Expect(LogType.Error, "Graphics Tests: Failed to capture the EditorWindow.");
             var result = await EditorWindowCapture.CaptureAsync(customWindow, settings);
             Assert.That(result, Is.Null);
         }

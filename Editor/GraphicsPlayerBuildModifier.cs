@@ -10,7 +10,7 @@ public class GraphicsPlayerBuildModifier : ITestPlayerBuildModifier
         // Add an extra define to the player so that XR test code can be enabled while still using the regular (non-VR) reference images
         if (RuntimeSettings.reuseTestsForXR)
             AddExtraScriptingDefine(ref playerOptions, "XR_REUSE_TESTS_STANDALONE");
-        
+
         // Add an extra define to the player so that RenderGraph test code can be enabled while still using the regular (non-RG) reference images
         if (RuntimeSettings.reuseTestsForRenderGraph)
             AddExtraScriptingDefine(ref playerOptions, "RENDER_GRAPH_REUSE_TESTS_STANDALONE");
@@ -25,7 +25,6 @@ public class GraphicsPlayerBuildModifier : ITestPlayerBuildModifier
 
     private void AddExtraScriptingDefine(ref BuildPlayerOptions playerOptions, string extraScriptingDefine)
     {
-#if UNITY_2020_1_OR_NEWER
         if (playerOptions.extraScriptingDefines != null)
         {
             string[] extraScriptingDefines = new string[1 + playerOptions.extraScriptingDefines.Length];
@@ -38,6 +37,5 @@ public class GraphicsPlayerBuildModifier : ITestPlayerBuildModifier
         {
             playerOptions.extraScriptingDefines = new string[] { extraScriptingDefine };
         }
-#endif
     }
 }

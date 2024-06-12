@@ -101,7 +101,7 @@ namespace UnityEngine.TestTools.Graphics
                 foreach (var testCase in provider.GetTestCases())
                 {
                     TestCaseData data = new TestCaseData( new object[]{ testCase } );
-                    
+
                     data.SetName(testCase.Name);
                     data.ExpectedResult = new Object();
                     data.HasExpectedResult = true;
@@ -117,7 +117,7 @@ namespace UnityEngine.TestTools.Graphics
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Failed to generate graphics testcases!");
+                GraphicsTestLogger.Log(LogType.Error, "Failed to generate graphics test cases.");
                 Debug.LogException(ex);
                 throw;
             }
@@ -134,9 +134,9 @@ namespace UnityEngine.TestTools.Graphics
         public static GraphicsTestCase GetCaseFromScenePath(string scenePath, string referenceImagePath = null )
         {
             UseGraphicsTestCasesAttribute tmp = new UseGraphicsTestCasesAttribute( string.IsNullOrEmpty(referenceImagePath)? String.Empty : referenceImagePath);
-        
+
             var provider = tmp.Provider;
-        
+
             return provider.GetTestCaseFromPath(scenePath);
         }
     }

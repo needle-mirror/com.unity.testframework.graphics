@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using System;
 
-namespace UnityEngine.TestTools.Graphics.PackageValidationTests
+namespace UnityEngine.TestTools.Graphics.Tests
 {
     [TestFixture(System.Runtime.InteropServices.Architecture.Arm64)]
     [TestFixture(System.Runtime.InteropServices.Architecture.X64)]

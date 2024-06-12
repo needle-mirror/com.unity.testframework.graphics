@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.TestTools.Graphics;
 
 // This script sets global rendering resolution based on the predefined settings inside scriptable object that is attached
 // to the component with this script.
@@ -28,13 +29,13 @@ public class GlobalResolutionSetter : MonoBehaviour
     {
         if (resolutionFields.Platform != Application.platform)
         {
-            Debug.Log(
+            GraphicsTestLogger.Log(LogType.Log,
                 $"Skipping setting rendering resolution, target platform: {resolutionFields.Platform}, current platform: {Application.platform}"
             );
             return false;
         }
 
-        Debug.Log(
+        GraphicsTestLogger.Log(LogType.Log,
             $"Setting new rendering resolution: {resolutionFields.Width}x{resolutionFields.Height}"
         );
         Screen.SetResolution(

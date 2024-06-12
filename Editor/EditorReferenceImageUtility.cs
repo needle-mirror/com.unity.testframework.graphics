@@ -1,32 +1,67 @@
 using UnityEngine;
+using System;
 using System.IO;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using UnityEngine.TestTools.Graphics;
+using Object = UnityEngine.Object;
 
 namespace UnityEditor.TestTools.Graphics
 {
-    class ReferenceImageUtility
+    static class EditorReferenceImageUtility
     {
-        static internal string referenceLinearImagesPath => Path. Combine("Assets", "ReferenceImages", "Linear");
-        static internal string referenceImagesPath => Path. Combine("Assets", "ReferenceImages");
+        const string k_ReferenceImagesRoot = "Assets/ReferenceImages";
+        const string k_ReferenceImagesBaseRoot = "Assets/ReferenceImagesBase";
 
-
-        [MenuItem("Assets/Graphics Test Framework/Copy To Linear Reference Images", priority = 1)]
-        internal static void CopyLinearImages()
+        [MenuItem("Assets/Graphics Test Framework/Copy Image(s) To.../Reference Images Base", priority = 1)]
+        internal static void CopyImagesToBasePath()
         {
-            CopyImages(referenceLinearImagesPath);
+            CopyImages(k_ReferenceImagesBaseRoot);
         }
 
-        [MenuItem("Assets/Graphics Test Framework/Copy Images To Folder Recursively", priority = 1)]
+        [MenuItem("Assets/Graphics Test Framework/Copy Image(s) To.../Reference Images", priority = 2)]
+        internal static void CopyImagesToDefaultPaths()
+        {
+            CopyImages(k_ReferenceImagesRoot + "/Linear");
+            CopyImages(k_ReferenceImagesRoot + "/Gamma");
+        }
+
+        [MenuItem("Assets/Graphics Test Framework/Copy Image(s) To.../Custom Folder", priority = 3)]
         internal static void CopyImagesToCustomFolder()
         {
-            CopyImages(EditorUtility.OpenFolderPanel("Destination",referenceImagesPath, "ReferenceImages"));
+            string defaultPath = Directory.Exists(k_ReferenceImagesRoot) ? k_ReferenceImagesRoot : "Assets";
+
+            string path = EditorUtility.OpenFolderPanel("Destination", defaultPath, "");
+            if (string.IsNullOrEmpty(path))
+                return;
+
+            CopyImages(path);
         }
 
-        static void CopyImages(string path)
+        [MenuItem("Assets/Graphics Test Framework/Copy Image(s) To.../Reference Images Base", true)]
+        [MenuItem("Assets/Graphics Test Framework/Copy Image(s) To.../Reference Images", true)]
+        [MenuItem("Assets/Graphics Test Framework/Copy Image(s) To.../Custom Folder", true)]
+        public static bool LabelSceneForBake_Test()
         {
-            Directory.CreateDirectory(path);
+            return IsTextureAssetSelected();
+        }
+
+        static bool IsTextureAssetSelected()
+        {
+            UnityEngine.Object[] textureAssets = Selection.GetFiltered(typeof(Texture2D), SelectionMode.DeepAssets);
+
+            return textureAssets.Length != 0;
+        }
+
+        internal static void CopyImages(string path)
+        {
+            if (!Directory.Exists(path))
+            {
+                return;
+            }
+
             string[] leafFolders = EnumerateLeafFolders(path).ToArray();
             int numOfLeafFolders = leafFolders.Length;
 
@@ -55,12 +90,14 @@ namespace UnityEditor.TestTools.Graphics
                             break;
                         }
                         AssetDatabase.CopyAsset(pathToOriginalImage, Path.Combine(leafFolder, imageName));
-                        sb.AppendLine("-> " + leafFolder);
+                        sb.AppendLine($"-> {leafFolder}");
                     }
                     EditorUtility.ClearProgressBar();
-                    Debug.Log(sb);
+                    GraphicsTestLogger.Log(LogType.Log, sb.ToString());
                 }
             }
+
+            AssetDatabase.Refresh();
         }
 
         internal static IEnumerable<string> EnumerateLeafFolders(string root)
@@ -81,7 +118,7 @@ namespace UnityEditor.TestTools.Graphics
 
                 if (!anySubfolders)
                 {
-                    yield return root;
+                    yield return root.Replace('\\', '/');
                 }
             }
         }

@@ -1,4 +1,3 @@
-#if UNITY_EDITOR
 using System;
 using System.Linq;
 using System.Runtime.ExceptionServices;
@@ -8,7 +7,7 @@ namespace UnityEditor.TestTools.Graphics
 {
     [System.Serializable]
 
-    [CreateAssetMenu(fileName = "TestCaseFilters", menuName = "Testing/Test Filter ScriptableObject", order = 100)]
+    [CreateAssetMenu(fileName = "TestCaseFilters", menuName = "Graphics Test Framework/Test Filters", order = 100)]
     public class TestFilters : ScriptableObject
     {
         public TestFilterConfig[] filters;
@@ -28,6 +27,4 @@ namespace UnityEditor.TestTools.Graphics
             Array.Copy(sortedFilters, filters, filters.Length);
         }
     }
-
 }
-#endif

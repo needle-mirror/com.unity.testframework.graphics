@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
 
-[CreateAssetMenu(fileName = "SRPTestSceneSO", menuName = "Testing/SRP Test Scene Asset")]
+[CreateAssetMenu(fileName = "SRPTestSceneSO", menuName = "Graphics Test Framework/SRP Test Scene Asset")]
 public class SRPTestSceneAsset : ScriptableObject
 {
     [Serializable]
@@ -15,6 +15,6 @@ public class SRPTestSceneAsset : ScriptableObject
         public List<RenderPipelineAsset>   srpAssets;
         public string path;
     }
-    
+
     public List<TestData> testDatas = new List<TestData>();
 }
