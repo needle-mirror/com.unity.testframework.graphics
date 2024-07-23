@@ -10,6 +10,18 @@ namespace UnityEngine.TestTools.Graphics.Tests
 #endif
     public class ImageAssertTests
     {
+        [UnityTest]
+        public IEnumerator AreEqualAsync_WithNullCamera()
+        {
+            bool success = true;
+            yield return ImageAssert.AreEqualAsync(new Texture2D(1, 1), (IEnumerable<Camera>)null, (result) => {
+                success = result;
+            });
+
+            Assert.False(success);
+        }
+
+
         [Test]
         public void AreEqual_WithNullCamera_ThrowsArgumentNullException()
         {

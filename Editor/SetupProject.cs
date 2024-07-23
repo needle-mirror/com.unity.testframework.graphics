@@ -37,7 +37,10 @@ namespace UnityEditor.TestTools.Graphics
             { "xb1d3d12", () => SetGraphicsAPI(GraphicsDeviceType.XboxOneD3D12) },
             { "gamecorexboxone", () => SetGraphicsAPI(GraphicsDeviceType.GameCoreXboxOne) },
             { "gamecorexboxseries", () => SetGraphicsAPI(GraphicsDeviceType.GameCoreXboxSeries) },
-            { "switch", () => SetGraphicsAPI(GraphicsDeviceType.Switch) }
+            { "switch", () => SetGraphicsAPI(GraphicsDeviceType.Switch) },
+#if UNITY_2023_2_OR_NEWER
+            { "webgpu", () => SetGraphicsAPI(GraphicsDeviceType.WebGPU) }
+#endif
         };
 
         public static void ApplySettings()

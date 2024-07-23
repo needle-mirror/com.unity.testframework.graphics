@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [8.8.0-exp.1] - 2024-07-23
+
+- There is now an ImageAssertAsync function to use AsyncGPUReadback to get test results
+- Added support for the WebGPU graphics API
+  
+## [8.7.1-exp.1] - 2024-07-15
+
+- There is now a function to check if there are any "useless" variants in the shader variant list (multiple variant leading to the same compiled shader code).
+
 ## [8.7.0-exp.1] - 2024-06-12
 
 - Enable the use of GraphicsTestLogger at Runtime for certain platforms.

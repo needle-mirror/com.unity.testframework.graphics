@@ -141,6 +141,8 @@ namespace UnityEditor.TestTools.Graphics
 #endif
                 case (GraphicsDeviceType)26: return (ShaderCompilerPlatform)23;
                 case (GraphicsDeviceType)27: return (ShaderCompilerPlatform)24;
+                case (GraphicsDeviceType)28: return (ShaderCompilerPlatform)26;
+
                 default: throw new ArgumentOutOfRangeException(nameof(type), type, null);
             }
         }

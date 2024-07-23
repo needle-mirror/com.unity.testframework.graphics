@@ -87,6 +87,16 @@ namespace UnityEditor.TestTools.Graphics
             }
             GUI.backgroundColor = oldColor;
 
+            using (new GUILayout.VerticalScope("HelpBox"))
+            {
+                EditorGUILayout.LabelField("Debug / Optimization");
+                if (GUILayout.Button(new GUIContent("Log all duplicated variants",
+                        "Allow to find unneeded keywords in your shader passes. Removing them will improve object batching.")))
+                {
+                    LogDuplicatedVariantKeywords();
+                }
+            }
+
             if (Event.current.commandName == "ObjectSelectorUpdated")
             {
                 ShaderVariantCollection pickedCollection = null;
@@ -118,6 +128,91 @@ namespace UnityEditor.TestTools.Graphics
             base.OnInspectorGUI();
 
             serializedObject.ApplyModifiedProperties();
+        }
+
+        int ComputeHash(params byte[] data)
+        {
+            unchecked
+            {
+                const int p = 16777619;
+                int hash = (int)2166136261;
+
+                for (int i = 0; i < data.Length; i++)
+                    hash = (hash ^ data[i]) * p;
+
+                return hash;
+            }
+        }
+
+        string KeywordListToString(List<string> keywords)
+        {
+            if (keywords.Count == 0)
+                return "<no keywords>";
+            else
+                return String.Join(" ", keywords);
+        }
+
+        void LogDuplicatedVariantKeywords()
+        {
+            try
+            {
+                Dictionary<(ShaderType shaderType, string shaderName, string shaderPass, int compiledHash), List<string>> compiledSet = new();
+                StringBuilder sb = new();
+
+                int count = 0;
+                foreach (var variant in target.serializedShaderVariants)
+                {
+                    if (variant.stage != ShaderType.Fragment || variant.stage == ShaderType.Vertex ||
+                        variant.stage == ShaderType.Domain || variant.stage == ShaderType.Hull)
+                        continue;
+
+                    var shader = Shader.Find(variant.shaderName);
+                    if (shader == null)
+                    {
+                        Debug.Log("Shader " + variant.shaderName + " not found");
+                        continue;
+                    }
+
+                    var sd = ShaderUtil.GetShaderData(shader);
+                    var subShader = sd.GetSubshader(sd.ActiveSubshaderIndex);
+                    for (int i = 0; i < subShader.PassCount; i++)
+                    {
+                        var pass = subShader.GetPass(i);
+                        if (pass.Name == variant.passName)
+                        {
+                            if (pass.HasShaderStage(variant.stage))
+                            {
+                                var compiledInfo = pass.CompileVariant(variant.stage, variant.keywords.ToArray(),
+                                    ShaderCompilerPlatform.D3D, BuildTarget.StandaloneWindows);
+                                EditorUtility.DisplayProgressBar(
+                                    $"Compiling Variants {count}/{target.serializedShaderVariants.Count}",
+                                    $"{variant.shaderName} {variant.passName} {variant.stage} {KeywordListToString(variant.keywords)}",
+                                    i / (float)subShader.PassCount);
+                                var k = (variant.stage, variant.shaderName, variant.passName,
+                                    ComputeHash(compiledInfo.ShaderData));
+                                if (compiledSet.TryGetValue(k, out var keywords))
+                                {
+                                    var duplicatedText = "Duplicated keywords for shader " + variant.shaderName + " "
+                                              + variant.passName + " " + variant.stage + "\n" +
+                                              KeywordListToString(keywords) + "\n" +
+                                              KeywordListToString(variant.keywords) + "\n";
+                                    Debug.Log(duplicatedText);
+                                    sb.AppendLine(duplicatedText);
+                                }
+                                else
+                                    compiledSet.Add(k, variant.keywords);
+                            }
+                        }
+                    }
+                    count++;
+                }
+
+                File.WriteAllText(Application.dataPath + "/../DuplicatedVariants.log", sb.ToString());
+            }
+            finally
+            {
+                EditorUtility.ClearProgressBar();
+            }
         }
 
         void UpdateVariantsFromLog(string playerLogContent)

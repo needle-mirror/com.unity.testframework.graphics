@@ -14,6 +14,8 @@ using UnityEngine.Networking.PlayerConnection;
 using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.Experimental.Rendering;
+using UnityEngine.Rendering;
+
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.Profiling;
@@ -60,6 +62,7 @@ namespace UnityEngine.TestTools.Graphics
 
             AreEqual(expected, new List<Camera> { camera }, settings, expectedImagePathLog);
         }
+
 
         /// <summary>
         /// Render an image from the given cameras and compare it to the reference image.
@@ -169,6 +172,167 @@ namespace UnityEngine.TestTools.Graphics
             }
         }
 
+
+        /// <summary>
+        /// Render an image from the given cameras and compare it to the reference image.
+        /// </summary>
+        /// <param name="expected">The expected image that should be rendered by the camera.</param>
+        /// <param name="cameras">The cameras to render from.</param>
+        /// <param name="callback">Optional callback with boolean parameter to represent if AreEqual is successful </param>
+        /// <param name="settings">Optional settings that control how the image comparison is performed. Can be null, in which case the rendered image is required to be exactly identical to the reference.</param>
+        public static IEnumerator AreEqualAsync(Texture2D expected, IEnumerable<Camera> cameras, System.Action<bool> callback = null, ImageComparisonSettings settings = null, string expectedImagePathLog = null)
+        {
+            if (cameras == null)
+            {
+                if (callback != null)
+                {
+                    callback(false);
+                }
+                yield break;
+            }
+
+            settings ??= new ImageComparisonSettings();
+
+            int width = settings.TargetWidth;
+            int height = settings.TargetHeight;
+            int samples = settings.TargetMSAASamples;
+            var format = expected != null ? expected.format : TextureFormat.ARGB32;
+
+            // Some HDRP test fail with HDRP batcher because shaders variant are compiled "on the fly" in editor mode.
+            // Persistent PerMaterial CBUFFER is build during culling, but some nodes could use new variants and CBUFFER will be up to date next frame.
+            // ( this is editor specific, standalone player has no frame delay issue because all variants are ready at init stage )
+            // This PR adds a dummy rendered frame before doing the real rendering and compare images ( test already has frame delay, but there is no rendering )
+            const int dummyRenderedFrameCount = 1;
+            GraphicsFormat ldrFormat =
+#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
+                GraphicsFormat.R8G8B8A8_SRGB;
+#else
+                SystemInfo.GetGraphicsFormat(DefaultFormat.LDR);
+#endif
+            var defaultFormat = (settings.UseHDR) ? SystemInfo.GetGraphicsFormat(DefaultFormat.HDR) : ldrFormat;
+            RenderTextureDescriptor desc = new RenderTextureDescriptor(width, height, defaultFormat, 24);
+            desc.msaaSamples = samples;
+            var rt = RenderTexture.GetTemporary(desc);
+            UnityEngine.Graphics.SetRenderTarget(rt);
+            UnityEngine.GL.Clear(true, true, UnityEngine.Color.black);
+            UnityEngine.Graphics.SetRenderTarget(null);
+
+            Texture2D actual = null;
+            try
+            {
+                if (RuntimeSettings.reuseTestsForXR)
+                {
+                    GetImageResolution(settings, out int w, out int h);
+                    actual = new Texture2D(w, h, format, false);
+                    actual.ReadPixels(new Rect(0, 0, w, h), 0, 0, false);
+                    actual.Apply();
+                }
+                else if (settings.UseBackBuffer)
+                {
+                    Vector2 screenRes = new Vector2(Screen.width, Screen.height); // Grab the resolution of the screen
+                    RenderTextureDescriptor rtDesc = new RenderTextureDescriptor((int)screenRes.x, (int)screenRes.y, ldrFormat, 24);
+                    var tempRT = RenderTexture.GetTemporary(rtDesc);
+                    (int, int) resolution = (0, 0);
+                    backBufferResolutions.TryGetValue(settings.ImageResolution, out resolution);
+
+                    UnityEngine.Graphics.Blit(null as Texture, tempRT);
+
+                    // NOTE: this is needed because d3d-style top left origin graphics APIs will have the image flipped from the blit above.
+                    // requesting texture data assumes it is upside down and does another flip but blits from the back buffer keep the correct orientation
+                    // this fix will not be needed once y-flip is removed from the engine.
+                    RenderTexture screenRT = null;
+                    if (SystemInfo.graphicsUVStartsAtTop)
+                    {
+                        var (scale, offs) = (new Vector2(1, -1), new Vector2(0, 1));
+                        screenRT = RenderTexture.GetTemporary(rtDesc);
+                        UnityEngine.Graphics.Blit(tempRT, screenRT, scale, offs);
+                    }
+
+                    // grab screen pixels asynchronously
+                    AsyncGPUReadbackRequest req = AsyncGPUReadback.Request(SystemInfo.graphicsUVStartsAtTop ? screenRT : tempRT, 0, ldrFormat);
+                    yield return new WaitUntil(() => req.done);
+                    var data = req.GetData<Color32>().ToArray();
+                    Texture2D screenTex = new Texture2D((int)screenRes.x, (int)screenRes.y, format, false); // new texture to fill sized to the screen
+                    screenTex.SetPixels32(data);
+
+                    actual = new Texture2D(resolution.Item1, resolution.Item2, format, false);
+                    actual = ResizeInto(screenTex, actual);
+                    actual.Apply();
+
+                    RenderTexture.ReleaseTemporary(tempRT);
+                    if (screenRT)
+                    {
+                        RenderTexture.ReleaseTemporary(screenRT);
+                    }
+                    UnityEngine.Object.Destroy(screenTex);
+                }
+                else
+                {
+                    for (int i = 0; i < dummyRenderedFrameCount + 1; i++)        // x frame delay + the last one is the one really tested ( ie 5 frames delay means 6 frames are rendered )
+                    {
+                        foreach (var camera in cameras)
+                        {
+                            if (camera == null)
+                            {
+                                continue;
+                            }
+                            camera.targetTexture = rt;
+                            camera.Render();
+                            camera.targetTexture = null;
+                        }
+
+                        if (onAllCamerasRendered != null)
+                        {
+                            onAllCamerasRendered(rt);
+                        }
+
+                        // only proceed the test on the last rendered frame
+                        if (dummyRenderedFrameCount == i)
+                        {
+
+                            actual = new Texture2D(width, height, format, false);
+                            RenderTexture dummy = null;
+                            if (settings.UseHDR)
+                            {
+                                desc.graphicsFormat = ldrFormat;
+                                dummy = RenderTexture.GetTemporary(desc);
+                                UnityEngine.Graphics.Blit(rt, dummy);
+                            }
+
+                            AsyncGPUReadbackRequest req = AsyncGPUReadback.Request(dummy ?? rt, 0, ldrFormat);
+                            yield return new WaitUntil(() => req.done);
+                            Color32[] data = req.GetData<Color32>().ToArray();
+                            actual.SetPixels32(data);
+
+                            if (dummy != null)
+                            {
+                                RenderTexture.ReleaseTemporary(dummy);
+                            }
+
+                            actual.Apply();
+                        }
+                    }
+                }
+                AreEqual(expected, actual, settings, expectedImagePathLog);
+
+            }
+            finally
+            {
+                RenderTexture.ReleaseTemporary(rt);
+                if (actual != null)
+                {
+#if UNITY_EDITOR
+                    UnityEngine.Object.DestroyImmediate(actual);
+#else
+                    UnityEngine.Object.Destroy(actual);
+#endif
+                }
+            }
+            if (callback != null)
+            {
+                callback(true);
+            }
+        }
         private static string StripParametricTestCharacters(string name)
         {
             {
