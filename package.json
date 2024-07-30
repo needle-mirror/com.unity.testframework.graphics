@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Test Framework",
-  "version": "8.8.0-exp.1",
+  "version": "8.9.0-exp.1",
   "unity": "2021.3",
   "unityRelease": "0a1",
   "description": "Provides testing utilities for writing tests for graphics code, such as image comparison assertions and automatic management of reference images.",
@@ -24,15 +24,15 @@
     "com.unity.external.test-protocol": "1.0.0-preview"
   },
   "_upm": {
-    "changelog": "- There is now an ImageAssertAsync function to use AsyncGPUReadback to get test results\n- Added support for the WebGPU graphics API"
+    "changelog": "- Added parameter to `ImageAssert.AreEqual` to allow for saving images to the application persistent data path without an Editor connection."
   },
   "upmCi": {
-    "footprint": "db32c3823b10c28cacd282eb1bba94fbb5b07898"
+    "footprint": "d07dda42ac219ec444eaee89e88a986d62c2efca"
   },
-  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@8.8/manual/index.html",
+  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@8.9/manual/index.html",
   "repository": {
     "url": "git@github.cds.internal.unity3d.com:unity/unity.git",
     "type": "git",
-    "revision": "0450a7f2bfe7756fae9882ed0bb5db9d890cee51"
+    "revision": "b7e3af9bc42622d1119ae55b2c9ae9cb51741d29"
   }
 }

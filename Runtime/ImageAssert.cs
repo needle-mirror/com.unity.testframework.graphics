@@ -55,12 +55,12 @@ namespace UnityEngine.TestTools.Graphics
         /// <param name="expected">The expected image that should be rendered by the camera.</param>
         /// <param name="camera">The camera to render from.</param>
         /// <param name="settings">Optional settings that control how the image comparison is performed. Can be null, in which case the rendered image is required to be exactly identical to the reference.</param>
-        public static void AreEqual(Texture2D expected, Camera camera, ImageComparisonSettings settings = null, string expectedImagePathLog = null)
+        public static void AreEqual(Texture2D expected, Camera camera, ImageComparisonSettings settings = null, string expectedImagePathLog = null, bool saveFailedImageToDisk = false)
         {
             if (camera == null)
                 throw new ArgumentNullException(nameof(camera));
 
-            AreEqual(expected, new List<Camera> { camera }, settings, expectedImagePathLog);
+            AreEqual(expected, new List<Camera> { camera }, settings, expectedImagePathLog, saveFailedImageToDisk);
         }
 
 
@@ -70,7 +70,7 @@ namespace UnityEngine.TestTools.Graphics
         /// <param name="expected">The expected image that should be rendered by the camera.</param>
         /// <param name="cameras">The cameras to render from.</param>
         /// <param name="settings">Optional settings that control how the image comparison is performed. Can be null, in which case the rendered image is required to be exactly identical to the reference.</param>
-        public static void AreEqual(Texture2D expected, IEnumerable<Camera> cameras, ImageComparisonSettings settings = null, string expectedImagePathLog = null)
+        public static void AreEqual(Texture2D expected, IEnumerable<Camera> cameras, ImageComparisonSettings settings = null, string expectedImagePathLog = null, bool saveFailedImageToDisk = false)
         {
             if (cameras == null)
                 throw new ArgumentNullException(nameof(cameras));
@@ -155,7 +155,7 @@ namespace UnityEngine.TestTools.Graphics
                         }
                     }
                 }
-                AreEqual(expected, actual, settings, expectedImagePathLog);
+                AreEqual(expected, actual, settings, expectedImagePathLog, true, saveFailedImageToDisk);
 
             }
             finally
@@ -180,7 +180,7 @@ namespace UnityEngine.TestTools.Graphics
         /// <param name="cameras">The cameras to render from.</param>
         /// <param name="callback">Optional callback with boolean parameter to represent if AreEqual is successful </param>
         /// <param name="settings">Optional settings that control how the image comparison is performed. Can be null, in which case the rendered image is required to be exactly identical to the reference.</param>
-        public static IEnumerator AreEqualAsync(Texture2D expected, IEnumerable<Camera> cameras, System.Action<bool> callback = null, ImageComparisonSettings settings = null, string expectedImagePathLog = null)
+        public static IEnumerator AreEqualAsync(Texture2D expected, IEnumerable<Camera> cameras, System.Action<bool> callback = null, ImageComparisonSettings settings = null, string expectedImagePathLog = null, bool saveFailedImageToDisk = false)
         {
             if (cameras == null)
             {
@@ -313,7 +313,7 @@ namespace UnityEngine.TestTools.Graphics
                         }
                     }
                 }
-                AreEqual(expected, actual, settings, expectedImagePathLog);
+                AreEqual(expected, actual, settings, expectedImagePathLog, true, saveFailedImageToDisk);
 
             }
             finally
@@ -365,7 +365,7 @@ namespace UnityEngine.TestTools.Graphics
         /// <param name="expected">What the image is supposed to look like.</param>
         /// <param name="actual">What the image actually looks like.</param>
         /// <param name="settings">Optional settings that control how the comparison is performed. Can be null, in which case the images are required to be exactly identical.</param>
-        public static void AreEqualLinearHDR(Texture2D expected, Texture2D actual, ImageComparisonSettings settings = null, string expectedImagePathLog = null, bool saveFailedImage = true)
+        public static void AreEqualLinearHDR(Texture2D expected, Texture2D actual, ImageComparisonSettings settings = null, string expectedImagePathLog = null, bool saveFailedImage = true, bool saveFailedImageToDisk = false)
         {
             if (actual == null)
                 throw new ArgumentNullException(nameof(actual));
@@ -487,6 +487,10 @@ namespace UnityEngine.TestTools.Graphics
 #else
                 PlayerConnection.instance.Send(ImageMessage.MessageId, imageMessage.Serialize());
 #endif
+                if (saveFailedImageToDisk)
+                {
+                   SaveImageToPersistentData(imageMessage);
+                }
                 throw;
             }
         }
@@ -512,7 +516,7 @@ namespace UnityEngine.TestTools.Graphics
         /// <param name="expected">What the image is supposed to look like.</param>
         /// <param name="actual">What the image actually looks like.</param>
         /// <param name="settings">Optional settings that control how the comparison is performed. Can be null, in which case the images are required to be exactly identical.</param>
-        public static void AreEqual(Texture2D expected, Texture2D actual, ImageComparisonSettings settings = null, string expectedImagePathLog = null, bool saveFailedImage = true)
+        public static void AreEqual(Texture2D expected, Texture2D actual, ImageComparisonSettings settings = null, string expectedImagePathLog = null, bool saveFailedImage = true, bool saveFailedImageToDisk = false)
         {
             if (actual == null)
                 throw new ArgumentNullException(nameof(actual));
@@ -628,7 +632,38 @@ namespace UnityEngine.TestTools.Graphics
 #else
                 PlayerConnection.instance.Send(ImageMessage.MessageId, imageMessage.Serialize());
 #endif
+
+                if (saveFailedImageToDisk)
+                {
+                   SaveImageToPersistentData(imageMessage);
+                }
                 throw;
+            }
+        }
+
+        private static void SaveImageToPersistentData(ImageMessage imageMessage, bool hdr = false)
+        {
+            var saveDir = Path.Combine(Application.persistentDataPath, "ActualImages");
+            var currentTestResultsFolderPath = TestUtils.GetCurrentTestResultsFolderPath();
+            saveDir = Path.Combine(saveDir, currentTestResultsFolderPath);
+
+            if (!Directory.Exists(saveDir))
+            {
+                Directory.CreateDirectory(saveDir);
+            }
+
+            string extension = hdr ? "exr" : "png";
+            var actualImagePath = Path.Combine(saveDir, $"{imageMessage.ImageName}.{extension}");
+            File.WriteAllBytes(actualImagePath, imageMessage.ActualImage);
+
+            if (imageMessage.DiffImage != null)
+            {
+                var diffImagePath = Path.Combine(saveDir, $"{imageMessage.ImageName}.diff.{extension}");
+                File.WriteAllBytes(diffImagePath, imageMessage.DiffImage);
+
+                var expectedImagesPath =
+                    Path.Combine(saveDir, $"{imageMessage.ImageName}.expected.{extension}");
+                File.WriteAllBytes(expectedImagesPath, imageMessage.ExpectedImage);
             }
         }
 

@@ -7,11 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [8.9.0-exp.1] - 2024-07-30
+
+- Added parameter to `ImageAssert.AreEqual` to allow for saving images to the application persistent data path without an Editor connection.
+
 ## [8.8.0-exp.1] - 2024-07-23
 
 - There is now an ImageAssertAsync function to use AsyncGPUReadback to get test results
 - Added support for the WebGPU graphics API
-  
+
 ## [8.7.1-exp.1] - 2024-07-15
 
 - There is now a function to check if there are any "useless" variants in the shader variant list (multiple variant leading to the same compiled shader code).
