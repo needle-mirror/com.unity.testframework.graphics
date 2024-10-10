@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [8.9.1-exp.1] - 2024-10-10
+
+- Updated the regular expression to match the new log format for shader variants sent to the GPU driver.
+
 ## [8.9.0-exp.1] - 2024-07-30
 
 - Added parameter to `ImageAssert.AreEqual` to allow for saving images to the application persistent data path without an Editor connection.

@@ -12,7 +12,8 @@ namespace UnityEngine.TestTools.Graphics
     public static class GenerateShaderVariantList
     {
         public static readonly string k_CompiledShaderString = "Uploaded shader variant to the GPU driver";
-        public static readonly Regex s_CompiledShaderRegex = new Regex(@$"({k_CompiledShaderString}|Compiled shader): (?<shaderName>[^,]*), pass: (?<passName>[^,]*), stage: (?<stage>[^,]*), keywords (?<keywords>.*)");
+        private const string k_RegexTail = "pass: (?<passName>[^,]*), stage: (?<stage>[^,]*), keywords (?<keywords>.*)(, time: (?<time>[^,]*) ms)?";
+        public static readonly Regex s_CompiledShaderRegex = new Regex(@$"({k_CompiledShaderString}|Compiled shader): (?<shaderName>[^,]*)( \(instance (?<instanceID>[^,]*)\))?, {k_RegexTail}");
         public static readonly Regex s_CompiledComputeShaderRegex = new Regex("Compiled compute shader: (?<computeName>[^,]*), kernel: (?<kernelName>[^,]*), keywords (?<keywords>.*)");
         public static readonly Regex s_ShaderVariantNotFoundRegex = new Regex("Shader (?<shaderName>[^,]*), subshader (?<subShaderIndex>\\d+), pass (?<passIndex>\\d+), stage (?<stage>[^,]*): variant (?<keywords>.*) not found.");
         public static readonly string s_NoKeywordText = "<no keywords>";
