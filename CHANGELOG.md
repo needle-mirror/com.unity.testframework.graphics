@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [8.11.0-exp.1] - 2025-08-28
+
+- Fixed and resolved compilation errors with newer versions of Unity.
+
+## [8.10.0-exp.1] - 2025-05-19
+
+- Added support to parse architecture from the TestSettings file.
+
 ## [8.9.1-exp.1] - 2024-10-10
 
 - Updated the regular expression to match the new log format for shader variants sent to the GPU driver.

@@ -264,7 +264,7 @@ namespace UnityEngine.TestTools.Graphics
 #if !UNITY_WEBGL && !UNITY_ANDROID // WebGL and Android don't support AssetBundles.LoadFromFile
             var referenceImagesBundlePath = string.Format(ReferenceImagesBundlePrefix,
                 UseGraphicsTestCasesAttribute.ColorSpace,
-                UseGraphicsTestCasesAttribute.Platform.ToUniqueString(TestPlatform.GetCurrent().Arch),
+                UseGraphicsTestCasesAttribute.Platform.ToUniqueString(TestPlatform.GetTarget().Arch),
                 UseGraphicsTestCasesAttribute.GraphicsDevice,
                 UseGraphicsTestCasesAttribute.LoadedXRDevice).ToLower();
 
@@ -332,7 +332,7 @@ namespace UnityEngine.TestTools.Graphics
         {
             var streamingAssetsPath = Application.streamingAssetsPath;
             var colorSpace = UseGraphicsTestCasesAttribute.ColorSpace;
-            var platform = UseGraphicsTestCasesAttribute.Platform.ToUniqueString(TestPlatform.GetCurrent().Arch);
+            var platform = UseGraphicsTestCasesAttribute.Platform.ToUniqueString(TestPlatform.GetTarget().Arch);
             var graphicsDevice = UseGraphicsTestCasesAttribute.GraphicsDevice;
             var loadedXrDevice = UseGraphicsTestCasesAttribute.LoadedXRDevice;
 

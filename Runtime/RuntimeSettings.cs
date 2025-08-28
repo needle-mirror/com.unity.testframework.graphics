@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Runtime.InteropServices;
 
 namespace UnityEngine.TestTools.Graphics
 {
@@ -23,12 +25,12 @@ namespace UnityEngine.TestTools.Graphics
             get => false;
 #endif
         }
-        
+
         /// <summary>
         /// Use this property to check if standard images (non-RG) should be used as reference when running tests in RenderGraph mode.
         /// </summary>
         public static bool reuseTestsForRenderGraph { get; } = _reuseTestsForRenderGraph;
-        
+
         // Cache result to avoid GC.
         private static bool _reuseTestsForRenderGraph
         {
@@ -52,9 +54,67 @@ namespace UnityEngine.TestTools.Graphics
             get => Array.Exists(Environment.GetCommandLineArgs(), arg => arg == "-save-actual-images") || UnityEditor.EditorPrefs.GetBool("SaveActualImages");
 #elif SAVE_ACTUAL_IMAGES_STANDALONE
             get => true;
-#else   
+#else
             get => false;
 #endif
+        }
+
+
+        internal static string FindCommandLineArgument(string argName)
+        {
+            return FindCommandLineArgument(Environment.GetCommandLineArgs(), argName);
+        }
+
+        internal static string FindCommandLineArgument(string[] args, string argName)
+        {
+            string argValue = "";
+
+            if (args == null || args.Length == 0)
+                return string.Empty;
+
+            string filterArg = Array.Find(
+                args,
+                arg => arg.StartsWith($"{argName}", StringComparison.OrdinalIgnoreCase)
+            );
+            if (filterArg == null)
+                return string.Empty;
+
+            if (filterArg.Contains("=") && !filterArg.EndsWith('='))
+            {
+                argValue = filterArg.Split('=')[1];
+            }
+            else
+            {
+                int index = Array.IndexOf(args, filterArg);
+                if (index < 0 || index == args.Length - 1) // -argName is the last argument
+                {
+                    return string.Empty;
+                }
+
+                argValue = args[index + 1];
+            }
+
+            return argValue.Trim();
+        }
+
+        internal static TestSettings TryReadSettingsFromFile(string fileName)
+        {
+            if (!File.Exists(fileName))
+                return null;
+
+            return JsonUtility.FromJson<TestSettings>(File.ReadAllText(fileName));
+        }
+
+        [Serializable]
+        internal class TestSettings
+        {
+            [SerializeField]
+            string architecture;
+
+            internal Architecture? Architecture =>
+                string.IsNullOrEmpty(architecture)
+                    ? null
+                    : Enum.Parse<Architecture>(architecture, true);
         }
     }
 }

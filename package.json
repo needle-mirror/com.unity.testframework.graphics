@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Test Framework",
-  "version": "8.9.1-exp.1",
+  "version": "8.11.0-exp.1",
   "unity": "2021.3",
   "unityRelease": "0a1",
   "description": "Provides testing utilities for writing tests for graphics code, such as image comparison assertions and automatic management of reference images.",
@@ -24,15 +24,15 @@
     "com.unity.external.test-protocol": "1.0.0-preview"
   },
   "_upm": {
-    "changelog": "- Updated the regular expression to match the new log format for shader variants sent to the GPU driver."
+    "changelog": "- Fixed and resolved compilation errors with newer versions of Unity."
   },
   "upmCi": {
-    "footprint": "5a2f0e73f868a9ab9ed0633081d4daf24cf01ab4"
+    "footprint": "967d2ba0166dc7bae95cdf11e6d95b18ed8b881b"
   },
-  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@8.9/manual/index.html",
+  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@8.11/manual/index.html",
   "repository": {
-    "url": "git@github.cds.internal.unity3d.com:unity/unity.git",
+    "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "8a6430558cab0672d401cdda1b092e9d672332ec"
+    "revision": "a8e1ac32804ff396eddae4f5e51e8bbe6b20834b"
   }
 }

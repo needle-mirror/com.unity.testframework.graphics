@@ -47,7 +47,7 @@ namespace UnityEditor.TestTools.Graphics
             var platform = GetEnumPropertyValue<RuntimePlatform>(doc, "RuntimePlatform");
             var graphicsDevice = GetEnumPropertyValue<GraphicsDeviceType>(doc, "GraphicsDevice");
 
-            var path = Path.Combine(ActualImagesRoot, string.Format("{0}/{1}/{2}", colorSpace, platform.ToUniqueString(TestPlatform.GetCurrent().Arch), graphicsDevice));
+            var path = Path.Combine(ActualImagesRoot, string.Format("{0}/{1}/{2}", colorSpace, platform.ToUniqueString(TestPlatform.GetTarget().Arch), graphicsDevice));
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
 

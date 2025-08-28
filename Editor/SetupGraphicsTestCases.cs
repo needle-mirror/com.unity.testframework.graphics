@@ -145,7 +145,7 @@ namespace UnityEditor.TestTools.Graphics
 
                     bundleBuilds.Add(new AssetBundleBuild
                     {
-                        assetBundleName = string.Format("referenceimages-{0}-{1}-{2}-{3}", colorSpace, runtimePlatform.ToUniqueString(TestPlatform.GetCurrent().Arch), api, xrsdk),
+                        assetBundleName = string.Format("referenceimages-{0}-{1}-{2}-{3}", colorSpace, runtimePlatform.ToUniqueString(TestPlatform.GetTarget().Arch), api, xrsdk),
                         addressableNames = images.Keys.ToArray(),
                         assetNames = images.Values.ToArray()
                     });

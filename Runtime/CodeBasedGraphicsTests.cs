@@ -57,7 +57,7 @@ namespace UnityEngine.TestTools.Graphics
                 throw new ArgumentNullException(nameof(onEnumerate));
 
             var api = ScriptableObject.CreateInstance<TestRunnerApi>();
-            api.RetrieveTestList(TestMode.EditMode, (testRoot) =>
+            api.RetrieveTestList(UnityEditor.TestTools.TestRunner.Api.TestMode.EditMode, (testRoot) =>
             {
                 var newGraphicsTests = new List<GraphicsTestCase>();
                 TraverseTests(testRoot, newGraphicsTests);
@@ -65,7 +65,7 @@ namespace UnityEngine.TestTools.Graphics
                     onEnumerate(newGraphicsTests);
             });
             
-            api.RetrieveTestList(TestMode.PlayMode, (testRoot) =>
+            api.RetrieveTestList(UnityEditor.TestTools.TestRunner.Api.TestMode.PlayMode, (testRoot) =>
             {
                 var newGraphicsTests = new List<GraphicsTestCase>();
                 TraverseTests(testRoot, newGraphicsTests);

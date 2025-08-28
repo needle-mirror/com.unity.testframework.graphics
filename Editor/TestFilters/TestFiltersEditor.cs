@@ -174,7 +174,7 @@ namespace UnityEditor.TestTools.Graphics
 
             if (GUILayout.Button(new GUIContent("Sort", "Sort filters by scene name.")))
             {
-                var filterObjectPath = AssetDatabase.GetAssetPath(target.GetInstanceID());
+                var filterObjectPath = AssetDatabase.GetAssetPath(target);
                 var filterObject = AssetDatabase.LoadAssetAtPath<TestFilters>(filterObjectPath);
                 filterObject.SortBySceneName();
                 EditorUtility.SetDirty(filterObject);
