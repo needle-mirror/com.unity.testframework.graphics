@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Test Framework",
-  "version": "8.11.0-exp.1",
+  "version": "8.12.0-exp.2",
   "unity": "2021.3",
   "unityRelease": "0a1",
   "description": "Provides testing utilities for writing tests for graphics code, such as image comparison assertions and automatic management of reference images.",
@@ -24,15 +24,15 @@
     "com.unity.external.test-protocol": "1.0.0-preview"
   },
   "_upm": {
-    "changelog": "- Fixed and resolved compilation errors with newer versions of Unity."
+    "changelog": "- Add support for Switch2 for 6.0 and 6.3 and newer."
   },
   "upmCi": {
-    "footprint": "967d2ba0166dc7bae95cdf11e6d95b18ed8b881b"
+    "footprint": "5423339499f8858a6c31869ef8b1971d552f852e"
   },
-  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@8.11/manual/index.html",
+  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@8.12/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "a8e1ac32804ff396eddae4f5e51e8bbe6b20834b"
+    "revision": "65c149f93d148aa5ac721a414420129544923354"
   }
 }

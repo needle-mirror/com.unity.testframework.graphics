@@ -38,6 +38,9 @@ namespace UnityEditor.TestTools.Graphics
             { "gamecorexboxone", () => SetGraphicsAPI(GraphicsDeviceType.GameCoreXboxOne) },
             { "gamecorexboxseries", () => SetGraphicsAPI(GraphicsDeviceType.GameCoreXboxSeries) },
             { "switch", () => SetGraphicsAPI(GraphicsDeviceType.Switch) },
+#if UNITY_6000_0 || UNITY_6000_3_OR_NEWER
+            { "switch2", () => SetGraphicsAPI(GraphicsDeviceType.Switch2) },
+#endif
 #if UNITY_2023_2_OR_NEWER
             { "webgpu", () => SetGraphicsAPI(GraphicsDeviceType.WebGPU) }
 #endif

@@ -31,6 +31,10 @@ namespace UnityEditor.TestTools.Graphics
 #endif
                 case BuildTarget.Switch:
                     return RuntimePlatform.Switch;
+#if UNITY_6000_0 || UNITY_6000_3_OR_NEWER
+                case BuildTarget.Switch2:
+                    return RuntimePlatform.Switch2;
+#endif
                 case BuildTarget.WebGL:
                     return RuntimePlatform.WebGLPlayer;
                 case BuildTarget.WSAPlayer:
@@ -110,6 +114,10 @@ namespace UnityEditor.TestTools.Graphics
 #endif
                 case RuntimePlatform.Switch:
                     return BuildTarget.Switch;
+#if UNITY_6000_0 || UNITY_6000_3_OR_NEWER
+                case RuntimePlatform.Switch2:
+                    return BuildTarget.Switch2;
+#endif
 #if !UNITY_2017_2_OR_NEWER
                 case RuntimePlatform.TizenPlayer:
                     return BuildTarget.Tizen;

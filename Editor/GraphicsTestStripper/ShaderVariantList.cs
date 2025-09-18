@@ -53,7 +53,13 @@ namespace UnityEditor.TestTools.Graphics
         {
             // For Vulkan and Switch (when using HLSLcc), we combine all shader stages, so the stripper needs to have a list of keywords for all the stages combined,
             // otherwise some variants are going to be stripped as their keyword config don't exist across all stages.
-            bool fusedStageBuild = PlayerSettings.GetGraphicsAPIs(EditorUserBuildSettings.activeBuildTarget).Any(t => t == GraphicsDeviceType.Vulkan || t == GraphicsDeviceType.Switch);
+            bool fusedStageBuild = PlayerSettings
+                .GetGraphicsAPIs(EditorUserBuildSettings.activeBuildTarget)
+                .Any(t => t == GraphicsDeviceType.Vulkan || t == GraphicsDeviceType.Switch
+#if UNITY_6000_0 || UNITY_6000_3_OR_NEWER
+                 || t == GraphicsDeviceType.Switch2
+#endif
+                 );
             var allStages = new List<ShaderType> { ShaderType.Vertex, ShaderType.Fragment, ShaderType.Geometry, ShaderType.Hull, ShaderType.Domain, ShaderType.RayTracing };
                     
             foreach (var variant in serializedShaderVariants)

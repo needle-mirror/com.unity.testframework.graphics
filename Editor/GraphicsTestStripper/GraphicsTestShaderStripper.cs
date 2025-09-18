@@ -139,6 +139,10 @@ namespace UnityEditor.TestTools.Graphics
                 case GraphicsDeviceType.GameCoreXboxOne: return ShaderCompilerPlatform.GameCore;
                 case GraphicsDeviceType.GameCoreXboxSeries: return ShaderCompilerPlatform.GameCore;
 #endif
+#if UNITY_6000_0 || UNITY_6000_3_OR_NEWER
+                case GraphicsDeviceType.Switch2: 
+                    return ShaderCompilerPlatform.Switch2;
+#endif
                 case (GraphicsDeviceType)26: return (ShaderCompilerPlatform)23;
                 case (GraphicsDeviceType)27: return (ShaderCompilerPlatform)24;
                 case (GraphicsDeviceType)28: return (ShaderCompilerPlatform)26;

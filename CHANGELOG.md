@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [8.12.0-exp.2] - 2025-09-18
+
+- Add support for Switch2 for 6.0 and 6.3 and newer.
+
 ## [8.11.0-exp.1] - 2025-08-28
 
 - Fixed and resolved compilation errors with newer versions of Unity.
