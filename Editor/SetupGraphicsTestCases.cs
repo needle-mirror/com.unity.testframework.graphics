@@ -280,7 +280,7 @@ namespace UnityEditor.TestTools.Graphics
                             (filter.Architecture == architecture || filter.Architecture == Architecture.Unknown))
                         {
                             // Non vr filter matched if none of the VR settings are present.
-                            if ((!PlayerSettings.virtualRealitySupported || !(xrsettings != null && xrActive)) &&
+                            if (!(xrsettings != null && xrActive) &&
                                 (string.IsNullOrEmpty(filter.XrSdk) || string.Compare(filter.XrSdk, "None", true) == 0) &&
                                 filter.StereoModes == StereoRenderingModeFlags.None)
                             {
@@ -289,7 +289,7 @@ namespace UnityEditor.TestTools.Graphics
                                 filterReasons += filter.Reason + "\n";
                             }
                             // If VR is enabled then the VR specific filters need to match the filter too.
-                            else if ((PlayerSettings.virtualRealitySupported || (xrsettings != null && xrActive)) &&
+                            else if ((xrsettings != null && xrActive) &&
                                 (filter.StereoModes == StereoRenderingModeFlags.None || (filter.StereoModes & stereoModeFlag) == stereoModeFlag) &&
                                 (filter.XrSdk == xrsdk || string.IsNullOrEmpty(filter.XrSdk)))
                             {

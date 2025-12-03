@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Test Framework",
-  "version": "8.12.0-exp.2",
+  "version": "8.13.1-exp.1",
   "unity": "2021.3",
   "unityRelease": "0a1",
   "description": "Provides testing utilities for writing tests for graphics code, such as image comparison assertions and automatic management of reference images.",
@@ -14,25 +14,24 @@
   ],
   "dependencies": {
     "com.unity.modules.xr": "1.0.0",
-    "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.imageconversion": "1.0.0",
-    "com.unity.nuget.newtonsoft-json": "2.0.0",
-    "com.unity.xr.management": "4.0.5",
-    "com.unity.xr.legacyinputhelpers": "2.1.8",
-    "com.unity.addressables": "1.21.12",
-    "com.unity.testtools.codecoverage": "1.2.0",
+    "com.unity.nuget.newtonsoft-json": "3.2.2",
+    "com.unity.xr.management": "4.4.0",
+    "com.unity.xr.legacyinputhelpers": "2.1.13",
+    "com.unity.addressables": "1.28.1",
+    "com.unity.testtools.codecoverage": "1.2.7",
     "com.unity.external.test-protocol": "1.0.0-preview"
   },
   "_upm": {
-    "changelog": "- Add support for Switch2 for 6.0 and 6.3 and newer."
+    "changelog": "- Bumped dependencies to ensure signed package dependencies."
   },
   "upmCi": {
-    "footprint": "5423339499f8858a6c31869ef8b1971d552f852e"
+    "footprint": "ac749e0857d41f09fb7138671a763f1f755c8fcc"
   },
-  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@8.12/manual/index.html",
+  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@8.13/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "65c149f93d148aa5ac721a414420129544923354"
+    "revision": "f0f22269c654c50eed05493f88aebea7def31b35"
   }
 }

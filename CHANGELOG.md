@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [8.13.1-exp.1] - 2025-12-03
+
+- Bumped dependencies to ensure signed package dependencies.
+
+## [8.13.0-exp.1] - 2025-12-02
+
+- Removed `com.unity.modules.vr` dependency.
+- Removed calls for deprecated VR API.
+
 ## [8.12.0-exp.2] - 2025-09-18
 
 - Add support for Switch2 for 6.0 and 6.3 and newer.
