@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ---
+## [8.14.0-exp.2] - 2026-03-24
+
+- Updated package manifest.
+
+## [8.14.0-exp.1] - 2026-03-19
+
+- Updated instanceID code to use the EntityId API.
+
 ## [8.13.2-exp.1] - 2026-01-13
 
 - Bumped dependency to signed version of com.unity.external.test-protocol.

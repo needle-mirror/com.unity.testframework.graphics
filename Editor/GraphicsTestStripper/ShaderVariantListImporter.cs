@@ -21,12 +21,33 @@ namespace UnityEditor.TestTools.Graphics
         {
             AssetDatabase.Refresh();
             var action = ScriptableObject.CreateInstance< CreateShaderVariantListAsset >();
-            ProjectWindowUtil.StartNameEditingIfProjectWindowExists(0, action, "variants.shadervariantlist", null, null);
+            ProjectWindowUtil.StartNameEditingIfProjectWindowExists(
+#if UNITY_6000_4_OR_NEWER
+                EntityId.None,
+#else
+                0,
+#endif
+                action,
+                "variants.shadervariantlist",
+                null,
+                null
+            );
         }
 
-        class CreateShaderVariantListAsset : EndNameEditAction
+        class CreateShaderVariantListAsset
+#if UNITY_6000_4_OR_NEWER
+            : AssetCreationEndAction
+#else
+            : EndNameEditAction
+#endif
         {
-            public override void Action(int instanceId, string pathName, string resourceFile)
+            public override void Action(
+#if UNITY_6000_4_OR_NEWER
+                EntityId entityId,
+#else
+                int entityId,
+#endif
+                string pathName, string resourceFile)
             {
                 File.WriteAllText(pathName, JsonUtility.ToJson(new ShaderVariantList.Settings()));
                 AssetDatabase.ImportAsset(pathName);
