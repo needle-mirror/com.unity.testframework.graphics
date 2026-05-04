@@ -1,0 +1,24 @@
+#pragma kernel CSMain
+
+Texture2D<float4> _TexA;
+Texture2D<float4> _TexB;
+RWStructuredBuffer<float> _Result;
+
+[numthreads(8, 8, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    uint width, height;
+    _TexA.GetDimensions(width, height);
+
+    if (id.x >= width || id.y >= height)
+        return;
+
+    uint index = id.y * width + id.x;
+
+    float4 a = _TexA[id.xy];
+    float4 b = _TexB[id.xy];
+    float4 diff = a - b;
+    float delta = sqrt(dot(diff, diff));
+
+    _Result[index] = delta;
+}

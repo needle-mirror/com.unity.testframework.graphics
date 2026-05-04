@@ -1,17 +1,37 @@
-# Graphics Tests Framework
+# About Graphics Test Framework
 
-This package provides a foundation for writing tests for Graphics features in Unity projects.
+Use the Graphics Test Framework to automate visual validation of rendering: compare captured output against reference images, catch regressions, and test across platforms, graphics APIs, and custom Scriptable Render Pipelines.
 
-Currently it contains:
+# Installing
 
-* ImageAssert, for doing image renders and comparisons with reference images
-* Automatic collection and deployment of reference images
-* Automatic generation of tests from scenes in the project
+Add this package with the [Package Manager](https://docs.unity3d.com/Manual/upm-ui.html). It depends on the Unity Test Framework and other packages listed in `package.json`.
 
-See [the Documentation](Documentation~/com.unity.testframework.graphics.md) for more information.
+# Using Graphics Test Framework
 
-### Package CI Summary
+- Full documentation: [Graphics Test Framework](https://docs.unity3d.com/Packages/com.unity.testframework.graphics@latest/index.html).
+- In the Editor, open **Window** > **General** > **Graphics Tests** to create tests, manage reference images, and inspect results.
+- Optional **Samples** in the Package Manager (Basic Graphics Tests, Parameterized Tests, Image Comparison Examples, and more) show common patterns.
 
-Package Name | Latest CI Status
------------- | ---------
-com.unity.testframework.graphics | [![](https://badges.cds.internal.unity3d.com/packages/com.unity.testframework.graphics/build-badge.svg?branch=master&testWorkflow=package-isolation)](https://badges.cds.internal.unity3d.com/packages/com.unity.testframework.graphics/build-info?branch=master&testWorkflow=package-isolation) [![](https://badges.cds.internal.unity3d.com/packages/com.unity.testframework.graphics/dependencies-badge.svg?branch=master&testWorkflow=updated-dependencies)](https://badges.cds.internal.unity3d.com/packages/com.unity.testframework.graphics/dependencies-info?branch=master&testWorkflow=updated-dependencies) [![](https://badges.cds.internal.unity3d.com/packages/com.unity.testframework.graphics/dependants-badge.svg)](https://badges.cds.internal.unity3d.com/packages/com.unity.testframework.graphics/dependants-info) [![](https://badges.cds.internal.unity3d.com/packages/com.unity.testframework.graphics/warnings-badge.svg?branch=master)](https://badges.cds.internal.unity3d.com/packages/com.unity.testframework.graphics/warnings-info?branch=master) [![](https://badges.cds.internal.unity3d.com/packages/com.unity.testframework.graphics/template-badge.svg?branch=master&testWorkflow=template-published)](https://badges.cds.internal.unity3d.com/packages/com.unity.testframework.graphics/template-info?branch=master&testWorkflow=template-published) ![ReleaseBadge](https://badges.cds.internal.unity3d.com/packages/com.unity.testframework.graphics/release-badge.svg) ![ReleaseBadge](https://badges.cds.internal.unity3d.com/packages/com.unity.testframework.graphics/candidates-badge.svg)
+# Technical details
+
+## Requirements
+
+This package is compatible with:
+
+* Unity **6000.0** and later (see `package.json` for the exact `unity` / `unityRelease` requirement).
+
+## Package contents
+
+| Location | Description |
+| --- | --- |
+| `Editor` | Editor tools: Graphics Tests window, test build and filtering, image utilities, and related services. |
+| `Runtime` | Runtime APIs and attributes for authoring graphics tests (e.g. scene and code-based tests, image comparison helpers). |
+| `Documentation~` | Package documentation source (the `~` folder is not imported into Unity projects as assets). |
+| `Samples~` | Optional sample projects you can import from the Package Manager. |
+
+## Document revision history
+
+| Date | Reason |
+| --- | --- |
+| April 22, 2026 | Package README updated to match version 9. |
+| January 25, 2019 | Initial document. |

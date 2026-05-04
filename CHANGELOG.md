@@ -6,38 +6,508 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ---
-## [8.14.0-exp.2] - 2026-03-24
 
-- Updated package manifest.
+## [9.0.0-pre.6] - 2026-05-04
 
-## [8.14.0-exp.1] - 2026-03-19
+### Added
 
-- Updated instanceID code to use the EntityId API.
+- Added `-enable-shader-stripping` command-line argument for manipulating shader stripping from CLI.
+- Exposed command-line argument values in the GraphicsTestBuildSettings class for documentation purposes.
 
-## [8.13.2-exp.1] - 2026-01-13
+## [9.0.0-pre.5] - 2026-05-04
 
-- Bumped dependency to signed version of com.unity.external.test-protocol.
-  
-## [8.13.1-exp.1] - 2025-12-03
+### Fixed
 
-- Bumped dependencies to ensure signed package dependencies.
+- Fixed errors being raised by `AssetDatabase.ImportAsset` when post-processing reference images. 
 
-## [8.13.0-exp.1] - 2025-12-02
+## [9.0.0-pre.4] - 2026-04-23
 
-- Removed `com.unity.modules.vr` dependency.
-- Removed calls for deprecated VR API.
+### Added
 
-## [8.12.0-exp.2] - 2025-09-18
+- Added `ReferenceImageRootSource` enum and optional `IReferenceImageNamingStrategy` interface so parameterized graphics tests can use a reference image root other than the full parameterized test name (for example one reference per scene via `SceneAssetFileStem` on `GraphicsTestAttributeBase`).
 
-- Add support for Switch2 for 6.0 and 6.3 and newer.
+### Changed
 
-## [8.11.0-exp.1] - 2025-08-28
+- Made D3D12 validation test framework classes cross-platform to match `UnityEngine.D3D12Validation`.
 
-- Fixed and resolved compilation errors with newer versions of Unity.
+## [9.0.0-pre.3] - 2026-04-10
 
-## [8.10.0-exp.1] - 2025-05-19
+- Added D3D12 validation layer support to detect GPU validation errors during tests when running with `-force-d3d12-debug-as-errors`.
+- Updated `com.unity.test-framework` dependency to 1.8.0.
 
-- Added support to parse architecture from the TestSettings file.
+## [9.0.0-pre.2] - 2026-04-08
+
+### Fixed
+
+- Fixed `ReferenceImageOptimizer.OptimizeReferenceImages` crashing when the optimization task faults, due to unconditional access to `task.Result` on a faulted task.
+- Fixed `ReferenceImageOptimizer.OptimizeReferenceImages` allowing concurrent runs by adding an early return when already running.
+- Fixed `ReferenceImageAssetBundle.LoadBundleAsync` falling through to `AssetBundle.LoadFromFile` when the bundle file does not exist.
+- Fixed `EuclideanDistance.Compare` throwing `NullReferenceException` in player builds due to a null compute shader, now throws a descriptive `InvalidOperationException`.
+- Fixed `EuclideanDistance.Compare` sync-over-async anti-pattern by removing unnecessary `Task.Run` wrapper.
+- Fixed `EuclideanDistance.CompareAsync` leaking `ComputeBuffer` when GPU dispatch or data readback throws an exception.
+- Fixed `ImageMessage.Serialize` operator precedence bug where `??` produced incorrect `MemoryStream` capacity preallocation.
+- Fixed `StructuralSimilarity.Compare` leaking `NativeArray` allocations from locally created `LumaPipelineResult` objects.
+- Fixed `TestUtils.GetTestResultsFolderPath` malformed `[Obsolete]` attribute message containing a stray parenthesis.
+- Fixed `TaskManager.Complete` not disposing `ProgressStatus` entries, leaking per-subtask `CancellationTokenSource` objects.
+- Fixed `TaskManager.Dispose` and `CancelAll` iterating `ConcurrentDictionary` keys during modification; now snapshots via `ToArray()`.
+- Fixed `ReferenceImageAutoOptimizer` not disposing old `CancellationTokenSource` before replacing it.
+- Fixed `PlatformNodeRegistry.LoadPluginsFromAssemblies` allowing a single bad `IPlatformNode` type to crash all node loading.
+- Fixed `GraphicsTestLogger.Log` throwing `NullReferenceException` when passed a null message.
+- Fixed `SceneFileSystemWatcher` and `GraphicsTestsWindow` persistence using fragile `string.Replace` for path manipulation on Windows; now uses `Path.GetDirectoryName`.
+- Fixed `SceneFileSystemWatcher.s_RecompileRequested` missing `volatile`, causing a potential visibility race between thread-pool callbacks and the main thread.
+- Fixed `CompareAsync` XML docs on `StructuralSimilarity` and `PeakSignalToNoiseRatio` incorrectly referencing `NotImplementedException` instead of `NotSupportedException`.
+- Fixed `EditorWindowCapture.WaitForShadersToCompileAsync` not restoring `ShaderUtil.allowAsyncCompilation` on timeout, leaving async compilation permanently disabled for the Editor session.
+- Fixed `ShaderVariantListImporter` throwing `IndexOutOfRangeException` when importing an empty or newly created `.shadervariantlist` file.
+- Fixed `ShaderlabShaderExecutor` leaking `Camera` GameObject and `Mesh` across shader test runs; resources are now cleaned up in a `finally` block.
+- Fixed `ShaderVariantListImporterEditor` crashing with `FileNotFoundException` when the user cancels the `OpenFilePanel` dialog.
+- Fixed `ConvertTestFiltersToIgnoreAttribute` embedding unescaped `filter.reason` strings, which could produce invalid C# attribute syntax when the reason contains quotes or backslashes.
+- Fixed `GraphicsTestsWindow.OnEnable` stacking duplicate visual trees and callback subscriptions when the window is re-enabled after a domain reload.
+- Fixed `TestListener` registering duplicate `EditorConnection` handlers after each domain reload, causing test results to be processed multiple times.
+- Fixed `LinkWatcher` accumulating duplicate `hyperLinkClicked` handlers after each domain reload.
+- Fixed `GraphicsTestsWindow` LogView `bindItem` stacking `ContextualMenuManipulator` instances on every rebind, causing duplicate context menus.
+- Fixed `GraphicsTestsWindow` LogView auto-scroll logic accumulating `valueChanged` handlers on the vertical scroller.
+- Fixed `GraphicsTestsWindow.ImageComparisonView.OnTestBuilderFinished` setting the wrong tab view (`m_TabView` instead of `m_ComparisonTabView`), causing incorrect tab selection.
+- Fixed `BakeLightingAttribute` not unsubscribing `logMessageReceived` callback if `Lightmapping.Bake()` throws an exception.
+- Fixed `ImageCapture.CaptureFrame` leaking temporary `RenderTexture` when `ReadPixels` or `Apply` throws an exception in HDR mode.
+- Fixed `AssetBundleBuilder.BuildContent` throwing `NullReferenceException` when a test case has a null `ReferenceImageDescriptor`.
+- Fixed `RemoteReferenceImageAssetBundle.ContainsAsset` not normalizing the asset name, causing inconsistent results versus `LoadAsset` which strips the file extension.
+- Fixed `ShaderTestFramework.LoadShader` caching a null loader in the dictionary when `Activator.CreateInstance` fails, poisoning subsequent calls.
+- Fixed `ShaderTestFramework.Dispose` allowing one failing loader `Dispose` to skip cleanup of remaining loaders.
+- Fixed `ShaderlabShaderLoader.LoadShader` crashing with `ArgumentOutOfRangeException` on paths with no file extension; now uses `Path.ChangeExtension`.
+- Fixed `CliSettingsConsistencyValidator.ValidatePlayer` throwing `ArgumentException` on invalid `-playerGraphicsAPI` values instead of returning a validation failure.
+- Fixed `ResultsUtility.IsWithinRoot` prefix-matching allowing path escape when the root path does not end with a directory separator.
+- Fixed `TestListener.OnTestFinishedMessageReceived` throwing `NullReferenceException` when deserialized JSON produces a null `results` array.
+- Fixed `GraphicsTestNewComparisonWindow.OnOpen` throwing `NullReferenceException` when the UXML asset fails to load.
+- Fixed `GraphicsTestsWindow` image comparison view leaking heatmap `Texture2D` instances on every update by destroying the previous texture before assigning a new one.
+- Fixed `GraphicsTestsWindow` LogView `ScrollToItem` passing index -1 when the filtered log list is empty.
+- Fixed `GraphicsTestBuildSettingsEditor.OnEnable` throwing `SerializedObjectNotCreatableException` on assembly reload when the target `ScriptableObject` is temporarily null.
+- Fixed `EditorGraphicsTestBuildManager.Build` not validating the `platforms` parameter, throwing a `NullReferenceException` instead of `ArgumentNullException` when null.
+- Fixed `GraphicsTestCase.AdditionalReferenceImages` throwing `NullReferenceException` when `ReferenceImageDescriptor` is null.
+- Fixed `ShaderWriter` always overwriting the same `Assets/TestShader.compute` file, causing multiple HLSL shader handles to alias to the last written shader.
+- Fixed `HlslShaderExecutor.ExecuteShader` silently returning `default(T)` on GPU readback error instead of throwing an exception.
+- Fixed `MainThreadDispatcher.RunOnMainThread` deferring execution via the queue even when already on the Unity main thread; now executes synchronously.
+- Fixed `GraphicsTestsWindow.CreateOrShowWindow` potentially returning null when `HasOpenInstances` is true but the window object cannot be found; now falls through to `CreateWindow`.
+- Fixed `ResultsUtility.ExtractImagesFromTestProperties` reading from `TestContext.CurrentContext` instead of the `test` parameter, causing incorrect property extraction when the two differ.
+- Fixed `HlslShaderWrapperGenerator.GenerateShaderWrapper` concatenating `Arrange` and `Act` blocks without a newline separator in the generated compute shader.
+- Fixed `TestContentLoader.LoadContent` running the `ContinueWith` continuation on the thread pool instead of dispatching to the Unity main thread for safe API access.
+- Fixed `ImageAssert.AreEqual` overwriting the `out ImageComparisonResults` parameter with a default (zeroed) value on the success path, causing callers to receive incorrect metrics.
+- Fixed `ImageAssert.CheckGCAllocWithCallstack` leaving `camera.targetTexture` set to the temporary render texture on early exit paths; now cleared in the `finally` block.
+- Fixed `ImageAssert.AreEqualAsync` ignoring `AsyncGPUReadback.hasError`, silently producing invalid comparison results on GPU readback failure.
+- Fixed `PeakSignalToNoiseRatio.Psnr` returning `Infinity` when comparing identical images (MSE = 0); now returns `float.MaxValue`.
+- Fixed `ImageMessage.GetBytes` allowing unbounded memory allocation from corrupt payloads; now validates the declared length against remaining stream bytes.
+- Fixed `PlayerGraphicsTestBuildManager.Build` not validating the `platforms` parameter, matching the guard already present in the Editor variant.
+- Fixed `GraphicsTestsWindow.SelectTest` selecting an arbitrary tree item (id 0) when the requested test name is not found; now early-returns.
+- Fixed `GraphicsTestsWindow` persistence layer crashing the window on corrupt `EditorPrefs` or test results JSON; deserialization is now wrapped in `try/catch`.
+- Fixed `ReferenceImageOptimizer` leaving `k_IsRunning` permanently stuck when the optimization task is canceled, blocking all future runs.
+- Fixed `PlatformSchema.OnBeforeSerialize` throwing `NullReferenceException` when `Types` is null or `rootPath` is null; now initializes defensively.
+- Fixed `PlatformSchema.GetTypes` adding null entries to the `Types` list when `Type.GetType` fails to resolve a type name.
+- Fixed `CommandLineReader` prefix matching allowing false positives (e.g. `-log` matching `-logFile`); now requires exact match or `=` delimiter.
+- Fixed `ReferenceImageAssetBundle.LoadFromFile` throwing `NullReferenceException` when `AssetBundle.LoadFromFile` returns null; now sets `Failed` state and logs at Error level.
+- Fixed `IgnoreGraphicsTestData.MatchesPlatform` throwing `ArgumentNullException` when `m_Platforms` is null after deserialization.
+- Fixed `ReferenceImageOptimizer` averaged delta computation using the wrong denominator (`metrics.Count` instead of `deltaEMetrics.Count`), diluting the averaged heatmap.
+
+### Changed
+
+- `ReferenceImageAssetBundle.LoadBundleAsync` now logs missing bundles at `Warning` level instead of `Log`.
+- `ReferenceImageAssetBundle.LoadFromFile` error catch block now logs at `Error` level instead of `Log`.
+
+## [9.0.0-pre.1] - 2026-03-31
+
+- Removed dependency to com.unity.external.test-protocol as it is only used by internal tests and should not be a dependency for the package itself.
+
+## [9.0.0-exp.57] - 2026-03-05
+
+### Added
+
+- Added `TestNotSupportedOnAttribute` and `TestOnlySupportedOnAttribute` syntactic sugar attributes for marking platform-incompatible tests with non-overridable ignores.
+- Added `GraphicsTestParamAttribute` and `GraphicsTestParamSourceAttribute` to replace the deprecated `GTestCaseAttribute` and `GTestCaseSourceAttribute`, unified through the `IGraphicsTestArgProvider` interface.
+- Added `GraphicsTestParamParameterizer` to unify test case parameterization logic.
+- Added `GlobalContext<TEnum>` abstract base class that merges the `IGlobalContextProvider` and `IPlatformNode` systems, eliminating boilerplate register/unregister code.
+- Added `ShaderWarningCollector` service and `ShaderWarningTestRunCallback` to catch shader warnings during builds and test runs, with opt-in `-shader-warnings-as-errors` CLI flag.
+- Added `IAssetService` abstraction (replacing direct `AssetDatabase` calls) to improve testability across the Editor assembly.
+- Added `EuclideanDistanceResult` and `EuclideanDistanceSettings` as distinct types, replacing the monolithic `EuclideanDistanceComparisonResult`.
+- Added path sanitization and directory traversal protection in `ResultsUtility` for untrusted XML input.
+- Added `TreeViewModel`, `HeatmapManager`, `IgnoreDataExporter`, and `ColumnNames` as extracted, focused classes for the Graphics Tests Window.
+- Added USS stylesheet for the Graphics Tests Window, replacing inline C# style definitions.
+- Added `ShaderWarningsAsErrors` toggle to the `GraphicsTestBuildSettings` inspector.
+- Added comprehensive package samples: Basic Graphics Tests, Parameterized Tests, Image Comparison Examples, Platform Filtering Examples, Editor Test Examples, and Advanced Patterns.
+- Added new documentation pages: Platform System, Comparison Algorithms, Resolving Failing Tests, Graphics Test Logging, Editor Window Capture, and Sample Projects.
+
+### Changed
+
+- Removed all `System.Linq` usage across the entire package (Runtime, Editor, and Tests), replacing with allocation-free imperative alternatives.
+- Simplified the `GraphicsTestBuildSettings` `Save()` and `Load()` methods. Settings remain in `Assets/Resources/` and are loaded at runtime via `Resources.LoadAll`.
+- Simplified the `GlobalContextManager` into a thin facade over `PlatformNodeRegistry`, removing the need for explicit `RegisterGlobalContext`/`UnregisterGlobalContext` calls.
+- Simplified `IgnoreGraphicsTestAttribute`: removed the legacy multi-parameter constructor, unsealed the class to allow inheritance, and changed the default `allowOverrideIgnore` to `true`.
+- Replaced hardcoded image paths (`Assets/ReferenceImages`, `Assets/ReferenceImagesBase`, `Assets/ActualImages`) with configurable settings from `GraphicsTestBuildSettings`.
+- Renamed `ImageComparisonSettings` properties to PascalCase for consistency (e.g., `RMSEThreshold`).
+- Improved performance across the package: cached reflection in `GameViewSize`, used `GetPixelData<T>()` for zero-copy pixel access, replaced `RenderTexture.ReadPixels` with `Graphics.Blit` for GPU-based resize, added `TryGetValue`/`TryAdd` for dictionary lookups, and used `HashSet` for set operations.
+- Refactored and restructured the entire documentation, replacing the old per-assembly layout with a task-oriented structure.
+- Updated `ConvertTestFiltersToIgnoreAttribute` to emit the simplified `IgnoreGraphicsTestAttribute` constructor.
+
+### Removed
+
+- Removed `CodeBasedGraphicsTestAttribute`, `GTestCaseAttribute`, `GTestCaseSourceAttribute`, and their parameterizers in favor of the new `GraphicsTestParam*` family.
+- Removed `EuclideanDistanceComparisonResult` (replaced by `EuclideanDistanceResult` and `EuclideanDistanceSettings`).
+- Removed `GraphicsTestsWindow.ResultsLoader` (functionality absorbed into other window components).
+- Removed `GraphicTestVariantStripper.asmdef` (consolidated into the main Editor assembly).
+- Removed legacy documentation files under `Documentation~/Editor/` and `Documentation~/Runtime/`.
+
+## [9.0.0-exp.56] - 2026-03-03
+
+- Add variant navigation buttons to image comparison view
+
+## [9.0.0-exp.55] - 2026-03-02
+
+- Added helper method to reliably change player resolution
+
+## [9.0.0-exp.54] - 2026-02-13
+
+- Updated ImageAssert.AreEqual xmldoc to be more acurrate.
+
+## [9.0.0-exp.53] - 2026-02-09
+
+- Changed field to property to not attempt serialization
+
+## [9.0.0-exp.52] - 2026-02-09
+
+- Removed unused field
+
+## [9.0.0-exp.51] - 2026-02-06
+
+- Made the UnityEngine.TestTools.Graphics assembly internals visible to UnityEngine.TestTools.Graphics.Contexts.
+- Added a TestSettingsReader static helper to read specific settings from client code, without needing to add a new TestSetting. 
+
+## [9.0.0-exp.50] - 2026-02-04
+
+- Removed automatic resizing of game view before running tests in-editor.
+
+## [9.0.0-exp.49] - 2026-02-03
+
+- Significantly improved the performance of test discovery by caching test case data and reducing redundant computations.
+
+## [9.0.0-exp.48] - 2026-02-02
+
+-  Added SSIM image comparison support.
+-  Added support to reuse Luma calculations across different image comparisons.
+-  Renamed ITextureComparisonThreshold to ITextureComparisonSettings.
+
+## [9.0.0-exp.47] - 2026-01-30
+
+- Small fix to NaN image comparison to clarify which image contains the pixels with issues.
+
+## [9.0.0-exp.46] - 2026-01-30
+
+- Added support for getting the target graphicsVendor from the test settings files.
+
+## [9.0.0-exp.45] - 2025-01-29
+
+- Major refactor of graphics test build workflow: now supports grouped scene lists, robust platform/test case extraction, and improved asset/image handling.
+- Refactored `GraphicsTestAttribute` to inherit from `GraphicsTestAttributeBase` and use `DefaultGraphicsTestCaseSource`.
+- UI and attribute changes to support new scene grouping and filtering mechanisms.
+
+## [9.0.0-exp.44] - 2026-01-27
+
+- Fixed an issue where an image comparison of different images would silently succeed if one of them has a +-infinity value in it.
+- Added improved reporting of NaN and/or non-finite values including index of the first found bad value.
+- Removed GPU NaN checker.
+
+## [9.0.0-exp.43] - 2026-01-21
+
+- Fixed an issue where platform node types could be registered multiple times in the NodeRegistry.
+
+## [9.0.0-exp.42] - 2026-01-13
+
+- Removed automatic resizing of backbuffer captures.
+- Removed `ImageResolution` property from `ImageComparisonSettings` class.
+
+## [9.0.0-exp.41] - 2026-01-12
+
+- Added the evaluated RMSE value to the message displayed when `ImageAssert` fails.
+
+## [9.0.0-exp.40] - 2026-01-08
+
+- Fixed the "Convert Filters to Attributes" button by making the underlying TestFilter object serializable.
+
+## [9.0.0-exp.39] - 2026-01-07
+
+- Bumped com.unity.external.test-protocol to signed version.
+
+## [9.0.0-exp.38] - 2025-12-17
+
+- Added `IgnoreGraphicsTest` option to ignore based on Rendering.RenderingThreadingMode.
+
+## [9.0.0-exp.37] - 2025-12-12
+
+- Updated usage of ShaderType enum.
+
+## [9.0.0-exp.36] - 2025-12-04
+
+- Changed the representation of image extensions from a string to an enum `ImageExtension`.
+
+## [9.0.0-exp.35] - 2025-12-03
+
+- Bumped dependencies to ensure dependency packages are signed.
+
+## [9.0.0-exp.34] - 2025-11-25
+
+- Fixed an issue where trying to add an already existing tab to the Test Results view would result in an exception during the Prebuild step.
+
+## [9.0.0-exp.33] - 2025-11-06
+
+- Fixed an issue where the reference image assets would be loaded from the most generic platform path first (instead of the most specific).
+
+## [9.0.0-exp.32] - 2025-11-05
+
+- Added Shader Test Framework extension to test HLSL and ShaderLab shaders in isolation.
+
+## [9.0.0-exp.31] - 2025-10-30
+
+- Added support for ATI Graphics Vendor.
+
+## [9.0.0-exp.30] - 2025-10-27
+
+- Added support for multiple reference images per graphics test case.
+
+## [9.0.0-exp.29] - 2025-10-13
+
+- Forced Render Graph Context to handle URP Compatibility mode removal.
+
+## [9.0.0-exp.28] - 2025-10-10
+
+- Added support for multiple images in PSNR.
+
+## [9.0.0-exp.27] - 2025-10-05
+
+- Added a new API to capture one or multiple frames from camera or buffer.
+
+## [9.0.0-exp.26] - 2025-09-11
+
+- Added new `GraphicsTestsWindow` to replace all other UI. Found under `Window > General > Graphics Tests`.
+- Added "View in Graphics Tests Window" link to the start of `GraphicsTest` output.
+- Optimized the `Reference Image Optimization` process
+- Removed `TestResultWindow` and associated assets.
+- Removed `ReferenceImageAnalyzerWindow`.
+- Removed `GraphicsTestSettingsWindow`.
+- Moved all menu items to the `GraphicsTestBuildSettings` scriptable object or `GraphicsTestsWindow`.
+- Moved the OverrideIgnoreAttributes command-line argument to the `GraphicsTestBuildSettings` scriptable object.
+- Moved the SaveActualImages command-line argument to the `GraphicsTestBuildSettings` scriptable object.
+- Abstracted command-line argument reading using `ICommandLineProvider` interface.
+- Added an optional `ActualImageFileName` property to `LegacyImageExportOptions`. Use it if you want to control the file name of an actual image file after comparison.
+
+## [9.0.0-exp.25] - 2025-08-25
+
+- Removed several workarounds for filtering based on UTF command-line and TestRunner
+- In the AutoBuilder, replaced PrebuildSetup with PrebuildSetupWithTestData
+- In the AutoBuilder, replaced PostbuildCleanup PostBuildCleanupWithTestData
+
+## [9.0.0-exp.24] - 2025-07-30
+
+- Reworked the ImageAssert class to reduce complexity and improve test coverage
+- Extracted the current image difference algorithm in its own class
+- Added a new texture comparison assertion API that can work with different comparison algorithm
+
+## [9.0.0-exp.23] - 2025-07-30
+
+- Added support for Switch 2 platform.
+
+## [9.0.0-exp.22] - 2025-07-02
+
+- Reworked the Reference Image Optimizer system.
+
+## [9.0.0-exp.21] - 2025-07-01
+
+- Added `-urp-compatibility-mode` command-line argument that sets the `URP_COMPATIBILITY_MODE` define for player builds.
+
+## [9.0.0-exp.20] - 2025-06-30
+
+- Added an AssetPostprocessor to automatically enforce reference image import settings.
+
+## [9.0.0-exp.19] - 2025-06-04
+
+- Fixed an issue where the Graphics Test Cleanup would run even when no Setup was run
+- Added a conditional compilation directive for the now-deprecated TreeView API in the Graphics Test Results window.
+- Updated the `ShaderVariantListImporter` to be able to parse variants from UnityShaderCompiler logs.
+- Improved the `GraphicsTestShaderStripper` to allow for way faster shader preprocessing.
+
+## [9.0.0-exp.18] - 2025-05-14
+
+- Added support for different texture formats for reference images on all platforms.
+
+## [9.0.0-exp.17] - 2025-05-09
+
+- Fixed documentation and structure to comply with validation rules.
+
+## [9.0.0-exp.16] - 2025-05-08
+
+- Fixed test case naming to use the correct test name for the purposes of the TestRunner.
+- Added an internal Test Tree to help with selecting test cases for the test run.
+- Refactor the PlatformProvider architecture getter to support building x64 players on arm64 machines.
+
+## [9.0.0-exp.15] - 2025-04-29
+
+- Refactored the backslash sanitization to use a common method for all paths.
+- Refactored the `SceneGraphicsTestCaseSource` to use the new path sanitization method and broke it into smaller methods for better readability.
+
+## [9.0.0-exp.14] - 2025-04-08
+
+- Added command-line argument to override the IgnoreGraphicsTest attribute (`-override-graphics-test-ignores`)
+- Added `IgnoreGraphicsTestMode` enum to specify the matching mode of the IgnoreGraphicsTest attribute patterns.
+- Added `allowOverrideIgnore` bool to the `IgnoreGraphicsTestAttribute` to allow overriding the attribute in the command line (default: true)
+- Allowed filtering test suites based on the `IgnoreGraphicsTestAttribute` attribute.
+- Modified filtering to consider the Full Name of the test case
+
+## [9.0.0-exp.13] - 2025-04-06
+
+- Reformatted most of the code to follow CSharpier formatting rules.
+- Updated XML documentation to pass experimental documentation validation.
+- Added upgrade guide 8 -> 9
+- Added what's new section for test framework 9
+- Changed the accessibility modifiers of some classes and methods to be more restrictive.
+- Added API documentation for all public classes and methods
+
+## [9.0.0-exp.12] - 2025-04-01
+
+- Removed the unused and outdated `GenerateCodeCoverage` class.
+
+## [9.0.0-exp.11] - 2025-03-28
+
+- Add `ActivateContext`, `OnContextRegistered` and `OnContextUnregistered` methods to the `IGlobalContextProvider` interface.
+
+## [9.0.0-exp.10] - 2025-03-24
+
+- Modified `SceneGraphicsTestCaseSource` to allow SceneGraphicsTestCase subclasses to access data.
+
+## [9.0.0-exp.9] - 2025-03-19
+
+- Added validation in the IGraphicsTestBuildManager to ensure that test cases' TestMode is consistent with the TestBuildContext
+- Changed test filtering to consider the full name of the test case when filtering tests for the build
+- Optimized test filtering calls and refactored to a separate class
+- Added tests for the test filtering functionality
+- Added extra validation for contexts in `IgnoreGraphicsTestAttribute`
+
+## [9.0.0-exp.8] - 2025-03-17
+
+- Added the `TestModeAttribute` to allow for the selection of the test mode for a test assembly.
+- Added the `TestMode` enum to define the test mode for a test assembly (mirrors the `TestMode` enum in `UnityEditor.TestRunner`).
+
+## [9.0.0-exp.7] - 2025-03-13
+
+- Fixed an issue where writing test images to the same directory would lead to an IOException.
+- Fixed an issue where test filtering would have no effect on the scenes built for the Graphics Test Framework.
+
+## [9.0.0-exp.6] - 2025-02-26
+
+- Fixed an issue where the command-line argument for enabling RenderGraph was `-rendergraph-reuse-tests` instead of `render-graph-reuse-tests` as expected by the URP package.
+- Added a transition scene to each Graphics Test build to facilitate state changes and to avoid leaking between tests.
+- Changed the return type of `GlobalContextManager.RegisterGlobalContext` to be the context that is registered.
+
+## [9.0.0-exp.5] - 2025-02-20
+
+- Added a method overload for `ImageAssert.AreEqual` that allows to control logged messages and returns the results of the image-comparison job as an `ImageComparisonResults` struct.
+- Modified `BaseImageOptimization.StrategySingleBaseMostCommonImage` to choose the base image based on the accumulated-divergence for the comparison of all reference-images for a Graphics Test Case.
+- Added `BaseImageOptimization.CachedMetricsPerImage` dictionary containing the image-comparison metrics for the last invocation of `BaseImageOptimization.Optimization`.
+- Added extra parameters to `BaseImageOptimization.Optimization` to be able to control image-modifications and name-based filtering for the Graphics Test Cases in a project.
+- Added `ReferenceImageAnalyzerWindow` to be able to gather and analyze image-comparison metrics for the Graphics Test Cases in a project.
+
+## [9.0.0-exp.4] - 2025-02-17
+
+- Added support for TestFixtures to be used in the Graphics Test Framework. This allows for the setup and teardown of test data to be done once for multiple tests.
+- Added the `SupportsComputeShaders` boolean to `GraphicsDeviceInfo` to indicate if the device supports compute shaders.
+- Fixed the IgnoreAttribute not correctly filtering tests based on Global Context.
+- Fixed an issue where `SceneGraphicsTestCaseSource` would not work correctly with multiple regex patterns.
+
+## [9.0.0-exp.3] - 2025-02-03
+
+- Multiple asset bundles will now be built for each platform (eg. base references images) to avoid having asset bundles with hundreds of images. The current max size is 8 images, but we plan to potentially raise that and expose it to the GraphicsTestBuildSettings.
+- Asset bundles will now be loaded in order of the platform specificity, descending. So, most specific platform first and base images last.
+- If tests are generated through scenes, the test list will now respect the order that the build settings have the scenes in.
+- It is now possible to use any TextureFormat and any file extension for reference images
+- Memory allocation errors now use an Assertion and not just and Exception
+
+## [9.0.0-exp.2] - 2025-01-15
+
+- Fixed overwrites in the `EditorBuildSettings` scenes which caused scenes to be rewritten out of order. Now, if scenes are placed in the `EditorBuildSettings` in a specific order, the order is maintained. The rest of the scenes, if any, are appended after them.
+- Fixed several issues in the `BakeLighting` attribute, including filtering out scenes based on the filtered tests, fixed baking APVs correctly.
+- Fixed the `TestFiltersEditorWindow` not correctly displaying the converted attributes for some reason.
+- Reverted the `ShaderStripper` functionality to its 8.9.1 capacities. No meaningful changes had been made in 9.0 yet, and it was tough to reason about whether it was functioning correctly.
+- Fixed `IgnoreGraphicsTest` attribute not correctly filtering scenes out of the build
+- Fixed documentation for `isInclusive`
+- Fixed inclusive test filters ignoring too many test cases
+- Added the path of the bundle asset path to the load message for reference images.
+- Added the ability to add a command-line argument to enable `GRAPHICS_TEST_FRAMEWORK_DEBUG` mode
+- Added regex support for `SceneGraphicsTest` scene path definitions
+
+## [9.0.0-exp.1] - 2024-12-20
+
+### Added
+
+#### Graphics Test Platform
+
+- Added the `GraphicsTestPlatform` class to provide information about the platform used in the test run.
+- Added the `IGraphicsTestPlatformProvider` interface to provide information about the platform used in the test run.
+- Added the `PlayerBuildGraphicsTestPlatformProvider` class to provide information about the `GraphicsTestPlatform` used for a player build.
+- Added the `EditorGraphicsTestPlatformProvider` class to provide information about the `GraphicsTestPlatform` used in the editor.
+- Added the `RuntimeGraphicsTestPlatformProvider` class to provide information about the `GraphicsTestPlatform` used at runtime.
+- Added the `MatchesPlatform` method to the `TestFilterConfig` class.
+
+#### Graphics Test Build
+
+- Added the `GraphicsTestBuilder` class to build the graphics tests (replacing the `SetupGraphicsTestCases` class).
+- Added the `IGraphicsTestBuildManager` interface to manage the build process for graphics tests.
+- Added the `PlayerGraphicsTestBuildManager` class to manage the build process for graphics tests for a player.
+- Added the `EditorGraphicsTestBuildManager` class to manage the build process for graphics tests for the editor.
+- Added the `GraphicsTestBuildResult` enum to provide the result of the graphics test build process.
+- Added the `GraphicsTestBuildContext` enum to provide context information for the graphics test build process.
+- Added the `GraphicsTestBuildSettings` scriptable object to provide settings for the graphics test build process and transfer them between the editor and player.
+
+#### Other
+
+- Added the `ReferenceImage` class to represent a reference image. It contains the path to the reference image and reference image base. It is used to defer loading the reference image until it is needed.
+- Added the ability to filter tests based on the `-testFilter` command-line argument.
+- Added an `ArchitectureExtensions` class to convert from `System.Runtime.InteropServices.Architecture` to our `Architecture` enum.
+- Added a `StereoRenderingPathExtensions` class to convert from `StereoRenderingPath` to our `StereoRenderingModeFlags` enum.
+- Added a `BuildTargetExtensions` class to convert from `BuildTarget` to `RuntimePlatform` enum.
+- Added a `StringExtensions` class to provide an extension method for string sanitization.
+- Added the `IgnoreGraphicsTest` attribute to make it easier to ignore tests.
+
+### Changed
+
+- Moved test filtering functionality to the `TestFilterUtility` class.
+- Moved Asset bundle building functionality to the `AssetBundleBuilder` class.
+- Moved Asset bundle loading functionality to the `AssetBundleLoader` class.
+- Moved Light Baking related functionality to the `LightBakingUtility` class.
+- Moved all Test Runner related functionality to the `TestRunnerUtility` class.
+- Moved all runtime Reference Image related functionality to the `ReferenceImageUtility` class.
+- Moved all XR related functionality to the `XRPlatform` class.
+- Moved the `ImageHandler` class to its own file.
+- Moved `CopyImageToReferenceFolder` functionality to the `EditorReferenceImageUtility` class.
+- Moved `CreateSceneListFileFromBuildSettings` functionality to the `PlayerGraphicsTestBuildManager` class.
+- Moved `GameView` related functionality to the `GameViewSize` class.
+- Replaced Errors with Exceptions in `CliArgumentsCheck` class.
+- Refactored and cleaned up the `GraphicsTestCase` class.
+- Reduced the responsibilities and implementation details of the `GraphicsTestCaseProvider` classes.
+- Renamed `RuntimePlatformExtension` to `RuntimePlatformExtensions`.
+- Moved the `GraphicsTestLogger` class to the `UnityEngine.TestTools.Graphics` namespace to make it accessible from a player.
+- Replaced calls to Debug.Log with calls to `GraphicsTestLogger.Log()`.
+- Reorganized menus under `Tools/Graphics Test Framework` in the Unity Editor.
+- Split up documentation to separate files for better readability and maintainability.
+- Reformatted the Changelog file to adhere to MarkdownLint rules.
+- Reformatted the package.json file.
+
+### Removed
+
+- Deprecated the `SetupGraphicsTestCases.Setup()` method as it was replaced by `GraphicsTestBuilder.Build()`.
+- Removed `CaptureSceneView` as it was replaced by `EditorWindowCapture`.
+- Removed the `TestPlatform` class as it was replaced by the `GraphicsTestPlatform` class.
+- Removed the `GetTestCaseFromPath` method from the `IGraphicsTestCaseProvider` as it was unused.
+- Removed several unused methods.
+- Removed several old conditional compilation directives.
+- Removed several instances of commented out code.
+- Removed reference image loading functionality from the CodeBasedGraphicsTestAttribute class.
+- Removed the `TestUtils` class.
+- Removed the `EditorUtils` class.
+- Completely removed the functionality of the `TestFilters` system, but added a converter to the `IgnoreGraphicsTest` attribute for easy migration.
 
 ## [8.9.1-exp.1] - 2024-10-10
 

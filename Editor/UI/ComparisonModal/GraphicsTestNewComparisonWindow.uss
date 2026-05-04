@@ -1,0 +1,82 @@
+/* Root container */
+.modal-root {
+    padding: 12px;
+    flex-grow: 1;
+}
+
+/* Header title */
+.modal-header {
+    font-size: 16px;
+    -unity-font-style: bold;
+    margin-bottom: 4px;
+}
+
+/* Horizontal divider */
+.modal-separator {
+    height: 1px;
+    background-color: rgba(128, 128, 128, 0.3);
+    margin-top: 6px;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+}
+
+/* Description text under each mode */
+.modal-description {
+    font-size: 11px;
+    color: rgba(200, 200, 200, 0.7);
+    white-space: normal;
+    margin-bottom: 8px;
+}
+
+/* Section labels (e.g. "Platform A", "Platform B") */
+.section-label {
+    font-size: 11px;
+    -unity-font-style: bold;
+    margin-top: 6px;
+    margin-bottom: 2px;
+}
+
+/* Standard field spacing */
+.modal-field {
+    margin-bottom: 4px;
+}
+
+/* Mode containers */
+.mode-container {
+    margin-top: 4px;
+    flex-grow: 1;
+}
+
+/* Options group (dynamic enum fields) */
+.options-group {
+    margin: 0;
+    padding: 2px 0 0 0;
+}
+
+.options-group > EnumField {
+    margin-bottom: 2px;
+}
+
+/* Button row at bottom of each mode */
+.button-row {
+    flex-direction: row;
+    justify-content: flex-end;
+    margin-top: 4px;
+}
+
+.modal-button {
+    min-width: 100px;
+    height: 24px;
+    margin-left: 6px;
+    border-radius: 3px;
+}
+
+.modal-button--primary {
+    background-color: rgb(46, 108, 184);
+    color: rgb(255, 255, 255);
+    border-color: rgb(36, 88, 152);
+}
+
+.modal-button--primary:hover {
+    background-color: rgb(56, 128, 214);
+}

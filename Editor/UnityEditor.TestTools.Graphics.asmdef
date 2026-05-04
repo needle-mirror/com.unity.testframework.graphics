@@ -16,7 +16,8 @@
     "allowUnsafeCode": false,
     "overrideReferences": true,
     "precompiledReferences": [
-        "nunit.framework.dll"
+        "nunit.framework.dll",
+        "Newtonsoft.Json.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [
@@ -24,14 +25,14 @@
     ],
     "versionDefines": [
         {
-            "name": "com.unity.test-framework",
-            "expression": "2.0",
-            "define": "TEST_FRAMEWORK_2_0_0_OR_NEWER"
-        },
-        {
             "name": "com.unity.testframework.graphics",
             "expression": "",
             "define": "UNITY_TESTS_FRAMEWORK"
+        },
+        {
+            "name": "com.unity.testtools.codecoverage",
+            "expression": "",
+            "define": "UNITY_CODE_COVERAGE"
         }
     ],
     "noEngineReferences": false

@@ -1,0 +1,117 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <ui:TabView tabindex="-1" name="TabView" style="flex-grow: 1;">
+        <ui:Tab label="Test Results" closeable="false" name="ResultsTab" enabled="true" icon-image="project://database/Packages/com.unity.testframework.graphics/Editor/UI/Assets/gtf-icon-book-check.png?fileID=2800000&amp;guid=798b5b1b210454e279b1ffd2f15c1cbb&amp;type=3#gtf-icon-book-check" class="results-tab">
+            <uie:Toolbar class="results-toolbar">
+                <uie:ToolbarSearchField name="Search" tooltip="Filter test cases by name" class="results-toolbar__search"/>
+                <ui:VisualElement name="ToolbarButtons" class="results-toolbar__buttons">
+                    <uie:ToolbarButton text="Optimize Images" name="OptimizeImagesButton" tooltip="Analyze reference images and find optimization opportunities"/>
+                    <uie:ToolbarMenu name="ToolbarMenu"/>
+                </ui:VisualElement>
+            </uie:Toolbar>
+            <ui:VisualElement name="TestListPanel" class="test-list-panel">
+                <ui:VisualElement name="ComparisonTabs" class="comparison-tabs">
+                    <ui:TabView name="ComparisonTabView" reorderable="true" style="flex-grow: 1;"/>
+                    <uie:Toolbar name="ComparisonTabsButtons" style="flex-shrink: 1;">
+                        <uie:ToolbarButton text="+" focusable="false" name="NewComparisonButton" enabled="true" tooltip="Add a new comparison tab" class="new-comparison-button"/>
+                    </uie:Toolbar>
+                </ui:VisualElement>
+                <ui:MultiColumnTreeView name="TestCases" show-border="true" show-alternating-row-backgrounds="All" auto-expand="true" horizontal-scrolling="true" sorting-mode="Default" selection-type="Multiple" virtualization-method="DynamicHeight" enabled="true" reorderable="false" class="test-tree">
+                    <ui:Columns primary-column-name="TestName" reorderable="true" stretch-mode="GrowAndFill" resize-preview="true">
+                        <ui:Column name="TestResult" resizable="false"/>
+                        <ui:Column name="TestName" title="Name" stretchable="false" width="60%" resizable="true"/>
+                        <ui:Column name="IgnoredOn" title="Ignored On" resizable="true" stretchable="true" width="15%"/>
+                        <ui:Column name="Images" title="Images" width="60px" visible="false"/>
+                        <ui:Column name="Divergence" title="Divergence" width="80px" resizable="false" visible="false"/>
+                    </ui:Columns>
+                    <ui:SortColumnDescriptions>
+                        <ui:SortColumnDescription column-index="0" column-name="TestResult" direction="Descending"/>
+                        <ui:SortColumnDescription column-name="TestName" column-index="1" direction="Ascending"/>
+                        <ui:SortColumnDescription column-index="2" column-name="IgnoredOn"/>
+                    </ui:SortColumnDescriptions>
+                </ui:MultiColumnTreeView>
+                <ui:VisualElement name="EmptyStateOverlay" class="empty-state-overlay" style="display: none;">
+                    <ui:Label text="No graphics tests found in this project." class="empty-state-overlay__label"/>
+                    <ui:Label text="Create a test folder with an assembly definition and sample test file to get started." class="empty-state-overlay__hint"/>
+                    <ui:Button text="Create Graphics Tests" name="CreateGraphicsTestsButton" class="empty-state-overlay__button"/>
+                </ui:VisualElement>
+                <ui:VisualElement name="ImagePanel" class="image-panel">
+                    <ui:GroupBox name="ImageGroup" class="grabbable image-group">
+                        <ui:VisualElement name="ImageMasks" class="image-masks">
+                            <ui:VisualElement name="MaskRight" class="grabbable image-mask image-mask--right">
+                                <ui:Image name="ActualImage" class="grabbable comparison-image" style="overflow: hidden;">
+                                    <ui:VisualElement name="ActualImageBg" class="no-image-bg">
+                                        <ui:Image name="NoActualImageImage" class="no-image-placeholder"/>
+                                        <ui:Label text="No Actual Image Found" name="NoActualImageLabel" parse-escape-sequences="true" class="no-image-label"/>
+                                    </ui:VisualElement>
+                                </ui:Image>
+                            </ui:VisualElement>
+                            <ui:VisualElement name="MaskLeft" class="grabbable image-mask image-mask--left">
+                                <ui:Image name="ReferenceImage" class="grabbable comparison-image">
+                                    <ui:VisualElement name="RefImageBg" class="no-image-bg">
+                                        <ui:Image name="NoRefImageImage" class="no-image-placeholder"/>
+                                        <ui:Label text="No Reference Image Found" name="NoReferenceImageLabel" parse-escape-sequences="true" class="no-image-label"/>
+                                    </ui:VisualElement>
+                                </ui:Image>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:Image name="DiffImage" class="grabbable comparison-image overlay-image"/>
+                        <ui:Image name="HeatmapImage" class="grabbable comparison-image overlay-image"/>
+                    </ui:GroupBox>
+                    <uie:Toolbar name="ImageToolbar" class="image-toolbar">
+                        <ui:VisualElement class="breadcrumbs-container">
+                            <uie:ToolbarBreadcrumbs name="ReferenceImageBreadcrumbs" class="breadcrumbs"/>
+                            <uie:ToolbarBreadcrumbs name="ActualImageBreadcrumbs" class="breadcrumbs"/>
+                        </ui:VisualElement>
+                        <uie:ToolbarButton text="Quick Switch" name="QuickSwitchButton" focusable="false" tooltip="Swap between showing reference and actual image" class="toolbar-button--borderless"/>
+                        <uie:ToolbarSpacer class="toolbar-spacer"/>
+                        <ui:VisualElement name="VariantNavigator" class="variant-navigator">
+                            <uie:ToolbarButton text="◀" name="PrevVariantButton" focusable="false" tooltip="Previous reference image variant" class="variant-nav-button"/>
+                            <ui:Label text="Variant 0 / 0" name="VariantLabel" class="variant-label"/>
+                            <uie:ToolbarButton text="▶" name="NextVariantButton" focusable="false" tooltip="Next reference image variant" class="variant-nav-button"/>
+                        </ui:VisualElement>
+                        <uie:ToolbarSpacer class="toolbar-spacer"/>
+                        <uie:ToolbarToggle label="" name="OverlayDiffToggle" toggle-on-label-click="true" text="Difference" tooltip="Overlay the difference (diff) between the reference image and the result image." class="overlay-toggle"/>
+                        <uie:ToolbarToggle label="" name="OverlayHeatmapToggle" toggle-on-label-click="true" text="Heatmap" tooltip="Overlay a heatmap of the average divergence among reference images." class="overlay-toggle"/>
+                        <uie:ToolbarSpacer class="toolbar-spacer"/>
+                        <uie:ToolbarButton text="Accept Result" name="AcceptResultButton" focusable="false" tooltip="Replace the reference image with the actual result" class="toolbar-button--borderless"/>
+                        <uie:ToolbarButton text="Clear Result" name="ClearResultButton" focusable="false" tooltip="Delete the actual result image" class="toolbar-button--borderless"/>
+                        <uie:ToolbarSpacer class="toolbar-separator"/>
+                        <uie:ToolbarButton text="Reset View" name="ResetViewButton" focusable="false" tooltip="Reset zoom and slider to default" class="toolbar-button--borderless"/>
+                        <uie:ToolbarMenu tabindex="0" name="ImageMenu" class="toolbar-button--borderless"/>
+                    </uie:Toolbar>
+                    <ui:VisualElement name="RevealBar" class="reveal-bar">
+                        <ui:Slider value="50" high-value="100" name="RevealSlider" fill="true" show-input-field="false" class="reveal-slider"/>
+                        <ui:VisualElement name="ReferenceActualBar" picking-mode="Ignore" class="reference-actual-bar">
+                            <ui:GroupBox name="ReferenceImageBar" picking-mode="Ignore" class="image-bar image-bar--reference">
+                                <ui:Label text="Reference Image" picking-mode="Ignore" name="ReferenceImageLabel" class="image-label image-label--reference"/>
+                            </ui:GroupBox>
+                            <ui:GroupBox name="ActualImageBar" picking-mode="Ignore" class="image-bar image-bar--actual">
+                                <ui:Label text="Actual Image" picking-mode="Ignore" name="ActualImageLabel" class="image-label image-label--actual"/>
+                            </ui:GroupBox>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Slider label="" value="0" high-value="100" direction="Vertical" name="ZoomSlider" class="zoom-slider"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:Tab>
+        <ui:Tab label="Settings" closeable="false" name="SettingsTab" tabindex="1" enabled="true" icon-image="project://database/Packages/com.unity.testframework.graphics/Editor/UI/Assets/gtf-icon-settings.png?fileID=2800000&amp;guid=ed0eaa75c4cf34675a36ad316abfe069&amp;type=3#gtf-icon-settings" class="settings-tab">
+            <ui:ScrollView>
+                <uie:ObjectField label="Settings" allow-scene-objects="false" type="UnityEngine.TestTools.Graphics.GraphicsTestBuildSettings, UnityEngine.TestTools.Graphics" name="SettingsObject" class="settings-field"/>
+                <ui:VisualElement name="InspectorContainer" class="inspector-container"/>
+            </ui:ScrollView>
+        </ui:Tab>
+        <ui:Tab label="Logs" closeable="false" name="LogsTab" tabindex="2" icon-image="project://database/Packages/com.unity.testframework.graphics/Editor/UI/Assets/gtf-icon-logs.png?fileID=2800000&amp;guid=6b906acd17e934f01a1051ab2ca4a307&amp;type=3#gtf-icon-logs" class="logs-tab">
+            <uie:Toolbar class="logs-toolbar">
+                <uie:ToolbarSearchField name="LogSearchField" style="flex-grow: 1;"/>
+                <uie:ToolbarButton text="Open File" name="OpenFileButton" focusable="false" selectable="false" tooltip="Open the most recent log file"/>
+                <uie:ToolbarButton text="Scroll to Latest" name="ScrollToLatestButton" focusable="false" tooltip="Scroll to the most recent log entry"/>
+                <uie:ToolbarButton text="Clear" name="ClearLogsButton" focusable="false" tooltip="Clear all log entries"/>
+            </uie:Toolbar>
+            <ui:ListView name="LogListView" allow-add="false" allow-remove="false" horizontal-scrolling="false" show-foldout-header="false" show-alternating-row-backgrounds="ContentOnly" show-border="false" virtualization-method="DynamicHeight" focusable="true" selection-type="Multiple" class="log-list"/>
+            <ui:VisualElement name="EmptyLogsOverlay" class="empty-state-overlay" style="display: none;">
+                <ui:Label text="No logs yet" class="empty-state-overlay__label"/>
+                <ui:Label text="Log entries from graphics test runs will appear here." class="empty-state-overlay__hint"/>
+            </ui:VisualElement>
+        </ui:Tab>
+    </ui:TabView>
+</ui:UXML>

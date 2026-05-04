@@ -1,36 +1,70 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Test Framework",
-  "version": "8.14.0-exp.2",
-  "unity": "2021.3",
-  "description": "Provides testing utilities for writing tests for graphics code, such as image comparison assertions and automatic management of reference images.",
+  "version": "9.0.0-pre.6",
+  "unity": "6000.0",
+  "unityRelease": "59f1",
+  "description": "Unity's automated visual validation system for graphics rendering. Enables developers to catch visual regressions, validate rendering consistency across platforms and graphics APIs, and test custom Scriptable Render Pipelines through automated image comparison testing.",
+  "category": "Testing",
   "keywords": [
-    "qa",
-    "test",
+    "graphics",
     "testing",
-    "tests",
-    "graphics"
+    "visual-validation",
+    "image-comparison",
+    "automation",
+    "ci",
+    "continuous-integration",
+    "quality-assurance"
+  ],
+  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@latest/",
+  "samples": [
+    {
+      "displayName": "Basic Graphics Tests",
+      "description": "Example graphics tests demonstrating scene-based testing and custom test scenarios",
+      "path": "Samples~/BasicGraphicsTests"
+    },
+    {
+      "displayName": "Parameterized Tests",
+      "description": "Demonstrates GraphicsTestParam and GraphicsTestParamSource for creating parameterized test variants with inline values and external data sources",
+      "path": "Samples~/ParameterizedTests"
+    },
+    {
+      "displayName": "Image Comparison Examples",
+      "description": "Demonstrates ImageComparisonSettings configuration, HDR/EXR testing, ImageCapture utilities, multi-camera comparison, async image comparison, and custom texture comparison with SSIM/PSNR via IsTexture.EqualTo",
+      "path": "Samples~/ImageComparisonExamples"
+    },
+    {
+      "displayName": "Platform Filtering Examples",
+      "description": "Demonstrates IgnoreGraphicsTest, TestNotSupportedOn, and TestOnlySupportedOn attributes with various match modes and platform filters",
+      "path": "Samples~/PlatformFilteringExamples"
+    },
+    {
+      "displayName": "Editor Test Examples",
+      "description": "Demonstrates EditorWindowCapture for capturing Editor windows and SceneViews, and ShaderTestFramework for unit-testing ShaderLab and HLSL shaders",
+      "path": "Samples~/EditorTestExamples"
+    },
+    {
+      "displayName": "Advanced Patterns",
+      "description": "Demonstrates custom test case sources, BakeLighting, custom pre-build setup, GlobalContext, custom IPlatformNode implementations, and the GraphicsTestLogger",
+      "path": "Samples~/AdvancedPatterns"
+    }
   ],
   "dependencies": {
-    "com.unity.modules.xr": "1.0.0",
+    "com.unity.addressables": "2.7.6",
     "com.unity.modules.imageconversion": "1.0.0",
     "com.unity.nuget.newtonsoft-json": "3.2.2",
-    "com.unity.xr.management": "4.4.0",
-    "com.unity.xr.legacyinputhelpers": "2.1.13",
-    "com.unity.addressables": "1.28.1",
-    "com.unity.testtools.codecoverage": "1.2.7",
-    "com.unity.external.test-protocol": "2.0.0-exp.1"
+    "com.unity.test-framework": "1.6.0",
+    "com.unity.burst": "1.8.27"
   },
   "_upm": {
-    "changelog": "- Updated package manifest."
+    "changelog": "### Added\n\n- Added `-enable-shader-stripping` command-line argument for manipulating shader stripping from CLI.\n- Exposed command-line argument values in the GraphicsTestBuildSettings class for documentation purposes."
   },
   "upmCi": {
-    "footprint": "61ed16e16ca7a3a93029c8746d403b3a128aef04"
+    "footprint": "8546c16fcd726a12d1e63e9f3fb469852af75128"
   },
-  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.testframework.graphics@8.14/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "c6aed4f2aedf7dd7d1369ab0f210a4f20f00c699"
+    "revision": "47b00ebdbff8bbb6e5fc12a54a4f7186d19a914a"
   }
 }

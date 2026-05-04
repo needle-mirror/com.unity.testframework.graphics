@@ -1,26 +1,24 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEditor;
-using UnityEditor.AssetImporters;
 using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
+using UnityEditor.AssetImporters;
 using UnityEditor.ProjectWindowCallback;
 using UnityEditor.Rendering;
+using UnityEngine;
 using UnityEngine.TestTools.Graphics;
 
 namespace UnityEditor.TestTools.Graphics
 {
     [ScriptedImporter(1, "shadervariantlist")]
-    public class ShaderVariantListImporter : ScriptedImporter
+    class ShaderVariantListImporter : ScriptedImporter
     {
+        internal static IAssetService AssetService { get; set; } = new AssetDatabaseService();
+
         [MenuItem("Assets/Create/Graphics Test Framework/Shader Variant List", false, 1)]
         public static void CreateEmptyShaderVariantList()
         {
-            AssetDatabase.Refresh();
-            var action = ScriptableObject.CreateInstance< CreateShaderVariantListAsset >();
+            AssetService.Refresh();
+            var action = ScriptableObject.CreateInstance<CreateShaderVariantListAsset>();
             ProjectWindowUtil.StartNameEditingIfProjectWindowExists(
 #if UNITY_6000_4_OR_NEWER
                 EntityId.None,
@@ -50,7 +48,7 @@ namespace UnityEditor.TestTools.Graphics
                 string pathName, string resourceFile)
             {
                 File.WriteAllText(pathName, JsonUtility.ToJson(new ShaderVariantList.Settings()));
-                AssetDatabase.ImportAsset(pathName);
+                AssetService.ImportAsset(pathName);
             }
         }
 
@@ -69,19 +67,25 @@ namespace UnityEditor.TestTools.Graphics
             {
                 compiledShaderLines = File.ReadAllLines(ctx.assetPath);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // When the file was just created, unity can't read it but that's not an issue since it's empty anyway
+                GraphicsTestLogger.DebugLog($"Could not read shader variant list at '{ctx.assetPath}' (likely newly created): {ex.Message}");
                 compiledShaderLines = Array.Empty<string>();
             }
 
             // We use the first line to store file settings in JSON:
             var settings = new ShaderVariantList.Settings();
-            try
+            if (compiledShaderLines.Length > 0)
             {
-                JsonUtility.FromJsonOverwrite(compiledShaderLines[0], settings);
+                try
+                {
+                    JsonUtility.FromJsonOverwrite(compiledShaderLines[0], settings);
+                }
+                catch (Exception ex)
+                {
+                    GraphicsTestLogger.DebugLog($"Could not parse settings from first line of shader variant list: {ex.Message}");
+                }
             }
-            catch (Exception) { }
 
             shaderVariantListAsset.settings = settings;
 
@@ -89,27 +93,37 @@ namespace UnityEditor.TestTools.Graphics
             foreach (var line in compiledShaderLines)
             {
                 var matchCompiledShader = GenerateShaderVariantList.s_CompiledShaderRegex.Match(line);
+                if (!matchCompiledShader.Success)
+                {
+                    matchCompiledShader = GenerateShaderVariantList.s_CompiledSnippetRegex.Match(line);
+                }
+
                 if (matchCompiledShader.Success)
                 {
                     var serializedVariant = new ShaderVariantList.SerializedShaderVariant();
                     try
                     {
                         serializedVariant.shaderName = matchCompiledShader.Groups["shaderName"].Value;
-                        string passName = matchCompiledShader.Groups["passName"].Value;
+                        var passName = matchCompiledShader.Groups["passName"].Value;
                         if (passName.StartsWith("<Unnamed Pass"))
                             passName = "";
                         serializedVariant.passName = passName;
                         var keywords = matchCompiledShader.Groups["keywords"].Value;
-                        if (keywords == GenerateShaderVariantList.s_NoKeywordText)
-                            serializedVariant.keywords = new List<string>();
-                        else
-                            serializedVariant.keywords = keywords.Split(' ').ToList();
+                        List<string> keywordList;
+                        keywordList =
+                            keywords == GenerateShaderVariantList.s_NoKeywordText
+                                ? new List<string>()
+                                : new List<string>(keywords.Split(' '));
 
-                        var stage = matchCompiledShader.Groups["stage"].Value;
+                        keywordList.Sort();
+                        serializedVariant.keywords = string.Join(" ", keywordList);
+
+                        var stage = matchCompiledShader.Groups["stage"].Value.ToLowerInvariant();
                         if (stage == "all")
                         {
                             shaderVariantListAsset.serializedShaderVariants.AddRange(
-                                GenerateAllStageForVariant(serializedVariant));
+                                GenerateAllStageForVariant(serializedVariant)
+                            );
                         }
                         else
                         {
@@ -125,19 +139,30 @@ namespace UnityEditor.TestTools.Graphics
                 }
 
                 var matchCompiledComputeShader = GenerateShaderVariantList.s_CompiledComputeShaderRegex.Match(line);
+                if (!matchCompiledComputeShader.Success)
+                {
+                    matchCompiledComputeShader = GenerateShaderVariantList.s_CompiledComputeKernelRegex.Match(line);
+                }
+
                 if (matchCompiledComputeShader.Success)
                 {
                     var serializedComputeVariant = new ShaderVariantList.SerializedComputeShaderVariant();
                     try
                     {
-                        serializedComputeVariant.computeShaderName =
-                            matchCompiledComputeShader.Groups["computeName"].Value;
+                        serializedComputeVariant.computeShaderName = matchCompiledComputeShader
+                            .Groups["computeName"]
+                            .Value;
                         serializedComputeVariant.kernelName = matchCompiledComputeShader.Groups["kernelName"].Value;
                         var keywords = matchCompiledComputeShader.Groups["keywords"].Value;
-                        if (keywords == GenerateShaderVariantList.s_NoKeywordText)
-                            serializedComputeVariant.keywords = new List<string>();
-                        else
-                            serializedComputeVariant.keywords = keywords.Split(' ').ToList();
+                        List<string> keywordList;
+                        keywordList =
+                            keywords == GenerateShaderVariantList.s_NoKeywordText
+                                ? new List<string>()
+                                : new List<string>(keywords.Split(' '));
+
+                        keywordList.Sort();
+                        serializedComputeVariant.keywords = string.Join(" ", keywordList);
+
                         shaderVariantListAsset.serializedComputeShaderVariants.Add(serializedComputeVariant);
                     }
                     catch (Exception e)
@@ -150,24 +175,16 @@ namespace UnityEditor.TestTools.Graphics
 
             ShaderType ParseShaderType(string stage)
             {
-                switch (stage)
+                return stage switch
                 {
-                    case "vertex":
-                        return ShaderType.Vertex;
-                    case "pixel":
-                    case "fragment":
-                        return ShaderType.Fragment;
-                    case "geometry":
-                        return ShaderType.Geometry;
-                    case "hull":
-                        return ShaderType.Hull;
-                    case "domain":
-                        return ShaderType.Domain;
-                    case "raytracing":
-                        return ShaderType.Surface; // For some reason raytracing shader end-up being marked as Surface Shader Type during the stripping
-                    default:
-                        throw new Exception("Unhandled shader stage: " + stage);
-                }
+                    "vertex" => ShaderType.Vertex,
+                    "pixel" or "fragment" => ShaderType.Fragment,
+                    "geometry" => ShaderType.Geometry,
+                    "hull" => ShaderType.Hull,
+                    "domain" => ShaderType.Domain,
+                    "raytracing" => ShaderType.RayTracing,
+                    _ => throw new Exception("Unhandled shader stage: " + stage),
+                };
             }
 
             ctx.AddObjectToAsset("Variants List", shaderVariantListAsset);
@@ -175,7 +192,8 @@ namespace UnityEditor.TestTools.Graphics
         }
 
         IEnumerable<ShaderVariantList.SerializedShaderVariant> GenerateAllStageForVariant(
-            ShaderVariantList.SerializedShaderVariant variant)
+            ShaderVariantList.SerializedShaderVariant variant
+        )
         {
             foreach (ShaderType stage in Enum.GetValues(typeof(ShaderType)))
             {

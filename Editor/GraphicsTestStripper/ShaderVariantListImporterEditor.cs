@@ -1,24 +1,28 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
-using UnityEditor;
-using UnityEditor.AssetImporters;
-using UnityEngine;
 using System.IO;
-using System.Linq;
+using System.Text;
 using UnityEditor.Rendering;
+using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.TestTools.Graphics;
 
 namespace UnityEditor.TestTools.Graphics
 {
     [CustomEditor(typeof(ShaderVariantList))]
-    public class ShaderVariantListImporterEditor : Editor
+    class ShaderVariantListImporterEditor : Editor
     {
+        const int k_UpdateSvcControlIdOffset = 101;
+        const int k_AggregateSvcControlIdOffset = 42;
+        const int k_FnvPrime = 16777619;
+        const uint k_FnvOffsetBasis = 2166136261;
+
         new ShaderVariantList target => base.target as ShaderVariantList;
 
-        int m_UpdateFromSCVEventID = -1;
-        int m_AggregateFromSCVEventID = -1;
+        internal IAssetService AssetService { get; set; } = new AssetDatabaseService();
+
+        int m_UpdateFromScvEventID = -1;
+        int m_AggregateFromScvEventID = -1;
 
         public override void OnInspectorGUI()
         {
@@ -29,30 +33,56 @@ namespace UnityEditor.TestTools.Graphics
             {
                 EditorGUILayout.LabelField("Logs operations", EditorStyles.boldLabel);
 
-                if (GUILayout.Button(new GUIContent("Update Shader Variants From Player.log",
-                        "You can provide the full Player.log file in this text area to manually update the list of shader variants to strip.")))
+                if (
+                    GUILayout.Button(
+                        new GUIContent(
+                            "Update Shader Variants From Player.log",
+                            "You can provide the full Player.log file in this text area to manually update the list of shader variants to strip."
+                        )
+                    )
+                )
                 {
-                    string defaultPath =
-                        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)
+                    var defaultPath =
+                        Environment
+                            .GetFolderPath(Environment.SpecialFolder.ApplicationData)
                             .Replace("Roaming", "LocalLow") + "/DefaultCompany/UnityTestFramework/";
 
-                    string path = EditorUtility.OpenFilePanel("Select Player.log or shadervariantlist file",
-                        defaultPath, "log,txt,shadervariantlist");
-                    var playerLog = File.ReadAllText(path);
-                    UpdateVariantsFromLog(playerLog);
+                    var path = EditorUtility.OpenFilePanel(
+                        "Select Player.log or shadervariantlist file",
+                        defaultPath,
+                        "log,txt,shadervariantlist"
+                    );
+                    if (!string.IsNullOrEmpty(path))
+                    {
+                        var playerLog = File.ReadAllText(path);
+                        UpdateVariantsFromLog(playerLog);
+                    }
                 }
 
-                if (GUILayout.Button(new GUIContent("Aggregate Shader Variants From Player.log",
-                        "You can provide the full Player.log file in this text area to manually update the list of shader variants to strip.")))
+                if (
+                    GUILayout.Button(
+                        new GUIContent(
+                            "Aggregate Shader Variants From Player.log",
+                            "You can provide the full Player.log file in this text area to manually update the list of shader variants to strip."
+                        )
+                    )
+                )
                 {
-                    string defaultPath =
-                        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)
+                    var defaultPath =
+                        Environment
+                            .GetFolderPath(Environment.SpecialFolder.ApplicationData)
                             .Replace("Roaming", "LocalLow") + "/DefaultCompany/UnityTestFramework/";
 
-                    string path = EditorUtility.OpenFilePanel("Select Player.log or shadervariantlist file",
-                        defaultPath, "log,txt,shadervariantlist");
-                    var playerLog = File.ReadAllText(path);
-                    AggregateVariantsFromLog(playerLog);
+                    var path = EditorUtility.OpenFilePanel(
+                        "Select Player.log or shadervariantlist file",
+                        defaultPath,
+                        "log,txt,shadervariantlist"
+                    );
+                    if (!string.IsNullOrEmpty(path))
+                    {
+                        var playerLog = File.ReadAllText(path);
+                        AggregateVariantsFromLog(playerLog);
+                    }
                 }
             }
 
@@ -62,17 +92,34 @@ namespace UnityEditor.TestTools.Graphics
             {
                 EditorGUILayout.LabelField("Shader Variant Collection Operations", EditorStyles.boldLabel);
 
-                if (GUILayout.Button(new GUIContent("Update Shader Variants From SVC",
-                        "You can provide a full Player.log file in this text area to manually update the list of shader variants to strip.")))
+                if (
+                    GUILayout.Button(
+                        new GUIContent(
+                            "Update Shader Variants From SVC",
+                            "You can provide a full Player.log file in this text area to manually update the list of shader variants to strip."
+                        )
+                    )
+                )
                 {
-                    m_UpdateFromSCVEventID = EditorGUIUtility.GetControlID(FocusType.Passive) + 101;
-                    EditorGUIUtility.ShowObjectPicker<ShaderVariantCollection>(null, false, "", m_UpdateFromSCVEventID);
+                    m_UpdateFromScvEventID = GUIUtility.GetControlID(FocusType.Passive) + k_UpdateSvcControlIdOffset;
+                    EditorGUIUtility.ShowObjectPicker<ShaderVariantCollection>(null, false, "", m_UpdateFromScvEventID);
                 }
-                if (GUILayout.Button(new GUIContent("Aggregate Shader Variants From SVC",
-                        "You can provide a full Player.log file in this text area to manually update the list of shader variants to strip.")))
+                if (
+                    GUILayout.Button(
+                        new GUIContent(
+                            "Aggregate Shader Variants From SVC",
+                            "You can provide a full Player.log file in this text area to manually update the list of shader variants to strip."
+                        )
+                    )
+                )
                 {
-                    m_AggregateFromSCVEventID = EditorGUIUtility.GetControlID(FocusType.Passive) + 42;
-                    EditorGUIUtility.ShowObjectPicker<ShaderVariantCollection>(null, false, "", m_AggregateFromSCVEventID);
+                    m_AggregateFromScvEventID = GUIUtility.GetControlID(FocusType.Passive) + k_AggregateSvcControlIdOffset;
+                    EditorGUIUtility.ShowObjectPicker<ShaderVariantCollection>(
+                        null,
+                        false,
+                        "",
+                        m_AggregateFromScvEventID
+                    );
                 }
             }
 
@@ -90,8 +137,14 @@ namespace UnityEditor.TestTools.Graphics
             using (new GUILayout.VerticalScope("HelpBox"))
             {
                 EditorGUILayout.LabelField("Debug / Optimization");
-                if (GUILayout.Button(new GUIContent("Log all duplicated variants",
-                        "Allow to find unneeded keywords in your shader passes. Removing them will improve object batching.")))
+                if (
+                    GUILayout.Button(
+                        new GUIContent(
+                            "Log all duplicated variants",
+                            "Allow to find unneeded keywords in your shader passes. Removing them will improve object batching."
+                        )
+                    )
+                )
                 {
                     LogDuplicatedVariantKeywords();
                 }
@@ -99,25 +152,26 @@ namespace UnityEditor.TestTools.Graphics
 
             if (Event.current.commandName == "ObjectSelectorUpdated")
             {
-                ShaderVariantCollection pickedCollection = null;
+                ShaderVariantCollection pickedCollection;
 
-                if (EditorGUIUtility.GetObjectPickerControlID() == m_UpdateFromSCVEventID)
+                if (EditorGUIUtility.GetObjectPickerControlID() == m_UpdateFromScvEventID)
                 {
                     pickedCollection = EditorGUIUtility.GetObjectPickerObject() as ShaderVariantCollection;
-                    m_UpdateFromSCVEventID = -1;
-                    UpdateVariantsFromSVC(pickedCollection);
+                    m_UpdateFromScvEventID = -1;
+                    UpdateVariantsFromSvc(pickedCollection);
                 }
-                if (EditorGUIUtility.GetObjectPickerControlID() == m_AggregateFromSCVEventID)
+                if (EditorGUIUtility.GetObjectPickerControlID() == m_AggregateFromScvEventID)
                 {
                     pickedCollection = EditorGUIUtility.GetObjectPickerObject() as ShaderVariantCollection;
-                    m_AggregateFromSCVEventID = -1;
-                    AggregateVariantsFromSVC(pickedCollection);
+                    m_AggregateFromScvEventID = -1;
+                    AggregateVariantsFromSvc(pickedCollection);
                 }
             }
 
             EditorGUI.BeginChangeCheck();
             target.settings.enabled = EditorGUILayout.Toggle("Enabled", target.settings.enabled);
-            target.settings.targetPlatform = (ShaderCompilerPlatform)EditorGUILayout.EnumPopup("Target Platform", target.settings.targetPlatform);
+            target.settings.targetPlatform = (ShaderCompilerPlatform)
+                EditorGUILayout.EnumPopup("Target Platform", target.settings.targetPlatform);
             target.settings.xr = EditorGUILayout.Toggle("XR", target.settings.xr);
             if (EditorGUI.EndChangeCheck())
             {
@@ -134,11 +188,11 @@ namespace UnityEditor.TestTools.Graphics
         {
             unchecked
             {
-                const int p = 16777619;
-                int hash = (int)2166136261;
+                const int p = k_FnvPrime;
+                var hash = (int)k_FnvOffsetBasis;
 
-                for (int i = 0; i < data.Length; i++)
-                    hash = (hash ^ data[i]) * p;
+                foreach (var t in data)
+                    hash = (hash ^ t) * p;
 
                 return hash;
             }
@@ -146,24 +200,23 @@ namespace UnityEditor.TestTools.Graphics
 
         string KeywordListToString(List<string> keywords)
         {
-            if (keywords.Count == 0)
-                return "<no keywords>";
-            else
-                return String.Join(" ", keywords);
+            return keywords.Count == 0 ? "<no keywords>" : string.Join(" ", keywords);
         }
 
         void LogDuplicatedVariantKeywords()
         {
             try
             {
-                Dictionary<(ShaderType shaderType, string shaderName, string shaderPass, int compiledHash), List<string>> compiledSet = new();
+                Dictionary<
+                    (ShaderType shaderType, string shaderName, string shaderPass, int compiledHash),
+                    string
+                > compiledSet = new();
                 StringBuilder sb = new();
 
-                int count = 0;
+                var count = 0;
                 foreach (var variant in target.serializedShaderVariants)
                 {
-                    if (variant.stage != ShaderType.Fragment || variant.stage == ShaderType.Vertex ||
-                        variant.stage == ShaderType.Domain || variant.stage == ShaderType.Hull)
+                    if (variant.stage != ShaderType.Fragment)
                         continue;
 
                     var shader = Shader.Find(variant.shaderName);
@@ -173,37 +226,7 @@ namespace UnityEditor.TestTools.Graphics
                         continue;
                     }
 
-                    var sd = ShaderUtil.GetShaderData(shader);
-                    var subShader = sd.GetSubshader(sd.ActiveSubshaderIndex);
-                    for (int i = 0; i < subShader.PassCount; i++)
-                    {
-                        var pass = subShader.GetPass(i);
-                        if (pass.Name == variant.passName)
-                        {
-                            if (pass.HasShaderStage(variant.stage))
-                            {
-                                var compiledInfo = pass.CompileVariant(variant.stage, variant.keywords.ToArray(),
-                                    ShaderCompilerPlatform.D3D, BuildTarget.StandaloneWindows);
-                                EditorUtility.DisplayProgressBar(
-                                    $"Compiling Variants {count}/{target.serializedShaderVariants.Count}",
-                                    $"{variant.shaderName} {variant.passName} {variant.stage} {KeywordListToString(variant.keywords)}",
-                                    i / (float)subShader.PassCount);
-                                var k = (variant.stage, variant.shaderName, variant.passName,
-                                    ComputeHash(compiledInfo.ShaderData));
-                                if (compiledSet.TryGetValue(k, out var keywords))
-                                {
-                                    var duplicatedText = "Duplicated keywords for shader " + variant.shaderName + " "
-                                              + variant.passName + " " + variant.stage + "\n" +
-                                              KeywordListToString(keywords) + "\n" +
-                                              KeywordListToString(variant.keywords) + "\n";
-                                    Debug.Log(duplicatedText);
-                                    sb.AppendLine(duplicatedText);
-                                }
-                                else
-                                    compiledSet.Add(k, variant.keywords);
-                            }
-                        }
-                    }
+                    CompileAndCheckVariant(shader, variant, compiledSet, sb, count);
                     count++;
                 }
 
@@ -215,36 +238,84 @@ namespace UnityEditor.TestTools.Graphics
             }
         }
 
+        void CompileAndCheckVariant(
+            Shader shader,
+            ShaderVariantList.SerializedShaderVariant variant,
+            Dictionary<(ShaderType, string, string, int), string> compiledSet,
+            StringBuilder sb,
+            int count
+        )
+        {
+            var sd = ShaderUtil.GetShaderData(shader);
+            var subShader = sd.GetSubshader(sd.ActiveSubshaderIndex);
+            for (var i = 0; i < subShader.PassCount; i++)
+            {
+                var pass = subShader.GetPass(i);
+                if (pass.Name != variant.passName || !pass.HasShaderStage(variant.stage))
+                    continue;
+
+                var compiledInfo = pass.CompileVariant(
+                    variant.stage,
+                    variant.keywords.Split(' '),
+                    ShaderCompilerPlatform.D3D,
+                    BuildTarget.StandaloneWindows
+                );
+                EditorUtility.DisplayProgressBar(
+                    $"Compiling Variants {count}/{target.serializedShaderVariants.Count}",
+                    $"{variant.shaderName} {variant.passName} {variant.stage} {variant.keywords}",
+                    i / (float)subShader.PassCount
+                );
+                var k = (
+                    variant.stage,
+                    variant.shaderName,
+                    variant.passName,
+                    ComputeHash(compiledInfo.ShaderData)
+                );
+                if (compiledSet.TryGetValue(k, out var keywords))
+                {
+                    var duplicatedText =
+                        $"Duplicated keywords for shader {variant.shaderName} {variant.passName} {variant.stage}\n"
+                        + $"{keywords}\n{variant.keywords}\n";
+                    Debug.Log(duplicatedText);
+                    sb.AppendLine(duplicatedText);
+                }
+                else
+                {
+                    compiledSet.Add(k, variant.keywords);
+                }
+            }
+        }
+
         void UpdateVariantsFromLog(string playerLogContent)
         {
             GenerateShaderVariantList.AppendAllShaderLines(out var finalFile, playerLogContent);
-            WriteAllTextToSVL(AssetDatabase.GetAssetPath(target), finalFile);
+            WriteAllTextToSvl(AssetService.GetAssetPath(target), finalFile);
         }
 
-        void UpdateVariantsFromSVC(ShaderVariantCollection svc)
+        void UpdateVariantsFromSvc(ShaderVariantCollection svc)
         {
-            var svcLog = TransformSVCToLog(svc);
+            var svcLog = TransformSvcToLog(svc);
 
             GenerateShaderVariantList.AppendAllShaderLines(out var finalFile, svcLog.ToString());
-            WriteAllTextToSVL(AssetDatabase.GetAssetPath(target), finalFile);
+            WriteAllTextToSvl(AssetService.GetAssetPath(target), finalFile);
         }
 
-        StringBuilder TransformSVCToLog(ShaderVariantCollection svc)
+        StringBuilder TransformSvcToLog(ShaderVariantCollection svc)
         {
             // Generate compiled shader lines form SVC
-            var serializedSVC = new SerializedObject(svc);
-            var shaders = serializedSVC.FindProperty("m_Shaders");
+            var serializedSvc = new SerializedObject(svc);
+            var shaders = serializedSvc.FindProperty("m_Shaders");
             var svcLog = new StringBuilder();
 
-            for (int i = 0; i < shaders.arraySize; i++)
+            for (var i = 0; i < shaders.arraySize; i++)
             {
                 var shaderVariants = shaders.GetArrayElementAtIndex(i);
-                Shader shader = (Shader)shaderVariants.FindPropertyRelative("first").objectReferenceValue;
+                var shader = (Shader)shaderVariants.FindPropertyRelative("first").objectReferenceValue;
                 var shaderPassNames = GetAllPassNamesInShader(shader);
 
                 // Shader name and button to remove it
                 var variantsProp = shaderVariants.FindPropertyRelative("second.variants");
-                for (int variantIndex = 0; variantIndex < variantsProp.arraySize; ++variantIndex)
+                for (var variantIndex = 0; variantIndex < variantsProp.arraySize; ++variantIndex)
                 {
                     var prop = variantsProp.GetArrayElementAtIndex(variantIndex);
                     var keywords = prop.FindPropertyRelative("keywords").stringValue;
@@ -253,7 +324,9 @@ namespace UnityEditor.TestTools.Graphics
 
                     // Ignore pass type as it's useless in SRPs and hardcode all stage instead because we don't have the info
                     foreach (var passName in shaderPassNames)
-                        svcLog.AppendLine($"{GenerateShaderVariantList.k_CompiledShaderString}: {shader.name}, pass: {passName}, stage: all, keywords {keywords}");
+                        svcLog.AppendLine(
+                            $"{GenerateShaderVariantList.k_CompiledShaderString}: {shader.name}, pass: {passName}, stage: all, keywords {keywords}"
+                        );
                 }
             }
 
@@ -266,17 +339,19 @@ namespace UnityEditor.TestTools.Graphics
             var shaderPassNames = new List<string>();
 
             // Gather pass names for the current shader, filtered using the current render pipeline
-            for (int subShaderIndex = 0; subShaderIndex < shaderData.SubshaderCount; subShaderIndex++)
+            for (var subShaderIndex = 0; subShaderIndex < shaderData.SubshaderCount; subShaderIndex++)
             {
                 var subShader = shaderData.GetSubshader(subShaderIndex);
 
                 var renderPipeline = subShader.FindTagValue(new ShaderTagId("RenderPipeline")).name;
-                if (RenderPipelineManager.currentPipeline == null ||
-                    renderPipeline == RenderPipelineManager.currentPipeline.GetType().Name)
+                if (
+                    RenderPipelineManager.currentPipeline == null
+                    || renderPipeline == RenderPipelineManager.currentPipeline.GetType().Name
+                )
                 {
-                    for (int passIndex = 0; passIndex < subShader.PassCount; passIndex++)
+                    for (var passIndex = 0; passIndex < subShader.PassCount; passIndex++)
                     {
-                        string passName = subShader.GetPass(passIndex).Name;
+                        var passName = subShader.GetPass(passIndex).Name;
                         if (String.IsNullOrEmpty(passName))
                             passName = "<Unnamed Pass " + passIndex + ">";
                         shaderPassNames.Add(passName);
@@ -289,18 +364,19 @@ namespace UnityEditor.TestTools.Graphics
 
         void AggregateVariantsFromLog(string playerLogContent)
         {
-            var path = AssetDatabase.GetAssetPath(target);
+            var path = AssetService.GetAssetPath(target);
             var existingLines = new SortedSet<string>();
 
             if (File.Exists(path))
             {
-                var lines = File.ReadAllLines(path).ToList();
+                var lines = new List<string>(File.ReadAllLines(path));
                 try
                 {
                     var settingsLine = JsonUtility.FromJson<ShaderVariantList.Settings>(lines[0]);
                     if (settingsLine != null)
                         lines.RemoveAt(0);
-                } catch
+                }
+                catch
                 {
                     // Don't care if it fails
                 }
@@ -311,21 +387,21 @@ namespace UnityEditor.TestTools.Graphics
             }
 
             GenerateShaderVariantList.AppendAllShaderLines(out var finalFile, playerLogContent, existingLines);
-            WriteAllTextToSVL(path, finalFile);
+            WriteAllTextToSvl(path, finalFile);
         }
 
-        void WriteAllTextToSVL(string path, StringBuilder finalFile)
+        void WriteAllTextToSvl(string path, StringBuilder finalFile)
         {
             finalFile.Insert(0, JsonUtility.ToJson(target.settings) + "\n");
             File.WriteAllText(path, finalFile.ToString());
-            AssetDatabase.Refresh();
-            AssetDatabase.ImportAsset(path);
+            AssetService.Refresh();
+            AssetService.ImportAsset(path);
         }
 
-        void AggregateVariantsFromSVC(ShaderVariantCollection svc)
+        void AggregateVariantsFromSvc(ShaderVariantCollection svc)
         {
-            var path = AssetDatabase.GetAssetPath(target);
-            var svcLog = TransformSVCToLog(svc);
+            var path = AssetService.GetAssetPath(target);
+            var svcLog = TransformSvcToLog(svc);
 
             var existingLines = new SortedSet<string>();
             if (File.Exists(path))
@@ -337,13 +413,13 @@ namespace UnityEditor.TestTools.Graphics
             }
 
             GenerateShaderVariantList.AppendAllShaderLines(out var finalFile, svcLog.ToString(), existingLines);
-            WriteAllTextToSVL(path, finalFile);
+            WriteAllTextToSvl(path, finalFile);
         }
 
         void UpdateVariantsSettingsInFile()
         {
-            var path = AssetDatabase.GetAssetPath(target);
-            var fileLines = File.ReadAllLines(path).ToList();
+            var path = AssetService.GetAssetPath(target);
+            var fileLines = new List<string>(File.ReadAllLines(path));
             var settingsText = JsonUtility.ToJson(target.settings);
 
             try
@@ -351,23 +427,24 @@ namespace UnityEditor.TestTools.Graphics
                 JsonUtility.FromJson<ShaderVariantList.Settings>(fileLines[0]);
                 fileLines[0] = settingsText;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                GraphicsTestLogger.DebugLog($"No existing settings line found, inserting new one: {ex.Message}");
                 fileLines.Insert(0, settingsText);
             }
 
             File.WriteAllLines(path, fileLines);
-            AssetDatabase.Refresh();
-            AssetDatabase.ImportAsset(path);
+            AssetService.Refresh();
+            AssetService.ImportAsset(path);
         }
 
         void ClearAllData()
         {
-            var path = AssetDatabase.GetAssetPath(target);
+            var path = AssetService.GetAssetPath(target);
             var settingsText = JsonUtility.ToJson(target.settings);
             File.WriteAllText(path, settingsText);
-            AssetDatabase.Refresh();
-            AssetDatabase.ImportAsset(path);
+            AssetService.Refresh();
+            AssetService.ImportAsset(path);
         }
     }
 }

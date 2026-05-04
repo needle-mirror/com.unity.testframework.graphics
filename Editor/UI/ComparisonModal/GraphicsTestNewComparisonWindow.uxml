@@ -1,0 +1,43 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Packages/com.unity.testframework.graphics/Editor/UI/ComparisonModal/GraphicsTestNewComparisonWindow.uss?fileID=7433441132597879392&amp;guid=835f355b2c2a05d40b6f31f736fd6497&amp;type=3#GraphicsTestNewComparisonWindow"/>
+    <ui:VisualElement class="modal-root">
+        <ui:Label text="New Comparison" class="modal-header"/>
+        <ui:VisualElement class="modal-separator"/>
+        <ui:EnumField label="Mode" value="LoadFromXml" type="UnityEditor.TestTools.Graphics.UI.ComparisonType, UnityEditor.TestTools.Graphics" name="ResultTypeField" class="modal-field"/>
+        <ui:VisualElement class="modal-separator"/>
+
+        <!-- Load from XML -->
+        <ui:VisualElement name="XmlModeContainer" class="mode-container">
+            <ui:Label text="Import test results from an NUnit TestResults.xml file. Platform information is read from the XML automatically." class="modal-description"/>
+            <ui:DropdownField label="Schema" choices="" index="0" name="XmlSchemaField" class="modal-field"/>
+            <ui:VisualElement class="button-row">
+                <ui:Button text="Select XML File..." name="LoadXmlButton" class="modal-button modal-button--primary"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Cross-Platform Comparison -->
+        <ui:VisualElement name="PlatformModeContainer" class="mode-container" style="display: none;">
+            <ui:Label text="Compare reference images from two different platform configurations side-by-side. Both selections point to reference image directories." class="modal-description"/>
+            <ui:DropdownField label="Schema" choices="" index="0" name="SchemaField" class="modal-field"/>
+            <ui:Label text="Reference Images A" class="section-label"/>
+            <ui:GroupBox name="OptionsA" class="options-group"/>
+            <ui:Label text="Reference Images B" class="section-label"/>
+            <ui:GroupBox name="OptionsB" class="options-group"/>
+            <ui:VisualElement class="modal-separator"/>
+            <ui:VisualElement class="button-row">
+                <ui:Button text="Compare" name="PlatformCompareButton" class="modal-button modal-button--primary"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Ad-hoc Comparison -->
+        <ui:VisualElement name="AdhocModeContainer" class="mode-container" style="display: none;">
+            <ui:Label text="Compare two individual image assets side-by-side." class="modal-description"/>
+            <uie:ObjectField label="Image A" name="ImageAField" type="UnityEngine.Texture2D, UnityEngine.CoreModule" allow-scene-objects="false" class="modal-field"/>
+            <uie:ObjectField label="Image B" name="ImageBField" type="UnityEngine.Texture2D, UnityEngine.CoreModule" allow-scene-objects="false" class="modal-field"/>
+            <ui:VisualElement class="modal-separator"/>
+            <ui:VisualElement class="button-row">
+                <ui:Button text="Compare" name="AdhocCompareButton" class="modal-button modal-button--primary"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

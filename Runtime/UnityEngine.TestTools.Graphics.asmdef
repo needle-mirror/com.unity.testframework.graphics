@@ -5,7 +5,10 @@
         "GUID:27619889b8ba8c24980f49ee34dbb44a",
         "GUID:0acc523941302664db1f4e527237feb3",
         "GUID:e40ba710768534012815d3193fa296cb",
-        "GUID:46d5d9bc6605549408d23b456bcb484f"
+        "GUID:46d5d9bc6605549408d23b456bcb484f",
+        "GUID:f9fe0089ec81f4079af78eb2287a6163",
+        "GUID:2665a8d13d1b3f18800f46e256720795",
+        "GUID:d8b63aba1907145bea998dd612889d6b"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -24,6 +27,16 @@
             "name": "com.unity.testframework.graphics",
             "expression": "",
             "define": "UNITY_TESTS_FRAMEWORK"
+        },
+        {
+            "name": "com.unity.xr.management",
+            "expression": "",
+            "define": "UNITY_XR"
+        },
+        {
+            "name": "com.unity.external.test-protocol",
+            "expression": "",
+            "define": "UNITY_TEST_PROTOCOL"
         }
     ],
     "noEngineReferences": false

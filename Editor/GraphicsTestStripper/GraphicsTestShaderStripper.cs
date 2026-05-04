@@ -1,104 +1,92 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using NUnit;
-using UnityEditor;
-using UnityEngine;
-using UnityEngine.Rendering;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEditor.Rendering;
+using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.TestTools.Graphics;
 
 namespace UnityEditor.TestTools.Graphics
 {
     class GraphicsTestShaderStripper : IPreprocessBuildWithReport
     {
-        const string k_EnableStripperKey = "GraphicsTestStripperEnabled";
+        internal static IAssetService AssetService
+        {
+            get => s_AssetService;
+            set
+            {
+                s_AssetService = value;
+                s_VariantListsInitialized = false;
+            }
+        }
 
-        static readonly List<ShaderVariantList> s_AllVariantListAssets = new List<ShaderVariantList>();
-        [NonSerialized] static ShaderVariantList s_CurrentVariantListInUse = null;
-        [NonSerialized] private static bool? s_UseGraphicsTestStripper = null;
+        static IAssetService s_AssetService = new AssetDatabaseService();
+        static bool s_VariantListsInitialized;
+
+        static readonly List<ShaderVariantList> k_AllVariantListAssets = new();
+
+        [NonSerialized]
+        static ShaderVariantList s_CurrentVariantListInUse;
 
         public int callbackOrder => 0;
 
         public void OnPreprocessBuild(BuildReport report)
         {
-            // Reset current variant list in use because we build
             s_CurrentVariantListInUse = null;
         }
 
-        static GraphicsTestShaderStripper()
+        static void EnsureVariantListsInitialized()
         {
-            s_AllVariantListAssets.Clear();
-            var shaderVariantListGUIDs =
-                AssetDatabase.FindAssets("t:ShaderVariantList", new[] { "Assets", "Packages" });
+            if (s_VariantListsInitialized)
+                return;
+            s_VariantListsInitialized = true;
+
+            k_AllVariantListAssets.Clear();
+            var shaderVariantListGUIDs = AssetService.FindAssets("t:ShaderVariantList", new[] { "Assets", "Packages" });
             foreach (var guid in shaderVariantListGUIDs)
             {
-                var path = AssetDatabase.GUIDToAssetPath(guid);
-                var svl = AssetDatabase.LoadAssetAtPath<ShaderVariantList>(path);
+                var path = AssetService.GuidToAssetPath(guid);
+                var svl = AssetService.LoadAssetAtPath<ShaderVariantList>(path);
                 if (svl != null && svl.settings.enabled)
-                    s_AllVariantListAssets.Add(svl);
+                    k_AllVariantListAssets.Add(svl);
             }
-        }
-
-        [MenuItem("Tools/Graphics Test Framework/Graphics Test Stripper Mode/Enabled", false, 400)]
-        static void EnableGraphicsTestStripper() => EnableGraphicsTestStripper(true);
-        [MenuItem("Tools/Graphics Test Framework/Graphics Test Stripper Mode/Disabled", false, 400)]
-        static void DisableGraphicsTestStripper() => EnableGraphicsTestStripper(false);
-
-        [MenuItem("Tools/Graphics Test Framework/Graphics Test Stripper Mode/Enabled", true, 400)]
-        static bool EnableGraphicsTestStripperValidate() => !EditorPrefs.GetBool(k_EnableStripperKey, true);
-        [MenuItem("Tools/Graphics Test Framework/Graphics Test Stripper Mode/Disabled", true, 400)]
-        static bool DisableGraphicsTestStripperValidate() => EditorPrefs.GetBool(k_EnableStripperKey, true);
-        static void EnableGraphicsTestStripper(bool enabled)
-        {
-            EditorPrefs.SetBool(k_EnableStripperKey, enabled);
-            string message;
-            if (enabled)
-            {
-                message = "Shader Stripper Enabled!";
-                GraphicsTestLogger.Log(LogType.Log, $"<color=green>{message}</color>");
-            }
-            else
-            {
-                message = "Shader Stripper Disabled!";
-                GraphicsTestLogger.Log(LogType.Log, $"<color=red>{message}</color>");
-            }
-
-            foreach (SceneView scene in SceneView.sceneViews)
-                scene.ShowNotification(new GUIContent(message));
         }
 
         static ShaderVariantList GetCurrentShaderVariantList()
         {
-            // Check if Graphic test stripper is enable
-            if (!EditorPrefs.GetBool(k_EnableStripperKey, true)) // Disable stripper by default
-                return null;
-            if (s_UseGraphicsTestStripper == null)
-            {
-                var useGfxTestStripper = Environment.GetEnvironmentVariable(GenerateShaderVariantList.k_UseGraphicsTestStripperEnv);
-                s_UseGraphicsTestStripper = useGfxTestStripper == null || useGfxTestStripper.ToLower() == "true";
-            }
+            EnsureVariantListsInitialized();
 
-            if (!s_UseGraphicsTestStripper.Value)
+            if (!GraphicsTestBuildSettings.LoadOrDefault().EnableShaderStripping)
+            {
+                GraphicsTestLogger.DebugLog("Shader stripping disabled in GraphicsTestBuildSettings");
                 return null;
+            }
 
             if (s_CurrentVariantListInUse == null)
             {
                 var currentAPI = GetCurrentGraphicsAPI();
-                var matchingVariant = s_AllVariantListAssets.FirstOrDefault(s => s.MatchSettings(currentAPI, RuntimeSettings.reuseTestsForXR));
+                var matchingVariant = k_AllVariantListAssets.Find(s =>
+                    s.MatchSettings(currentAPI, RuntimeSettings.reuseTestsForXR)
+                );
 
                 if (matchingVariant == null)
                 {
-                    matchingVariant = s_AllVariantListAssets.FirstOrDefault(s => s.MatchSettings(ShaderCompilerPlatform.D3D, false));
-                    GraphicsTestLogger.Log(LogType.Log, $"Couldn't find the Shader Variant List for the Graphics API {currentAPI}{(RuntimeSettings.reuseTestsForXR ? " in XR" : "")}. Falling back on the D3D platform file");
+                    matchingVariant = k_AllVariantListAssets.Find(s =>
+                        s.MatchSettings(ShaderCompilerPlatform.D3D, false)
+                    );
+                    GraphicsTestLogger.Log(
+                        LogType.Log,
+                        $"Couldn't find the Shader Variant List for the Graphics API {currentAPI}{(RuntimeSettings.reuseTestsForXR ? " in XR" : "")}. Falling back on the D3D platform file"
+                    );
                 }
 
                 if (matchingVariant == null)
                 {
-                    GraphicsTestLogger.Log(LogType.Log, "Couldn't find any Shader Variant List for this config, disabling Graphics Test Stripper");
-                    s_UseGraphicsTestStripper = false;
+                    GraphicsTestLogger.Log(
+                        LogType.Log,
+                        "Couldn't find any Shader Variant List for this config, disabling Graphics Test Stripper"
+                    );
                 }
                 s_CurrentVariantListInUse = matchingVariant;
             }
@@ -109,46 +97,43 @@ namespace UnityEditor.TestTools.Graphics
         static ShaderCompilerPlatform GetCurrentGraphicsAPI()
         {
             GraphicsDeviceType currentAPI;
-            if (BuildPipeline
-                .isBuildingPlayer) // In the editor we use the current graphics device instead of the list to avoid blocking the rendering if an invalid API is added but not enabled.
-                currentAPI = PlayerSettings.GetGraphicsAPIs(EditorUserBuildSettings.activeBuildTarget).First();
+            if (BuildPipeline.isBuildingPlayer)
+            {
+                // During a build, use the first configured graphics API for the active target.
+                // Fall back to the editor's current device if the list is unexpectedly empty.
+                var apis = PlayerSettings.GetGraphicsAPIs(EditorUserBuildSettings.activeBuildTarget);
+                currentAPI = apis.Length > 0 ? apis[0] : SystemInfo.graphicsDeviceType;
+            }
             else
+            {
                 currentAPI = SystemInfo.graphicsDeviceType;
+            }
 
             return GraphicsDeviceTypeToShaderCompilerPlatform(currentAPI);
         }
 
         static ShaderCompilerPlatform GraphicsDeviceTypeToShaderCompilerPlatform(GraphicsDeviceType type)
         {
-            switch (type)
+            return type switch
             {
-                case GraphicsDeviceType.Direct3D11: return ShaderCompilerPlatform.D3D;
-                case GraphicsDeviceType.OpenGLES3: return ShaderCompilerPlatform.GLES3x;
-                case (GraphicsDeviceType)13: return (ShaderCompilerPlatform)11;
-                case GraphicsDeviceType.XboxOne: return ShaderCompilerPlatform.XboxOneD3D11;
-                case GraphicsDeviceType.Metal: return ShaderCompilerPlatform.Metal;
-                case GraphicsDeviceType.OpenGLCore: return ShaderCompilerPlatform.OpenGLCore;
-                case GraphicsDeviceType.Direct3D12: return ShaderCompilerPlatform.D3D;
-                case GraphicsDeviceType.Vulkan: return ShaderCompilerPlatform.Vulkan;
-                case (GraphicsDeviceType)22: return (ShaderCompilerPlatform)19;
-                case GraphicsDeviceType.XboxOneD3D12: return ShaderCompilerPlatform.XboxOneD3D12;
-#if UNITY_2022_3_OR_NEWER
-                case GraphicsDeviceType.GameCoreXboxOne: return ShaderCompilerPlatform.GameCoreXboxOne;
-                case GraphicsDeviceType.GameCoreXboxSeries: return ShaderCompilerPlatform.GameCoreXboxSeries;
-#else
-                case GraphicsDeviceType.GameCoreXboxOne: return ShaderCompilerPlatform.GameCore;
-                case GraphicsDeviceType.GameCoreXboxSeries: return ShaderCompilerPlatform.GameCore;
-#endif
-#if UNITY_6000_0 || UNITY_6000_3_OR_NEWER
-                case GraphicsDeviceType.Switch2: 
-                    return ShaderCompilerPlatform.Switch2;
-#endif
-                case (GraphicsDeviceType)26: return (ShaderCompilerPlatform)23;
-                case (GraphicsDeviceType)27: return (ShaderCompilerPlatform)24;
-                case (GraphicsDeviceType)28: return (ShaderCompilerPlatform)26;
-
-                default: throw new ArgumentOutOfRangeException(nameof(type), type, null);
-            }
+                GraphicsDeviceType.Direct3D11 => ShaderCompilerPlatform.D3D,
+                GraphicsDeviceType.OpenGLES3 => ShaderCompilerPlatform.GLES3x,
+                (GraphicsDeviceType)13 => (ShaderCompilerPlatform)11,
+                GraphicsDeviceType.XboxOne => ShaderCompilerPlatform.XboxOneD3D11,
+                GraphicsDeviceType.Metal => ShaderCompilerPlatform.Metal,
+                GraphicsDeviceType.OpenGLCore => ShaderCompilerPlatform.OpenGLCore,
+                GraphicsDeviceType.Direct3D12 => ShaderCompilerPlatform.D3D,
+                GraphicsDeviceType.Vulkan => ShaderCompilerPlatform.Vulkan,
+                (GraphicsDeviceType)22 => (ShaderCompilerPlatform)19,
+                GraphicsDeviceType.XboxOneD3D12 => ShaderCompilerPlatform.XboxOneD3D12,
+                (GraphicsDeviceType)29 => (ShaderCompilerPlatform)27,
+                GraphicsDeviceType.GameCoreXboxOne => ShaderCompilerPlatform.GameCoreXboxOne,
+                GraphicsDeviceType.GameCoreXboxSeries => ShaderCompilerPlatform.GameCoreXboxSeries,
+                (GraphicsDeviceType)26 => (ShaderCompilerPlatform)23,
+                (GraphicsDeviceType)27 => (ShaderCompilerPlatform)24,
+                (GraphicsDeviceType)28 => (ShaderCompilerPlatform)26,
+                _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
+            };
         }
 
         public class ShaderPreProcessor : IPreprocessShaders
@@ -175,12 +160,11 @@ namespace UnityEditor.TestTools.Graphics
                     return;
                 }
 
-                for (int i = 0; i < data.Count; i++)
+                for (var i = data.Count - 1; i >= 0; i--)
                 {
-                    if (!MatchKeywordSet(data[i].shaderKeywordSet, keywordSetList))
+                    if (!keywordSetList.Contains(data[i].shaderKeywordSet.ToString()))
                     {
                         data.RemoveAt(i);
-                        i--;
                     }
                 }
             }
@@ -214,41 +198,14 @@ namespace UnityEditor.TestTools.Graphics
                     return;
                 }
 
-                for (int i = 0; i < data.Count; i++)
+                for (var i = data.Count - 1; i >= 0; i--)
                 {
-                    if (!MatchKeywordSet(data[i].shaderKeywordSet, keywordSetList))
+                    if (!keywordSetList.Contains(data[i].shaderKeywordSet.ToString()))
                     {
                         data.RemoveAt(i);
-                        i--;
                     }
                 }
             }
-        }
-        static bool MatchKeywordSet(ShaderKeywordSet variantKeywordSet,
-            List<ShaderVariantList.KeywordSet> keywordSetList)
-        {
-            var variantKeywords = variantKeywordSet.GetShaderKeywords();
-
-            foreach (var keywordSet in keywordSetList)
-            {
-                if (variantKeywords.Length != keywordSet.Count)
-                    continue;
-
-                bool matching = true;
-                foreach (var keyword in keywordSet)
-                {
-                    if (!variantKeywordSet.IsEnabled(keyword))
-                    {
-                        matching = false;
-                        break;
-                    }
-                }
-
-                if (matching)
-                    return true;
-            }
-
-            return false;
         }
     }
 }
