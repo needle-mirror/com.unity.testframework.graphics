@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Test Framework",
-  "version": "9.0.0-pre.6",
+  "version": "9.0.0-pre.7",
   "unity": "6000.0",
   "unityRelease": "59f1",
   "description": "Unity's automated visual validation system for graphics rendering. Enables developers to catch visual regressions, validate rendering consistency across platforms and graphics APIs, and test custom Scriptable Render Pipelines through automated image comparison testing.",
@@ -57,14 +57,14 @@
     "com.unity.burst": "1.8.27"
   },
   "_upm": {
-    "changelog": "### Added\n\n- Added `-enable-shader-stripping` command-line argument for manipulating shader stripping from CLI.\n- Exposed command-line argument values in the GraphicsTestBuildSettings class for documentation purposes."
+    "changelog": "### Fixed\n\n- Fixed `GraphicsTestBuildSettings.Save()` silently dropping `PlatformSchema` types whose `IPlatformNode` is not currently registered with `PlatformNodeRegistry`. `PlatformSchema.OnBeforeSerialize` now preserves already-resolved `Types` entries as a fallback when the registry lookup fails, so extras introduced by test platforms survive serialization."
   },
   "upmCi": {
-    "footprint": "8546c16fcd726a12d1e63e9f3fb469852af75128"
+    "footprint": "0ee29de4bc0c456841b75ad901c5e7826f07fe86"
   },
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "47b00ebdbff8bbb6e5fc12a54a4f7186d19a914a"
+    "revision": "93d728e025c0c05d75c1af94cbe84e450449a7b5"
   }
 }
