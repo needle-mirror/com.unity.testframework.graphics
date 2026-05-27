@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Test Framework",
-  "version": "9.0.0-pre.7",
+  "version": "9.0.0-pre.8",
   "unity": "6000.0",
   "unityRelease": "59f1",
   "description": "Unity's automated visual validation system for graphics rendering. Enables developers to catch visual regressions, validate rendering consistency across platforms and graphics APIs, and test custom Scriptable Render Pipelines through automated image comparison testing.",
@@ -57,14 +57,14 @@
     "com.unity.burst": "1.8.27"
   },
   "_upm": {
-    "changelog": "### Fixed\n\n- Fixed `GraphicsTestBuildSettings.Save()` silently dropping `PlatformSchema` types whose `IPlatformNode` is not currently registered with `PlatformNodeRegistry`. `PlatformSchema.OnBeforeSerialize` now preserves already-resolved `Types` entries as a fallback when the registry lookup fails, so extras introduced by test platforms survive serialization."
+    "changelog": "### Added\n\n- Added `PolySpatialXRLoader` and `VisionOSLoader` to the `UnityEngine.TestTools.Graphics.Platforms.XrDevice` enum."
   },
   "upmCi": {
-    "footprint": "0ee29de4bc0c456841b75ad901c5e7826f07fe86"
+    "footprint": "462e4f119af17c536e598004c47622f0941f3914"
   },
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "93d728e025c0c05d75c1af94cbe84e450449a7b5"
+    "revision": "0032254300f89411d1cc26ae0b97821cc6a47c44"
   }
 }

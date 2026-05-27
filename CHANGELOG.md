@@ -7,11 +7,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [9.0.0-pre.8] - 2026-05-27
+
+### Added
+
+- Added `PolySpatialXRLoader` and `VisionOSLoader` to the `UnityEngine.TestTools.Graphics.Platforms.XrDevice` enum.
+
 ## [9.0.0-pre.7] - 2026-05-19
 
 ### Fixed
 
 - Fixed `GraphicsTestBuildSettings.Save()` silently dropping `PlatformSchema` types whose `IPlatformNode` is not currently registered with `PlatformNodeRegistry`. `PlatformSchema.OnBeforeSerialize` now preserves already-resolved `Types` entries as a fallback when the registry lookup fails, so extras introduced by test platforms survive serialization.
+- Fixed compilation error in older versions related to `FindObjectsByType`
 
 ## [9.0.0-pre.6] - 2026-05-04
 

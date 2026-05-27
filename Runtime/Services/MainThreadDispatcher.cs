@@ -21,13 +21,12 @@ namespace UnityEngine.TestTools.Graphics
         static readonly ConcurrentQueue<Action> k_QueuedActions = new();
         static bool s_Initialized;
 
-#if !UNITY_EDITOR
         class PlayerLoopUpdater : MonoBehaviour
         {
             void Awake()
             {
                 // Ensure only one instance exists and it persists across scene loads
-                if (FindObjectsByType<PlayerLoopUpdater>().Length > 1)
+                if (FindAnyObjectByType<PlayerLoopUpdater>() != null)
                 {
                     Destroy(gameObject);
                     return;
@@ -40,7 +39,6 @@ namespace UnityEngine.TestTools.Graphics
                 ProcessQueue();
             }
         }
-#endif
 
         static MainThreadDispatcher()
         {

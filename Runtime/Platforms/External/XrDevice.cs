@@ -35,5 +35,15 @@ namespace UnityEngine.TestTools.Graphics.Platforms
         /// Windows Mixed Reality device.
         /// </summary>
         WindowsMRLoader,
+
+        /// <summary>
+        /// PolySpatial XR device.
+        /// </summary>
+        PolySpatialXRLoader,
+        
+        /// <summary>
+        /// VisionOSLoader device.
+        /// </summary>
+        VisionOSLoader,
     }
 }
