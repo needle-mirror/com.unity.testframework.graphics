@@ -111,7 +111,7 @@ namespace UnityEngine.TestTools.Graphics.Platforms
                 if (type != null)
                     yield return type;
                 else
-                    GraphicsTestLogger.LogError($"Invalid type in platform schema {name}: {s}");
+                    GraphicsTestLogger.LogError("Invalid type in platform schema \"{this.name}\": ${s}");
             }
         }
 
@@ -124,29 +124,15 @@ namespace UnityEngine.TestTools.Graphics.Platforms
             }
             else
             {
-                // Preserve already-resolved Types as a fallback so serialization does not
-                // silently drop entries whose IPlatformNode isn't currently registered with
-                // PlatformNodeRegistry. Registry-provided types still take precedence so
-                // edits to nodes[] remain authoritative.
-                var existingByName = new Dictionary<string, Type>(Types?.Count ?? 0);
-                if (Types != null)
-                {
-                    foreach (var t in Types)
-                    {
-                        if (t != null)
-                            existingByName[t.Name] = t;
-                    }
-                }
-
-                var rebuilt = new List<Type>(nodes.Length);
+                Types ??= new List<Type>();
+                Types.Clear();
                 foreach (var node in nodes)
                 {
                     if (PlatformNodeRegistry.k_Nodes.TryGetValue(node, out var nodeType))
-                        rebuilt.Add(nodeType.DataType);
-                    else if (existingByName.TryGetValue(node, out var preserved))
-                        rebuilt.Add(preserved);
+                    {
+                        Types.Add(nodeType.DataType);
+                    }
                 }
-                Types = rebuilt;
                 typeString = GetTypeNameString();
             }
             rootPath = (rootPath ?? string.Empty).SanitizeBackslashes().Trim('/');

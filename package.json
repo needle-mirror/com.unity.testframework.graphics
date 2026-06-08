@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Test Framework",
-  "version": "9.0.0-pre.8",
+  "version": "9.0.0-pre.12",
   "unity": "6000.0",
   "unityRelease": "59f1",
   "description": "Unity's automated visual validation system for graphics rendering. Enables developers to catch visual regressions, validate rendering consistency across platforms and graphics APIs, and test custom Scriptable Render Pipelines through automated image comparison testing.",
@@ -57,14 +57,14 @@
     "com.unity.burst": "1.8.27"
   },
   "_upm": {
-    "changelog": "### Added\n\n- Added `PolySpatialXRLoader` and `VisionOSLoader` to the `UnityEngine.TestTools.Graphics.Platforms.XrDevice` enum."
+    "changelog": "### Changed\n\n- Updated `D3D12ValidationCommand` to use the renamed `UnityEngine.Rendering.GraphicsApiValidation` API (formerly `UnityEngine.D3D12Validation`)."
   },
   "upmCi": {
-    "footprint": "462e4f119af17c536e598004c47622f0941f3914"
+    "footprint": "9fac54e8881a831ce4beabc93052a5a7ed077c56"
   },
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "0032254300f89411d1cc26ae0b97821cc6a47c44"
+    "revision": "2b58e9d4321278b5dd283ef193e8d629676f7385"
   }
 }

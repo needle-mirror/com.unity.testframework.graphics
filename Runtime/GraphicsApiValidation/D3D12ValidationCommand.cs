@@ -47,8 +47,8 @@ namespace UnityEngine.TestTools.Graphics.GraphicsApiValidation
 
                 if (graphicsDeviceType == GraphicsDeviceType.Direct3D12)
                 {
-                    bool requested = D3D12Validation.IsValidationRequested();
-                    bool active = D3D12Validation.IsValidationActive();
+                    bool requested = UnityEngine.Rendering.GraphicsApiValidation.IsValidationRequested();
+                    bool active = UnityEngine.Rendering.GraphicsApiValidation.IsValidationActive();
 
                     if (requested && !active)
                     {
@@ -77,7 +77,7 @@ namespace UnityEngine.TestTools.Graphics.GraphicsApiValidation
         {
             try
             {
-                D3D12Validation.ClearValidationErrors();
+                UnityEngine.Rendering.GraphicsApiValidation.ClearValidationErrors();
             }
             catch (Exception e)
             {
@@ -89,7 +89,7 @@ namespace UnityEngine.TestTools.Graphics.GraphicsApiValidation
         {
             try
             {
-                D3D12Validation.SetValidationErrorLoggingSuppressed(suppressed);
+                UnityEngine.Rendering.GraphicsApiValidation.SetValidationErrorLoggingSuppressed(suppressed);
             }
             catch (Exception e)
             {
@@ -99,17 +99,17 @@ namespace UnityEngine.TestTools.Graphics.GraphicsApiValidation
 
         protected override int GetErrorCount()
         {
-            return D3D12Validation.GetValidationErrorCount();
+            return UnityEngine.Rendering.GraphicsApiValidation.GetValidationErrorCount();
         }
 
         protected override string GetError(int index)
         {
-            return D3D12Validation.GetValidationError(index);
+            return UnityEngine.Rendering.GraphicsApiValidation.GetValidationError(index);
         }
 
         protected override int GetDroppedErrorCount()
         {
-            return D3D12Validation.GetValidationErrorsDroppedCount();
+            return UnityEngine.Rendering.GraphicsApiValidation.GetValidationErrorsDroppedCount();
         }
     }
 }

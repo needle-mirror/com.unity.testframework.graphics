@@ -126,7 +126,8 @@ namespace UnityEditor.TestTools.Graphics.Builder
             // Check Cli Settings Consistency
             var consistencyResult = CliSettingsConsistencyValidator.Validate(
                 GraphicsTestPlatform.Current.GetValue<GraphicsDeviceType>(),
-                GraphicsTestPlatform.PlayerBuild.GetValue<GraphicsDeviceType>()
+                GraphicsTestPlatform.PlayerBuild.GetValue<GraphicsDeviceType>(),
+                SystemInfo.renderingThreadingMode
             );
             if (consistencyResult.m_Success)
             {
@@ -160,6 +161,8 @@ namespace UnityEditor.TestTools.Graphics.Builder
                 GraphicsTestLogger.Log("Graphics test build finished: No test cases found to build.");
                 return GraphicsTestBuildResult.Success;
             }
+
+            Settings.OverwriteSettingsFromCommandLine();
 
             var testCasesToBuild = TestCaseFiltering.ApplyIgnoreAttributesForPlatform(Platforms, TestCases);
 
@@ -197,7 +200,8 @@ namespace UnityEditor.TestTools.Graphics.Builder
             var scenesInBuild = GenerateBuildSceneList(
                 selectedTestScenes,
                 allGraphicsTestScenesSet,
-                EditorBuildSettings.scenes
+                EditorBuildSettings.scenes,
+                Settings.ClearBuildSettingsScenesOnRebuild
             );
 
             var sceneGraphicsTestCases = new List<SceneGraphicsTestCase>();
@@ -295,10 +299,27 @@ namespace UnityEditor.TestTools.Graphics.Builder
             }
         }
 
+        /// <summary>
+        /// Computes the Build Settings scene list for the upcoming build.
+        /// </summary>
+        /// <remarks>
+        /// Scenes already present keep their position (and GUID); selected scenes are forced enabled
+        /// and any selected scene not yet present is appended in ordinal order. A graphics-test scene
+        /// that is ignored in this run (present in <paramref name="allGraphicsTestScenes"/> but not in
+        /// <paramref name="selectedTestScenes"/>) is removed only when
+        /// <paramref name="clearBuildSettingsScenesOnRebuild"/> is <c>true</c>; scenes that are not part
+        /// of any graphics test are never removed.
+        /// </remarks>
+        /// <param name="selectedTestScenes">Scene paths of the non-ignored scene test cases for this run.</param>
+        /// <param name="allGraphicsTestScenes">Scene paths of all scene test cases in this run, ignored or not.</param>
+        /// <param name="previousScenes">The current Build Settings scenes, whose order is preserved.</param>
+        /// <param name="clearBuildSettingsScenesOnRebuild">Whether to remove ignored graphics-test scenes that are already present.</param>
+        /// <returns>The scenes to write back to the Build Settings.</returns>
         internal static EditorBuildSettingsScene[] GenerateBuildSceneList(
             HashSet<string> selectedTestScenes,
             HashSet<string> allGraphicsTestScenes,
-            EditorBuildSettingsScene[] previousScenes
+            EditorBuildSettingsScene[] previousScenes,
+            bool clearBuildSettingsScenesOnRebuild
         )
         {
             if (selectedTestScenes == null)
@@ -316,38 +337,33 @@ namespace UnityEditor.TestTools.Graphics.Builder
                 throw new ArgumentNullException(nameof(previousScenes));
             }
 
-            var scenesToWrite = new List<EditorBuildSettingsScene>(previousScenes);
-            var scenePaths = new HashSet<string>(previousScenes.Length);
-            foreach (var s in previousScenes)
-                scenePaths.Add(s.path);
+            var scenesToWrite = new List<EditorBuildSettingsScene>(previousScenes.Length + selectedTestScenes.Count);
+            var keptScenePaths = new HashSet<string>(previousScenes.Length);
 
-            for (var i = 0; i < previousScenes.Length; i++)
+            foreach (var scene in previousScenes)
             {
-                var scenePath = previousScenes[i].path;
+                var scenePath = scene.path;
                 if (selectedTestScenes.Contains(scenePath))
                 {
-                    for (var j = 0; j < scenesToWrite.Count; j++)
-                    {
-                        if (scenesToWrite[j].path == scenePath)
-                        {
-                            var scene = scenesToWrite[j];
-                            scene.enabled = true;
-                            scenesToWrite[j] = scene;
-                            break;
-                        }
-                    }
+                    // Selected scene: keep its position and GUID, just ensure it is enabled.
+                    scene.enabled = true;
+                    scenesToWrite.Add(scene);
+                    keptScenePaths.Add(scenePath);
+                }
+                else if (clearBuildSettingsScenesOnRebuild && allGraphicsTestScenes.Contains(scenePath))
+                {
+                    // Drop scenes that are not part of the build (selected \ all)
+                    GraphicsTestLogger.Log(
+                        LogType.Log,
+                        $"Removing scene {scenePath} from the Build Settings because all test cases using it are ignored."
+                    );
                 }
                 else
                 {
-                    if (allGraphicsTestScenes.Contains(scenePath))
-                    {
-                        scenesToWrite.RemoveAll(s => s.path == scenePath);
-                        scenePaths.Remove(scenePath);
-                        GraphicsTestLogger.Log(
-                            LogType.Log,
-                            $"Removing scene {scenePath} from the Build Settings because all test cases using it are ignored."
-                        );
-                    }
+                    // A non-graphics-test scene, or an ignored scene we were told to keep: leave it
+                    // untouched (position, enabled state and GUID).
+                    scenesToWrite.Add(scene);
+                    keptScenePaths.Add(scenePath);
                 }
             }
 
@@ -355,10 +371,9 @@ namespace UnityEditor.TestTools.Graphics.Builder
             sortedSelectedScenes.Sort(StringComparer.Ordinal);
             foreach (var scenePath in sortedSelectedScenes)
             {
-                if (!scenePaths.Contains(scenePath))
+                if (keptScenePaths.Add(scenePath))
                 {
                     scenesToWrite.Add(new EditorBuildSettingsScene(scenePath, true));
-                    scenePaths.Add(scenePath);
                 }
             }
 
@@ -402,7 +417,6 @@ namespace UnityEditor.TestTools.Graphics.Builder
                 settings.AddSceneList(sceneList);
 
             settings.PopulateScenePathsDictionaryFromSceneLists(listsToAdd);
-            settings.OverwriteSettingsFromCommandLine();
             settings.ShouldCleanUpAfterBuild = true;
             settings.Save();
         }

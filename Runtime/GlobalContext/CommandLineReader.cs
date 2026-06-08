@@ -17,15 +17,39 @@ namespace UnityEngine.TestTools.Graphics
         internal CommandLineReader()
             : this(new EnvironmentCommandLineReader()) { }
 
-        internal bool CommandLineArgumentExists(string argName) =>
-            FindCommandLineArgument(argName, findOnly: true) == "true";
+        /// <summary>
+        /// Reads <paramref name="argName"/> from the command line, distinguishing the three states a flag
+        /// can be in: absent (returns <c>false</c>), present without a value (returns <c>true</c> with an
+        /// empty <paramref name="value"/>), and present with a value (returns <c>true</c> with the trimmed
+        /// value). A bare <c>-flag</c>, a trailing <c>-flag=</c>, or a flag that is the last argument all
+        /// count as "present without a value".
+        /// </summary>
+        /// <param name="argName">The CLI argument to read.</param>
+        /// <param name="value">The trimmed value when present, or <see cref="string.Empty"/> when the flag
+        /// is present without one. Set to <c>null</c> when the flag is absent.</param>
+        /// <returns><c>true</c> if the flag was present on the command line, <c>false</c> otherwise.</returns>
+        internal bool TryGetArgumentValue(string argName, out string value)
+        {
+            // FindCommandLineArgument returns null only for "absent", so a non-null result means present
+            // even when the value is empty. Deriving both presence and value from the same lookup keeps
+            // them from ever disagreeing, with a single cache as the source of truth.
+            value = FindCommandLineArgument(argName);
+            return value != null;
+        }
 
-        internal string FindCommandLineArgument(string argName, bool findOnly = false)
+        internal bool CommandLineArgumentExists(string argName) =>
+            FindCommandLineArgument(argName) != null;
+
+        /// <summary>
+        /// Returns the trimmed value of <paramref name="argName"/>, <see cref="string.Empty"/> when the
+        /// flag is present but has no value, or <c>null</c> when the flag is absent. Results are memoized.
+        /// </summary>
+        internal string FindCommandLineArgument(string argName)
         {
             if (m_ArgumentCache.TryGetValue(argName, out var value))
                 return value;
 
-            value = FindCommandLineArgument(m_CommandLineProvider.GetCommandLineArgs(), argName, findOnly);
+            value = FindCommandLineArgument(m_CommandLineProvider.GetCommandLineArgs(), argName);
             m_ArgumentCache.Add(argName, value);
             return value;
         }
@@ -57,6 +81,11 @@ namespace UnityEngine.TestTools.Graphics
         internal bool SetFlagIfPresent(ref bool field, string argName)
         {
             var present = CommandLineArgumentExists(argName);
+            if (present && !field)
+                GraphicsTestLogger.Log(
+                    LogType.Log,
+                    $"CommandLineReader: command-line flag '{argName}' is present; enabling the corresponding setting."
+                );
             field |= present;
             return present;
         }
@@ -81,7 +110,13 @@ namespace UnityEngine.TestTools.Graphics
 
             try
             {
-                field = parser(raw);
+                var parsed = parser(raw);
+                if (!EqualityComparer<T>.Default.Equals(field, parsed))
+                    GraphicsTestLogger.Log(
+                        LogType.Log,
+                        $"CommandLineReader: applying command-line argument '{argName}' with value '{parsed}'."
+                    );
+                field = parsed;
                 return true;
             }
             catch (Exception e)
@@ -91,22 +126,21 @@ namespace UnityEngine.TestTools.Graphics
             }
         }
 
-        static string FindCommandLineArgument(string[] args, string argName, bool findOnly = false)
+        // Returns null when argName is absent, so callers can tell that apart from a flag that is present
+        // but carries no value (string.Empty).
+        static string FindCommandLineArgument(string[] args, string argName)
         {
             string argValue;
 
             if (args == null || args.Length == 0)
-                return string.Empty;
+                return null;
 
             var filterArg = Array.Find(args, arg =>
                 arg.Equals(argName, StringComparison.OrdinalIgnoreCase) ||
                 arg.StartsWith($"{argName}=", StringComparison.OrdinalIgnoreCase));
 
-            if (findOnly)
-                return filterArg != null ? "true" : "false";
-
             if (filterArg == null)
-                return string.Empty;
+                return null;
 
             if (filterArg.Contains("=") && !filterArg.EndsWith('='))
             {
@@ -115,7 +149,7 @@ namespace UnityEngine.TestTools.Graphics
             else
             {
                 var index = Array.IndexOf(args, filterArg);
-                if (index < 0 || index == args.Length - 1) // -argName is the last argument
+                if (index < 0 || index == args.Length - 1) // present, but no value follows it
                 {
                     return string.Empty;
                 }

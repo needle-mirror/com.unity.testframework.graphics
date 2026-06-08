@@ -84,6 +84,12 @@ namespace UnityEngine.TestTools.Graphics
         bool m_ShaderWarningsAsErrors;
 
         [SerializeField]
+        [Tooltip(
+            "When rebuilding, remove ignored graphics-test scenes from the Build Settings. Disable to keep existing scenes in their current order. Scenes that are not part of any graphics test are never removed."
+        )]
+        bool m_ClearBuildSettingsScenesOnRebuild = true;
+
+        [SerializeField]
         [HideInInspector]
         string[] m_PreviousScenesPaths = Array.Empty<string>();
 
@@ -200,6 +206,17 @@ namespace UnityEngine.TestTools.Graphics
         {
             get => m_ShaderWarningsAsErrors;
             set => m_ShaderWarningsAsErrors = value;
+        }
+
+        /// <summary>
+        /// Whether to remove ignored graphics-test scenes from the Build Settings when rebuilding.
+        /// When disabled, scenes already present are kept in their current order. Scenes that are
+        /// not part of any graphics test are never removed.
+        /// </summary>
+        public bool ClearBuildSettingsScenesOnRebuild
+        {
+            get => m_ClearBuildSettingsScenesOnRebuild;
+            set => m_ClearBuildSettingsScenesOnRebuild = value;
         }
 
         /// <summary>
@@ -545,14 +562,7 @@ namespace UnityEngine.TestTools.Graphics
             reader.SetFlagIfPresent(ref m_SaveActualImages, k_SaveActualImagesArgument);
             reader.SetFlagIfPresent(ref m_OverrideIgnoreAttributes, k_OverrideIgnoreAttributesArgument);
             reader.SetFlagIfPresent(ref m_ShaderWarningsAsErrors, k_ShaderWarningsAsErrorsArgument);
-
-            if (reader.UpdateFromArgument(ref m_EnableShaderStripping, k_EnableShaderStrippingArgument, bool.Parse))
-            {
-                GraphicsTestLogger.Log(
-                    LogType.Log,
-                    $"GraphicsTestBuildSettings: Shader stripping was set to {m_EnableShaderStripping} from CLI arguments"
-                );
-            }
+            reader.UpdateFromArgument(ref m_EnableShaderStripping, k_EnableShaderStrippingArgument, bool.Parse);
         }
 
         /// <inheritdoc cref="ISerializationCallbackReceiver.OnBeforeSerialize"/>

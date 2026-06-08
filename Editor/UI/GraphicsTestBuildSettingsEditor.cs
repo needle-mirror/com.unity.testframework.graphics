@@ -23,6 +23,7 @@ namespace UnityEditor.TestTools.Graphics.UI
         SerializedProperty m_SaveActualImagesProp;
         SerializedProperty m_OverrideIgnoreProp;
         SerializedProperty m_ShaderWarningsAsErrorsProp;
+        SerializedProperty m_ClearBuildSettingsScenesOnRebuildProp;
         SerializedProperty m_AutoOptimizeProp;
         SerializedProperty m_ReloadDomainProp;
         SerializedProperty m_ShaderStrippingProp;
@@ -49,6 +50,7 @@ namespace UnityEditor.TestTools.Graphics.UI
             m_SaveActualImagesProp = serializedObject.FindProperty("m_SaveActualImages");
             m_OverrideIgnoreProp = serializedObject.FindProperty("m_OverrideIgnoreAttributes");
             m_ShaderWarningsAsErrorsProp = serializedObject.FindProperty("m_ShaderWarningsAsErrors");
+            m_ClearBuildSettingsScenesOnRebuildProp = serializedObject.FindProperty("m_ClearBuildSettingsScenesOnRebuild");
             m_AutoOptimizeProp = serializedObject.FindProperty("m_AutoOptimizeReferenceImages");
             m_ReloadDomainProp = serializedObject.FindProperty("m_ReloadDomainWhenEditingTestSceneAssets");
             m_ShaderStrippingProp = serializedObject.FindProperty("m_EnableShaderStripping");
@@ -145,6 +147,10 @@ namespace UnityEditor.TestTools.Graphics.UI
                 EditorGUILayout.PropertyField(m_ShaderStrippingProp);
                 EditorGUILayout.PropertyField(m_OverrideIgnoreProp);
                 EditorGUILayout.PropertyField(m_ShaderWarningsAsErrorsProp, new GUIContent("Shader Warnings as Errors"));
+                EditorGUILayout.PropertyField(
+                    m_ClearBuildSettingsScenesOnRebuildProp,
+                    new GUIContent("Clear Build Settings Scenes On Rebuild")
+                );
             }
 
             EditorGUILayout.EndFoldoutHeaderGroup();

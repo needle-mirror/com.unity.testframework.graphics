@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [9.0.0-pre.12] - 2026-06-08
+
+### Changed
+
+- Updated `D3D12ValidationCommand` to use the renamed `UnityEngine.Rendering.GraphicsApiValidation` API (formerly `UnityEngine.D3D12Validation`).
+
+## [9.0.0-pre.11] - 2026-06-05
+
+### Added
+
+- Extended `CliSettingsConsistencyValidator` to verify the Editor's actual `RenderingThreadingMode` matches the threading mode requested via command line arguments.
+
+### Fixed
+
+- Fixed `CommandLineReader` returning the literal string `"true"` as the value of an argument when `CommandLineArgumentExists` was called for the same argument first.
+
+## [9.0.0-pre.10] - 2026-06-02
+
+### Added
+
+- Added the `Clear Build Settings Scenes On Rebuild` setting (`GraphicsTestBuildSettings.ClearBuildSettingsScenesOnRebuild`). When disabled, scenes already in the Build Settings keep their order, enabled state, and GUID on rebuild instead of having ignored graphics-test scenes removed. Defaults to `true` to preserve the previous behavior. Scenes that are not part of any graphics test are never removed.
+
+### Changed
+
+- `GraphicsTestBuildSettings` now applies command-line overrides before computing the Build Settings scene list, and `CommandLineReader` logs each flag or argument it applies.
+
+## [9.0.0-pre.9] - 2026-05-28
+
+### Fixed
+
+- Updated low-entropy id .meta files 
+
 ## [9.0.0-pre.8] - 2026-05-27
 
 ### Added

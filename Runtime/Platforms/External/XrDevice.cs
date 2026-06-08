@@ -40,7 +40,7 @@ namespace UnityEngine.TestTools.Graphics.Platforms
         /// PolySpatial XR device.
         /// </summary>
         PolySpatialXRLoader,
-        
+
         /// <summary>
         /// VisionOSLoader device.
         /// </summary>
