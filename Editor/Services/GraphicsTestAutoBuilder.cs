@@ -27,30 +27,27 @@ namespace UnityEditor.TestTools.Graphics.Builder
             if (!settings.AutoBuildTestCases)
                 return;
 
-            var basePlatforms = new List<GraphicsTestPlatform>();
-            foreach (var s in settings.PlatformSchemata)
+            var currentPlatform = testData.TestMode.HasFlag(TestMode.Player)
+                ? GraphicsTestPlatform.PlayerBuild
+                : GraphicsTestPlatform.Current;
+
+            var fixtureArgSets = new List<Enum[]>();
+            foreach (var t in testData.TestList)
             {
-                basePlatforms.Add(
-                    testData.TestMode.HasFlag(TestMode.Player)
-                        ? new GraphicsTestPlatform(GraphicsTestPlatform.PlayerBuild, s)
-                        : new GraphicsTestPlatform(GraphicsTestPlatform.Current, s)
-                );
+                var args = new List<Enum>(FindFixtureArguments(t));
+                fixtureArgSets.Add(args.ToArray());
             }
 
-            var platforms = new List<GraphicsTestPlatform>();
-            foreach (var platform in basePlatforms)
-            {
-                foreach (var t in testData.TestList)
-                {
-                    var fixtureArgs = FindFixtureArguments(t);
-                    var fixtureArgsList = new List<Enum>();
-                    foreach (var e in fixtureArgs)
-                        fixtureArgsList.Add(e);
-                    var newPlatform = new GraphicsTestPlatform(platform, fixtureArgsList.ToArray());
-                    if (!platforms.Contains(newPlatform))
-                        platforms.Add(newPlatform);
-                }
-            }
+            var combinations = new PlatformCombinationCliReader().ReadCombinations();
+
+            // A combined player must build exactly the graphics APIs it carries, so drive the player's
+            // API list from the combined set instead of relying on the project's PlayerSettings. The
+            // previous configuration is restored on cleanup.
+            if (testData.TestMode.HasFlag(TestMode.Player))
+                ApplyCombinedGraphicsApis(settings, combinations);
+
+            var platforms = GraphicsTestPlatformResolver.ResolvePlatforms(
+                settings.PlatformSchemata, currentPlatform, fixtureArgSets, combinations);
 
             var builder = new GraphicsTestBuilder
             {
@@ -64,6 +61,22 @@ namespace UnityEditor.TestTools.Graphics.Builder
                 ShaderWarningCollector.StartCollecting();
 
             builder.Build();
+        }
+
+        static void ApplyCombinedGraphicsApis(GraphicsTestBuildSettings settings, PlatformCombinations combinations)
+        {
+            var combined = combinations.ValuesFor(typeof(UnityEngine.Rendering.GraphicsDeviceType));
+            if (combined.Count == 0)
+                return;
+
+            var apis = new UnityEngine.Rendering.GraphicsDeviceType[combined.Count];
+            for (var i = 0; i < combined.Count; i++)
+                apis[i] = (UnityEngine.Rendering.GraphicsDeviceType)combined[i];
+
+            settings.SavePlayerGraphicsApis();
+            var target = EditorUserBuildSettings.activeBuildTarget;
+            PlayerSettings.SetUseDefaultGraphicsAPIs(target, false);
+            PlayerSettings.SetGraphicsAPIs(target, apis);
         }
 
         static IEnumerable<Enum> FindFixtureArguments(ITest start)

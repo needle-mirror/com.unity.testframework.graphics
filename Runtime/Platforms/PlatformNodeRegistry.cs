@@ -20,6 +20,7 @@ namespace UnityEngine.TestTools.Graphics.Platforms
 
         internal static readonly Dictionary<string, IPlatformNode> k_Nodes = new();
         internal static readonly Dictionary<Type, IPlatformNode> k_NodesByType = new();
+        internal static readonly Dictionary<Type, IPlatformNode> k_NodesByDataType = new();
         internal static readonly HashSet<Type> k_EnumTypes = new();
 
         internal static T GetNode<T>() where T : class, IPlatformNode
@@ -30,6 +31,15 @@ namespace UnityEngine.TestTools.Graphics.Platforms
         internal static IPlatformNode GetNodeByType(Type type)
         {
             return k_NodesByType.TryGetValue(type, out var node) ? node : null;
+        }
+
+        /// <summary>
+        /// Returns the node whose <see cref="IPlatformNode.DataType"/> is <paramref name="dataType"/>,
+        /// or null when no node declares that enum type.
+        /// </summary>
+        internal static IPlatformNode GetNodeByDataType(Type dataType)
+        {
+            return k_NodesByDataType.TryGetValue(dataType, out var node) ? node : null;
         }
 
         /// <summary>
@@ -100,6 +110,7 @@ namespace UnityEngine.TestTools.Graphics.Platforms
 
             k_Nodes[node.Name] = node;
             k_NodesByType[node.GetType()] = node;
+            k_NodesByDataType[node.DataType] = node;
             k_EnumTypes.Add(node.DataType);
         }
 

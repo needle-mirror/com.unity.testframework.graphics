@@ -6,7 +6,7 @@ namespace UnityEngine.TestTools.Graphics
 {
     class ReferenceImageAssetBundle : TestContentBundle
     {
-        AssetBundle m_AssetBundle;
+        protected AssetBundle m_AssetBundle;
 
         internal ReferenceImageAssetBundle(string path)
             : base(path) { }
@@ -17,7 +17,10 @@ namespace UnityEngine.TestTools.Graphics
         {
             GraphicsTestLogger.Log($"Loading asset bundle {Name}");
             await Awaitable.MainThreadAsync();
-            await Awaitable.FixedUpdateAsync();
+
+            // FixedUpdate never ticks outside play mode, so awaiting it in editmode never completes.
+            if (Application.isPlaying)
+                await Awaitable.FixedUpdateAsync();
 
             if (!File.Exists(Path))
             {

@@ -22,7 +22,14 @@ namespace UnityEngine.TestTools.Graphics
         /// </summary>
         readonly int m_Order;
 
-        internal SetupAction SetupAction => new(Setup, GetType(), m_Order);
+        internal SetupAction SetupAction => new(Setup, GetType(), m_Order, SetupIdentity);
+
+        /// <summary>
+        /// Deduplication key for setup actions; setups with equal identity run once. Defaults to
+        /// the attribute type. Override when one attribute type is applied with distinct
+        /// configurations that must each run.
+        /// </summary>
+        protected virtual object SetupIdentity => GetType();
 
         /// <summary>
         /// Creates a new instance of the <see cref="GraphicsPrebuildSetupAttribute"/> class.
@@ -69,10 +76,16 @@ namespace UnityEngine.TestTools.Graphics
         /// </summary>
         public Type DeclaringType { get; set; }
 
+        /// <summary>
+        /// Deduplication key; defaults to <see cref="DeclaringType"/>.
+        /// </summary>
+        internal object Identity { get; set; }
+
         internal SetupAction(Action action, Type declaringType)
         {
             Action = action;
             DeclaringType = declaringType;
+            Identity = declaringType;
         }
 
         internal SetupAction(Action action, Type declaringType, int order)
@@ -80,6 +93,15 @@ namespace UnityEngine.TestTools.Graphics
             Action = action;
             DeclaringType = declaringType;
             Order = order;
+            Identity = declaringType;
+        }
+
+        internal SetupAction(Action action, Type declaringType, int order, object identity)
+        {
+            Action = action;
+            DeclaringType = declaringType;
+            Order = order;
+            Identity = identity ?? declaringType;
         }
 
         /// <inheritdoc cref="object.ToString"/>
@@ -90,9 +112,9 @@ namespace UnityEngine.TestTools.Graphics
     {
         public bool Equals(SetupAction a1, SetupAction a2)
         {
-            return a1?.DeclaringType == a2?.DeclaringType;
+            return object.Equals(a1?.Identity, a2?.Identity);
         }
 
-        public int GetHashCode(SetupAction action) => action?.DeclaringType?.GetHashCode() ?? 0;
+        public int GetHashCode(SetupAction action) => action?.Identity?.GetHashCode() ?? 0;
     }
 }

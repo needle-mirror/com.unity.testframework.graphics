@@ -1,14 +1,17 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using NUnit.Framework;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine.Experimental.Rendering;
+using UnityEngine.Networking.PlayerConnection;
 using UnityEngine.Profiling;
 using UnityEngine.Rendering;
 using UnityEngine.TestTools.Graphics.LegacyColorDifference;
+using UnityEngine.TestTools.Graphics.Platforms;
 #if UNITY_EDITOR
 using UnityEditor.Profiling;
 using UnityEditorInternal;
@@ -79,6 +82,9 @@ namespace UnityEngine.TestTools.Graphics
             cameras = cameraList;
 
             settings ??= new ImageComparisonSettings();
+
+            if (settings.UseBackBuffer || RuntimeSettings.reuseTestsForXR)
+                DeveloperConsole.ThrowIfVisible();
 
             Texture2D actual = null;
             try
@@ -180,6 +186,9 @@ namespace UnityEngine.TestTools.Graphics
             var succeeded = false;
             try
             {
+                if (settings.UseBackBuffer || RuntimeSettings.reuseTestsForXR)
+                    DeveloperConsole.ThrowIfVisible();
+
                 if (RuntimeSettings.reuseTestsForXR)
                 {
                     var w = Screen.width;
@@ -634,6 +643,25 @@ namespace UnityEngine.TestTools.Graphics
             );
         }
 
+        static string ActualImageSaveDirectoryForLog()
+        {
+#if UNITY_EDITOR
+            return ActualImageSaveDirectoryForLog(ImageHandler.IsAutomatedRun);
+#else
+            return ActualImageSaveDirectoryForLog(false);
+#endif
+        }
+
+        internal static string ActualImageSaveDirectoryForLog(bool isAutomatedRun)
+        {
+            var saveDir = ComparisonImageExporterProvider.Instance.FindImageDirectoryName();
+#if UNITY_EDITOR
+            if (isAutomatedRun)
+                saveDir = ImageHandler.ToImportIgnoredPath(saveDir);
+#endif
+            return saveDir;
+        }
+
         static bool HasAny(IEnumerable<Camera> cameras)
         {
             foreach (var _ in cameras)
@@ -648,7 +676,7 @@ namespace UnityEngine.TestTools.Graphics
                 case var _ when !expected:
                     return $"No reference image was provided.{Environment.NewLine}"
                         + "The actual (rendered) image will be saved as: "
-                        + $"{ComparisonImageExporterProvider.Instance.FindImageDirectoryName()}/{ComparisonImageExporterProvider.Instance.FindImageName()}.{fileExtension}{Environment.NewLine}"
+                        + $"{ActualImageSaveDirectoryForLog()}/{ComparisonImageExporterProvider.Instance.FindImageName()}.{fileExtension}{Environment.NewLine}"
                         + $"{expectedImagePathLog}";
                 case var _ when actual.width != expected.width:
                     return $"{expectedImagePathLog} The expected image had width {expected.width}px, "
@@ -744,6 +772,24 @@ namespace UnityEngine.TestTools.Graphics
             }
         }
 
+        static string BuildGCAllocFailureMessage(long allocationCount, string captureInfo = null)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"Memory allocation test failed: {allocationCount} allocation(s) detected during Camera.Render under 'GraphicTests_GC_Alloc_Check'.");
+            sb.AppendLine($"Platform: {GraphicsTestPlatform.Current}");
+            if (!string.IsNullOrEmpty(captureInfo))
+                sb.AppendLine(captureInfo);
+            sb.AppendLine("To get managed callstacks directly in the failure message, reproduce this test in Editor playmode where CheckGCAllocWithCallstack captures them automatically.");
+            sb.Append("Alternatively: open the Profiler (Ctrl+7), enable deep profiling, run the failing test, search for the 'GraphicTests_GC_Alloc_Check' marker in the CPU Hierarchy view, and sort by GC Alloc.");
+            return sb.ToString();
+        }
+
+        static void SendArtifactFile(string pathName, string fileName, byte[] data)
+        {
+            var message = new ArtifactFileMessage { PathName = pathName, FileName = fileName, Data = data };
+            PlayerConnection.instance.Send(ArtifactFileMessage.MessageId, message.Serialize());
+        }
+
         /// <summary>
         /// Render an image from the given camera and check if it allocated memory while doing so.
         /// </summary>
@@ -797,12 +843,7 @@ namespace UnityEngine.TestTools.Graphics
                 Assert.That(
                     allocationCountOfRenderPipeline,
                     Is.LessThanOrEqualTo(0),
-                    $@"Memory allocation test failed, {allocationCountOfRenderPipeline} allocations detected. Steps to find where your allocation is:
-                    - Open the profiler window (ctrl-7) and enable deep profiling.
-                    - Run your the test that fails and wait (it can take much longer because deep profiling is enabled).
-                    - In the CPU section of the profiler, select on Hierarchy and search for the 'GraphicTests_GC_Alloc_Check' marker.
-                    - This should give you one result, click on it and press f to go to the frame where it happened.
-                    - Click on the GC Alloc column to sort by allocation and unfold the hierarchy under the 'GraphicTests_GC_Alloc_Check' marker."
+                    BuildGCAllocFailureMessage(allocationCountOfRenderPipeline)
                 );
 
                 camera.targetTexture = null;
@@ -813,12 +854,141 @@ namespace UnityEngine.TestTools.Graphics
             }
         }
 
+        // Number of profiler-on re-runs used to try to reproduce (and capture the callstack of)
+        // an allocation the profiler-off measurement already tripped on.
+        const int k_GCAllocCaptureAttempts = 5;
+
+        static IEnumerator CheckNoGCAllocWithCapture(
+            Camera camera,
+            ImageComparisonSettings settings
+        )
+        {
+            if (camera == null)
+                throw new ArgumentNullException(nameof(camera));
+
+            settings ??= new ImageComparisonSettings();
+
+            var width = settings.TargetWidth;
+            var height = settings.TargetHeight;
+
+            var defaultFormat =
+                (settings.UseHDR)
+                    ? SystemInfo.GetGraphicsFormat(DefaultFormat.HDR)
+                    : SystemInfo.GetGraphicsFormat(DefaultFormat.LDR);
+            var desc = new RenderTextureDescriptor(width, height, defaultFormat, k_RenderTextureDepthBits);
+
+            var gcAllocRecorder = Recorder.Get("GC.Alloc");
+            gcAllocRecorder.FilterToCurrentThread();
+            gcAllocRecorder.enabled = false;
+
+            var rt = RenderTexture.GetTemporary(desc);
+            var profilerStarted = false;
+            try
+            {
+                if (!settings.UseBackBuffer && !RuntimeSettings.reuseTestsForXR)
+                    camera.targetTexture = rt;
+
+                // Render the first frame at this resolution (allocations allowed here).
+                camera.Render();
+
+                // Measure once with the profiler off so it doesn't perturb the allocation count.
+                Profiler.BeginSample("GraphicTests_GC_Alloc_Check");
+                try
+                {
+                    gcAllocRecorder.enabled = true;
+                    camera.Render();
+                    gcAllocRecorder.enabled = false;
+                }
+                finally
+                {
+                    Profiler.EndSample();
+                }
+
+                var allocationCount = gcAllocRecorder.sampleBlockCount;
+                if (allocationCount <= 0)
+                    yield break;
+
+                // A real allocation was tripped. These allocations are intermittent per render,
+                // so re-run with the profiler on and try to reproduce (and capture the callstack)
+                // up to k_GCAllocCaptureAttempts times.
+                var capturePath = Path.Combine(Application.temporaryCachePath, "gcalloc_capture");
+                var rawPath = capturePath + ".raw";
+                if (File.Exists(rawPath))
+                    File.Delete(rawPath);
+
+                var captured = false;
+                for (var attempt = 0; attempt < k_GCAllocCaptureAttempts && !captured; attempt++)
+                {
+                    // Fresh frame so the recorder count reflects only this attempt.
+                    yield return new WaitForEndOfFrame();
+
+                    Profiler.logFile = capturePath;
+                    Profiler.enableBinaryLog = true;
+                    Profiler.enableAllocationCallstacks = true;
+                    Profiler.enabled = true;
+                    profilerStarted = true;
+
+                    Profiler.BeginSample("GraphicTests_GC_Alloc_Check");
+                    try
+                    {
+                        gcAllocRecorder.enabled = true;
+                        camera.Render();
+                        gcAllocRecorder.enabled = false;
+                    }
+                    finally
+                    {
+                        Profiler.EndSample();
+                    }
+
+                    captured = gcAllocRecorder.sampleBlockCount > 0;
+
+                    Profiler.enabled = false;
+                    Profiler.enableAllocationCallstacks = false;
+                    Profiler.enableBinaryLog = false;
+                    Profiler.logFile = "";
+                    profilerStarted = false;
+                }
+
+                // The profiler-off measurement already confirmed a real allocation, so the test
+                // fails either way. The capture pass only decides whether we can attach a callstack.
+                string captureFileInfo;
+                if (captured && File.Exists(rawPath))
+                {
+                    const string artifactDir = "ProfilerCaptures";
+                    var fileName = ComparisonImageExporterProvider.Instance.FindImageName() + ".gcalloc.raw";
+                    SendArtifactFile(artifactDir, fileName, File.ReadAllBytes(rawPath));
+                    captureFileInfo = $"A profiler capture with allocation callstacks was sent as the test artifact '{artifactDir}/{fileName}'. Open it in the Unity Profiler (Window > Analysis > Profiler > Load) to see the allocation callstacks.";
+                }
+                else
+                {
+                    captureFileInfo = $"The allocation is intermittent and did not reproduce in {k_GCAllocCaptureAttempts} profiler-on capture attempts, so no callstack could be captured. Reproduce in Editor playmode, where CheckGCAllocWithCallstack captures the callstack directly.";
+                }
+
+                throw new AssertionException(
+                    BuildGCAllocFailureMessage(allocationCount, captureFileInfo)
+                );
+            }
+            finally
+            {
+                if (profilerStarted)
+                {
+                    Profiler.enabled = false;
+                    Profiler.enableAllocationCallstacks = false;
+                    Profiler.enableBinaryLog = false;
+                    Profiler.logFile = "";
+                }
+                gcAllocRecorder.enabled = false;
+                camera.targetTexture = null;
+                RenderTexture.ReleaseTemporary(rt);
+            }
+        }
+
         /// <summary>
         /// Render an image from the given camera and check if it allocated memory while doing so. Also outputs the callstack of the GC.Alloc found
         /// </summary>
         /// <param name="camera">The camera to render from.</param>
         /// <param name="settings">Settings to create the camera render target</param>
-        /// <param name="overrideSrpMarkerName">Override the main marker used to check the GC.Alloc</param>
+        /// <param name="overrideSrpMarkerName">Override the render-loop marker the GC.Alloc search is scoped to. Defaults to the SRP render loop; Built-in RP callers should pass "Camera.Render".</param>
         /// <returns>
         /// An enumerator that can be used to wait for the operation to complete.
         /// </returns>
@@ -872,51 +1042,71 @@ namespace UnityEngine.TestTools.Graphics
                 using (var frameData = ProfilerDriver.GetRawFrameDataView(cameraRenderFrameIndex, mainThread))
                 {
                     if (!frameData.valid)
+                    {
+                        GraphicsTestLogger.Log(
+                            LogType.Warning,
+                            "GC.Alloc check skipped: the profiler frame data was not valid, so no allocation check was performed."
+                        );
                         yield break;
+                    }
 
                     var gcAllocMarkerId = frameData.GetMarkerId("GC.Alloc");
 
-                    // Check if there is a GC Alloc marker in the frame
+                    // No GC.Alloc marker means nothing allocated during the captured frame: a clean pass.
                     if (gcAllocMarkerId == FrameDataView.invalidMarkerId)
-                        yield break;
-
-                    // Check if there is the srp marker in the frame
-                    var srpMarker = frameData.GetMarkerId(
-                        overrideSrpMarkerName
-                            ?? "UnityEngine.CoreModule.dll!UnityEngine.Rendering::RenderPipelineManager.DoRenderLoop_Internal() [Invoke]"
-                    );
-                    if (srpMarker == FrameDataView.invalidMarkerId)
-                        throw new Exception("SRP Marker not found in profiling while searching for GC.Alloc");
-                    var sampleCount = frameData.sampleCount;
-                    for (var i = 0; i < sampleCount; ++i)
                     {
-                        if (srpMarker == frameData.GetSampleMarkerId(i))
-                        {
-                            var endMarkerIndex = frameData.GetSampleChildrenCountRecursive(i) + i;
+                        GraphicsTestLogger.Log(
+                            LogType.Log,
+                            "GC.Alloc check: no GC.Alloc marker present in the captured frame; no managed allocations were recorded during Camera.Render."
+                        );
+                        yield break;
+                    }
 
-                            if (i >= endMarkerIndex)
+                    var renderMarkerName =
+                        overrideSrpMarkerName
+                        ?? "UnityEngine.CoreModule.dll!UnityEngine.Rendering::RenderPipelineManager.DoRenderLoop_Internal() [Invoke]";
+                    var renderMarker = frameData.GetMarkerId(renderMarkerName);
+                    var sampleCount = frameData.sampleCount;
+
+                    var foundRenderMarker = renderMarker != FrameDataView.invalidMarkerId;
+                    if (!foundRenderMarker)
+                        GraphicsTestLogger.Log(
+                            LogType.Warning,
+                            $"GC.Alloc check: render marker '{renderMarkerName}' not found in frame; scanning entire main thread."
+                        );
+
+                    var i = 0;
+                    while (i < sampleCount)
+                    {
+                        if (foundRenderMarker && renderMarker != frameData.GetSampleMarkerId(i))
+                        {
+                            i++;
+                            continue;
+                        }
+
+                        var endMarkerIndex = foundRenderMarker
+                            ? frameData.GetSampleChildrenCountRecursive(i) + i + 1
+                            : sampleCount;
+
+                        for (; i < endMarkerIndex; i++)
+                        {
+                            if (gcAllocMarkerId != frameData.GetSampleMarkerId(i))
                                 continue;
 
-                            for (; i < endMarkerIndex; i++)
+                            var callstack = new List<ulong>();
+                            frameData.GetSampleCallstack(i, callstack);
+                            foreach (var callAddress in callstack)
                             {
-                                if (gcAllocMarkerId != frameData.GetSampleMarkerId(i))
+                                var methodInfo = frameData.ResolveMethodInfo(callAddress);
+                                if (string.IsNullOrEmpty(methodInfo.methodName))
                                     continue;
-
-                                var callstack = new List<ulong>();
-                                frameData.GetSampleCallstack(i, callstack);
-                                foreach (var callAddress in callstack)
-                                {
-                                    var methodInfo = frameData.ResolveMethodInfo(callAddress);
-                                    if (string.IsNullOrEmpty(methodInfo.methodName))
-                                        continue;
-                                    humanReadableCallstack.AppendLine(methodInfo.methodName);
-                                }
-
-                                humanReadableCallstack.AppendLine();
-
-                                var gcAllocSize = frameData.GetSampleMetadataAsLong(i, 0);
-                                totalGcAllocSize += gcAllocSize;
+                                humanReadableCallstack.AppendLine(methodInfo.methodName);
                             }
+
+                            humanReadableCallstack.AppendLine();
+
+                            var gcAllocSize = frameData.GetSampleMetadataAsLong(i, 0);
+                            totalGcAllocSize += gcAllocSize;
                         }
                     }
                 }
@@ -940,7 +1130,7 @@ If the callstack is not exploitable you can try to find the allocation by follow
             }
             yield break;
 #else
-            AllocatesMemory(camera, settings, 0);
+            yield return CheckNoGCAllocWithCapture(camera, settings);
             yield break;
 #endif
         }

@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Test Framework",
-  "version": "9.0.0-pre.12",
+  "version": "9.0.0-pre.25",
   "unity": "6000.0",
   "unityRelease": "59f1",
   "description": "Unity's automated visual validation system for graphics rendering. Enables developers to catch visual regressions, validate rendering consistency across platforms and graphics APIs, and test custom Scriptable Render Pipelines through automated image comparison testing.",
@@ -45,7 +45,7 @@
     },
     {
       "displayName": "Advanced Patterns",
-      "description": "Demonstrates custom test case sources, BakeLighting, custom pre-build setup, GlobalContext, custom IPlatformNode implementations, and the GraphicsTestLogger",
+      "description": "Demonstrates custom test case sources, BakeLighting, custom pre-build setup, GlobalContext, custom IPlatformNode implementations, eliding platform values from reference image paths, and the GraphicsTestLogger",
       "path": "Samples~/AdvancedPatterns"
     }
   ],
@@ -57,14 +57,14 @@
     "com.unity.burst": "1.8.27"
   },
   "_upm": {
-    "changelog": "### Changed\n\n- Updated `D3D12ValidationCommand` to use the renamed `UnityEngine.Rendering.GraphicsApiValidation` API (formerly `UnityEngine.D3D12Validation`)."
+    "changelog": "### Changed\n\n- Asset-bundle content skips its FixedUpdate await outside play mode, so bundles also load in editmode tests; player and play-mode loading is unchanged."
   },
   "upmCi": {
-    "footprint": "9fac54e8881a831ce4beabc93052a5a7ed077c56"
+    "footprint": "6bd47a90e3cfbdfbdac2dce89db594e171a823d3"
   },
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "2b58e9d4321278b5dd283ef193e8d629676f7385"
+    "revision": "8ec69e505ce0ce7e03f08b6aafbe3ac2ac59d466"
   }
 }

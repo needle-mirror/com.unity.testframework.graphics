@@ -3,10 +3,10 @@ using UnityEngine.TestRunner.NUnitExtensions.Runner;
 
 namespace UnityEngine.TestTools.Graphics.GraphicsApiValidation
 {
-    static class D3D12ValidationInitializer
+    static class ManagedApiValidationInitializer
     {
         static bool s_Registered;
-        static readonly D3D12ValidationWrapper s_Wrapper = new D3D12ValidationWrapper();
+        static readonly ManagedApiValidationWrapper s_Wrapper = new ManagedApiValidationWrapper();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void RegisterRuntime() => Register();

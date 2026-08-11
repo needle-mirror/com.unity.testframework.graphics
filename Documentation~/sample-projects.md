@@ -37,7 +37,7 @@ Open the scripts in the **Editor Window Capture** folder for examples of using [
 
 ## Advanced use cases
 
-Open the scripts in the **Advanced Patterns** folder for examples of advanced use cases, such as custom test case sources, custom pre-build setup attributes, `GlobalContext`, custom [`IPlatformNode`](xref:UnityEngine.TestTools.Graphics.IPlatformNode) implementations, and the [`GraphicsTestLogger`](xref:UnityEngine.TestTools.Graphics.GraphicsTestLogger). For more information, refer to [Run code before a test](build-customization/custom-pre-build-steps.md) and [Customize tests](build-customization/customize-a-test.md).
+Open the scripts in the **Advanced Patterns** folder for examples of advanced use cases, such as custom test case sources, custom pre-build setup attributes, `GlobalContext`, custom [`IPlatformNode`](xref:UnityEngine.TestTools.Graphics.IPlatformNode) implementations, eliding a sentinel platform value from reference image paths with [`[ElideFromPlatformPath]`](xref:UnityEngine.TestTools.Graphics.Platforms.ElideFromPlatformPathAttribute), and the [`GraphicsTestLogger`](xref:UnityEngine.TestTools.Graphics.GraphicsTestLogger). For more information, refer to [Run code before a test](build-customization/custom-pre-build-steps.md), [Customize tests](build-customization/customize-a-test.md), and [Test specific platforms](test-authoring/get-platform-information.md).
 
 ## Additional resources
 

@@ -40,6 +40,8 @@ namespace UnityEditor.TestTools.Graphics
 
         public void SaveAssets() => AssetDatabase.SaveAssets();
 
+        public void SaveAssetIfDirty(UnityEngine.Object asset) => AssetDatabase.SaveAssetIfDirty(asset);
+
         public void ImportAsset(string path) => AssetDatabase.ImportAsset(path);
 
         public string[] FindAssets(string filter, string[] searchInFolders) =>

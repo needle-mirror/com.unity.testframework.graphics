@@ -181,16 +181,43 @@ namespace UnityEngine.TestTools.Graphics
         }
 
         [NonSerialized]
-        TestCaseData m_TestData;
+        TestCaseData m_TestCaseData;
 
         /// <summary>
-        /// The test case data connected to this Graphics Test Case.
+        /// The NUnit test case data connected to this Graphics Test Case.
         /// </summary>
-        public TestCaseData TestData
+        public TestCaseData TestCaseData
         {
-            get => m_TestData;
-            set => m_TestData = value;
+            get => m_TestCaseData;
+            set => m_TestCaseData = value;
         }
+
+        IReadOnlyList<ITestDataDescriptor> m_TestDataDescriptors;
+
+        /// <summary>
+        /// Gets or initializes the descriptors of the test data declared for this test case with
+        /// <see cref="RequireTestDataAttribute"/> (or any <see cref="ITestDataDescriptor"/>).
+        /// </summary>
+        public IReadOnlyList<ITestDataDescriptor> TestDataDescriptors
+        {
+            get => m_TestDataDescriptors;
+            // A record copy carries every field, so the cache built from the copied-from
+            // descriptors has to go when the descriptors change.
+            init
+            {
+                m_TestDataDescriptors = value;
+                m_TestData = null;
+            }
+        }
+
+        [NonSerialized]
+        GraphicsTestData m_TestData;
+
+        /// <summary>
+        /// The test data assets declared for this test case. Never null; when nothing is declared,
+        /// lookups fail with a message explaining how to declare assets.
+        /// </summary>
+        public GraphicsTestData TestData => m_TestData ??= new GraphicsTestData(m_TestDataDescriptors);
 
         /// <summary>
         /// The log message for the reference image.

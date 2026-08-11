@@ -50,20 +50,55 @@ namespace UnityEditor.TestTools.Graphics.Builder
             var bundleNames = bundleNamesList.ToArray();
 
             if (bundleNames.Length == 0)
-            {
                 GraphicsTestLogger.Log(LogType.Warning, "No content bundles were built.");
-            }
             else
-            {
                 GraphicsTestLogger.Log(
                     LogType.Log,
                     "Test content bundles were built successfully:\n" + string.Join("\n", bundleNames)
                 );
-                settings.TestContentBundlePaths = bundleNames;
-                settings.Save();
-            }
+
+            // Always written, so a build that produces nothing does not leave the previous build's
+            // bundles for the player to look for.
+            settings.TestContentBundlePaths = bundleNames;
+            settings.TestContentBundlePlatforms = CollectBundlePlatformInfos(m_ContentBuilder);
+            settings.TestDataBundles = CollectTestDataBundleInfos(m_ContentBuilder);
+            settings.Save();
 
             return GraphicsTestBuildResult.Success;
+        }
+
+        /// <summary>
+        /// Collects per-bundle platform metadata when the content builder can provide it. Builders
+        /// that can't report platforms clear the metadata, so stale entries from a previous build
+        /// never rank bundles they don't describe.
+        /// </summary>
+        internal static TestContentBundlePlatformInfo[] CollectBundlePlatformInfos(IPlayerContentBuilder contentBuilder)
+        {
+            if (contentBuilder is not IPerPlatformBundleSource withPlatforms)
+                return Array.Empty<TestContentBundlePlatformInfo>();
+
+            var infos = new List<TestContentBundlePlatformInfo>();
+            foreach (var (bundleName, platform) in withPlatforms.BuiltBundles)
+                infos.Add(TestContentBundlePlatformInfo.From(bundleName, platform));
+            return infos.ToArray();
+        }
+
+        /// <summary>
+        /// Collects the test data bundle metadata when the content builder can provide it. Builders
+        /// that can't report test data bundles clear the metadata, so stale entries from a previous
+        /// build never divert bundles they don't describe out of the global asset search.
+        /// </summary>
+        internal static TestDataBundleInfo[] CollectTestDataBundleInfos(IPlayerContentBuilder contentBuilder)
+        {
+            if (contentBuilder is not ITestDataBundleSource withTestData)
+                return Array.Empty<TestDataBundleInfo>();
+
+            var infos = new List<TestDataBundleInfo>();
+            foreach (var (bundleFileName, logicalName) in withTestData.BuiltTestDataBundles)
+            {
+                infos.Add(new TestDataBundleInfo { bundleFileName = bundleFileName, logicalName = logicalName });
+            }
+            return infos.ToArray();
         }
     }
 }

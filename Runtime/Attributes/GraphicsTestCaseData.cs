@@ -20,6 +20,7 @@ namespace UnityEngine.TestTools.Graphics
         internal IList<IgnoreGraphicsTestData> IgnoreTestData { get; }
         internal IList<GraphicsTestCase> RawTestCases { get; }
         internal IList<GraphicsTestCase> GraphicsTestCases { get; }
+        internal IReadOnlyList<ITestDataDescriptor> TestDataDescriptors { get; }
         ITest TestSuite { get; }
 
         readonly Parameterizer[] m_Parameterizers;
@@ -44,7 +45,8 @@ namespace UnityEngine.TestTools.Graphics
             IList<GraphicsTestCase> rawTestCases,
             Parameterizer[] parameterizers = null,
             ReferenceImageRootSource referenceImageRootSource = ReferenceImageRootSource.ParameterizedTestName,
-            Type referenceImageNamingStrategyType = null
+            Type referenceImageNamingStrategyType = null,
+            IReadOnlyList<ITestDataDescriptor> testDataDescriptors = null
         )
         {
             MethodInfo = method;
@@ -56,6 +58,7 @@ namespace UnityEngine.TestTools.Graphics
             SetupActions = setupActions;
             IgnoreTestData = ignoreTestData;
             RawTestCases = rawTestCases;
+            TestDataDescriptors = testDataDescriptors ?? Array.Empty<ITestDataDescriptor>();
             m_Parameterizers = parameterizers ?? k_DefaultParameterizers;
             m_ReferenceImageNamingStrategy = CreateNamingStrategy(referenceImageNamingStrategyType, referenceImageRootSource);
             GraphicsTestCases = ParameterizeTestCases();
@@ -84,7 +87,8 @@ namespace UnityEngine.TestTools.Graphics
                     ?? new List<GraphicsTestCase>(source.GetTestCases(testMethod, parent)),
                 parameterizers,
                 referenceImageRootSource,
-                referenceImageNamingStrategyType
+                referenceImageNamingStrategyType,
+                GetTestDataDescriptors(testMethod)
             )
         {
             if (HasExpectedResult && testMethod.ReturnType.Type != typeof(IEnumerator))
@@ -157,6 +161,52 @@ namespace UnityEngine.TestTools.Graphics
 #else
             return new List<SetupAction>();
 #endif
+        }
+
+        // Unlike setup actions and ignore data, test data declarations are gathered in players too:
+        // NUnit rebuilds the test cases inside the player, and GraphicsTestData needs the declared
+        // bundle names there to resolve its content bundles.
+        internal static IReadOnlyList<ITestDataDescriptor> GetTestDataDescriptors(IMethodInfo method)
+        {
+            var result = new List<ITestDataDescriptor>();
+
+            // Each declaration is materialized with the type that declares it, because that type
+            // names its default bundle: attributing a base declaration to the running fixture would
+            // turn one shared bundle into one per derived fixture.
+            foreach (var attr in Attribute.GetCustomAttributes(method.MethodInfo, true))
+            {
+                if (attr is RequireTestDataAttribute testDataAttr)
+                    AddDescriptor(result, testDataAttr, method.MethodInfo.DeclaringType);
+            }
+
+            // Walked level by level from the fixture that runs the method: its declaring type is not
+            // the fixture when the method is inherited, and each level owns its own declarations.
+            var fixtureType = method.TypeInfo?.Type ?? method.MethodInfo.DeclaringType;
+            for (var type = fixtureType; type != null; type = type.BaseType)
+            {
+                foreach (var attr in Attribute.GetCustomAttributes(type, false))
+                {
+                    if (attr is RequireTestDataAttribute testDataAttr)
+                        AddDescriptor(result, testDataAttr, type);
+                }
+            }
+
+            return result;
+        }
+
+        static void AddDescriptor(List<ITestDataDescriptor> result, RequireTestDataAttribute attr, Type declaringType)
+        {
+            var descriptor = attr.CreateDescriptor(declaringType);
+            if (descriptor != null)
+            {
+                result.Add(descriptor);
+            }
+            else
+            {
+                GraphicsTestLogger.LogWarning(
+                    $"{attr.GetType().FullName}.CreateDescriptor returned null on {declaringType?.FullName}; the declaration is ignored."
+                );
+            }
         }
 
         static IReferenceImageNamingStrategy CreateNamingStrategy(Type strategyType, ReferenceImageRootSource rootSource)
@@ -313,11 +363,12 @@ $"Could not create reference image naming strategy {strategyType.FullName}: {ex}
                     imageParts.Extension
                 ),
                 IgnoreData = ignoreIndex.GetMatches(fullName),
+                TestDataDescriptors = TestDataDescriptors,
             };
 
             var args = additionalArgs != null ? PrependToArray(result, additionalArgs) : new object[] { result };
 
-            result.TestData = new TestCaseData(args)
+            result.TestCaseData = new TestCaseData(args)
             {
                 ExpectedResult = ExpectedResult,
                 HasExpectedResult = HasExpectedResult,

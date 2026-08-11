@@ -120,7 +120,7 @@ namespace UnityEngine.TestTools.Graphics
             var setupActions = testCaseData.SetupActions;
             foreach (var testCase in testCases)
             {
-                var test = k_Builder.BuildTestMethod(method, suite, testCase.TestData);
+                var test = k_Builder.BuildTestMethod(method, suite, testCase.TestCaseData);
                 test.Name = testCase.Name;
 
                 NotifyTestCaseCreated(testCase, setupActions);

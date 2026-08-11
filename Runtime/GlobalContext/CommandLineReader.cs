@@ -126,6 +126,23 @@ namespace UnityEngine.TestTools.Graphics
             }
         }
 
+        /// <summary>
+        /// Returns the name part (before any <c>=</c>) of every command-line argument that starts with
+        /// <paramref name="prefix"/> (case-insensitive). Lets callers that derive argument names detect
+        /// unrecognized arguments in their namespace instead of silently ignoring them.
+        /// </summary>
+        internal IEnumerable<string> GetArgumentNamesWithPrefix(string prefix)
+        {
+            foreach (var arg in m_CommandLineProvider.GetCommandLineArgs())
+            {
+                if (!arg.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var separatorIndex = arg.IndexOf('=');
+                yield return separatorIndex < 0 ? arg : arg.Substring(0, separatorIndex);
+            }
+        }
+
         // Returns null when argName is absent, so callers can tell that apart from a flag that is present
         // but carries no value (string.Empty).
         static string FindCommandLineArgument(string[] args, string argName)

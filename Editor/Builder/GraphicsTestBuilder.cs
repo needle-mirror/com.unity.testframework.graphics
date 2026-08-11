@@ -256,6 +256,7 @@ namespace UnityEditor.TestTools.Graphics.Builder
             catch
             {
                 Settings.RestoreEditorBuildSettings();
+                Settings.RestorePlayerGraphicsApis();
                 throw;
             }
         }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -15,6 +16,8 @@ namespace UnityEngine.TestTools.Graphics.Platforms
         internal PlatformSchema Schema { get; }
         internal ReadOnlyDictionary<Type, Enum> Data { get; }
         readonly PlatformPath m_PlatformPath;
+        string m_ResultsPathWithElided;
+        IReadOnlyList<string> m_AllResultsPathsWithElided;
         string m_CachedName;
 
         static readonly ConcurrentDictionary<int, IList<GraphicsTestPlatform>> k_CombineCache = new();
@@ -80,8 +83,9 @@ namespace UnityEngine.TestTools.Graphics.Platforms
         /// </param>
         public GraphicsTestPlatform(GraphicsTestPlatform basePlatform, params Enum[] values)
         {
-            // Use the original schema types and add any new types from the values
-            var types = basePlatform.Schema.Types;
+            // Use the original schema types and add any new types from the values.
+            // Copy the list: the base platform's schema must not observe the added types.
+            var types = new List<Type>(basePlatform.Schema.Types);
 
             var enumValues = new List<Enum>(basePlatform.Data.Values ?? throw new InvalidOperationException());
 
@@ -145,6 +149,52 @@ namespace UnityEngine.TestTools.Graphics.Platforms
         /// All the possible results paths for this platform, ordered based on its platform schema.
         /// </summary>
         public IEnumerable<string> AllResultsPaths => m_PlatformPath.m_AllPaths;
+
+        /// <summary>
+        /// The platform restricted to the characteristics <paramref name="resultsPath"/> encodes,
+        /// where <paramref name="resultsPath"/> is one of <see cref="AllResultsPaths"/>. A reference
+        /// image found in a fallback folder only asserts the characteristics of that folder, not the
+        /// full platform that searched for it; this platform carries exactly those. Returns null when
+        /// the path is not one of this platform's results paths.
+        /// </summary>
+        internal GraphicsTestPlatform ForResultsPath(string resultsPath)
+        {
+            var paths = m_PlatformPath.m_AllPaths;
+            for (var i = 0; i < paths.Count; i++)
+            {
+                if (paths[i] == resultsPath)
+                    return new GraphicsTestPlatform(Schema, m_PlatformPath.m_AllPathValues[i]);
+            }
+            return null;
+        }
+
+        // Cached as reference-typed values (not the PlatformPath struct) so publication is atomic:
+        // GraphicsTestPlatform instances are shared across threads (e.g. k_CombineCache during parallel
+        // test runs), and a non-atomic write to a multi-field Nullable<PlatformPath> could tear.
+        // A race here only causes a redundant recompute, mirroring the m_CachedName pattern below.
+
+        /// <summary>
+        /// Same as <see cref="ResultsPath"/>, but includes segments for values marked with
+        /// <see cref="ElideFromPlatformPathAttribute"/> (for example "None"/"Unknown" sentinels).
+        /// </summary>
+        public string ResultsPathWithElided =>
+            m_ResultsPathWithElided ??= PlatformPath.Construct(Schema, false, CopyValuesToArray(Data?.Values)).m_RelativePath;
+
+        /// <summary>
+        /// Same as <see cref="AllResultsPaths"/>, but includes segments for values marked with
+        /// <see cref="ElideFromPlatformPathAttribute"/> (for example "None"/"Unknown" sentinels).
+        /// </summary>
+        public IEnumerable<string> AllResultsPathsWithElided =>
+            m_AllResultsPathsWithElided ??= PlatformPath.Construct(Schema, false, CopyValuesToArray(Data?.Values)).m_AllPaths;
+
+        /// <summary>
+        /// A stable identity string for this platform that, unlike <see cref="ToString"/>, keeps segments
+        /// for values elided via <see cref="ElideFromPlatformPathAttribute"/>. Platforms that differ only
+        /// by an elided value therefore produce different strings, so this is safe to use as a dictionary or
+        /// deduplication key where <see cref="ToString"/>/<see cref="Name"/> would collide.
+        /// </summary>
+        internal string ToIdentityString() =>
+            Data?.Values?.Count == 0 ? "AllPlatforms" : ResultsPathWithElided.Replace('/', '-');
 
         /// <summary>
         /// Converts the GraphicsTestPlatform to a string value.
@@ -435,7 +485,21 @@ namespace UnityEngine.TestTools.Graphics.Platforms
                     list = new List<Enum>();
                     groupDict[type] = list;
                 }
-                list.Add(v);
+
+                // A value flagged [PlatformWildcard] stands in for every concrete value of its
+                // node, so expand it instead of adding the wildcard sentinel itself.
+                if (IsPlatformWildcard(v))
+                {
+                    foreach (var concrete in ExpandWildcard(type))
+                    {
+                        if (!list.Contains(concrete))
+                            list.Add(concrete);
+                    }
+                }
+                else
+                {
+                    list.Add(v);
+                }
             }
 
             if (groupDict.Count == 0)
@@ -475,6 +539,43 @@ namespace UnityEngine.TestTools.Graphics.Platforms
             k_CombineCache.TryAdd(cacheKey, results);
             return results;
         }
+
+        // Per-enum-type cache of the concrete values a wildcard expands to (every value except
+        // the default 0 value and any values flagged [PlatformWildcard]).
+        static readonly ConcurrentDictionary<Type, Enum[]> k_WildcardExpansionCache = new();
+
+        // Per-enum-type set of value names flagged [PlatformWildcard].
+        static readonly ConcurrentDictionary<Type, HashSet<string>> k_WildcardNamesCache = new();
+
+        static bool IsPlatformWildcard(Enum value)
+        {
+            var names = k_WildcardNamesCache.GetOrAdd(value.GetType(), CollectWildcardNames);
+            return names.Count > 0 && names.Contains(value.ToString());
+        }
+
+        static HashSet<string> CollectWildcardNames(Type enumType)
+        {
+            var names = new HashSet<string>();
+            foreach (var field in enumType.GetFields(BindingFlags.Public | BindingFlags.Static))
+            {
+                if (field.IsDefined(typeof(PlatformWildcardAttribute), false))
+                    names.Add(field.Name);
+            }
+            return names;
+        }
+
+        static Enum[] ExpandWildcard(Type enumType) =>
+            k_WildcardExpansionCache.GetOrAdd(enumType, t =>
+            {
+                var wildcards = k_WildcardNamesCache.GetOrAdd(t, CollectWildcardNames);
+                var values = new List<Enum>();
+                foreach (Enum value in Enum.GetValues(t))
+                {
+                    if (Convert.ToInt64(value) != 0 && !wildcards.Contains(value.ToString()))
+                        values.Add(value);
+                }
+                return values.ToArray();
+            });
 
         static int ComputeCacheKey(List<Enum> values)
         {

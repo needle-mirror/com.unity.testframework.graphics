@@ -77,5 +77,6 @@ GraphicsTestLogger.Log("Render pipeline: " + GraphicsSettings.currentRenderPipel
 
 - [Running tests](https://docs.unity3d.com/Manual/test-framework/running-tests.html)
 - [Write a scene test](../test-authoring/writing-graphics-tests.md)
+- [Test specific platforms](get-platform-information.md)
 - [Graphics Tests window reference](../test-investigation/the-graphics-tests-window.md)
 - [Deduplicate reference images](../performance-optimization/reference-image-optimization.md)

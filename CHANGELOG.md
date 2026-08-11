@@ -7,11 +7,138 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [9.0.0-pre.25] - 2026-08-11
+
+### Changed
+
+- Asset-bundle content skips its FixedUpdate await outside play mode, so bundles also load in editmode tests; player and play-mode loading is unchanged.
+
+## [9.0.0-pre.24] - 2026-08-10
+
+### Fixed
+
+- `GlobalResolutionSetter.SetResolutionWithRetry` now holds for 5 seconds after a resolution change on macOS, where the fullscreen transition can disrupt a frame well after `Screen.width` reports the new size and fail the first back buffer capture of a run.
+
+## [9.0.0-pre.23] - 2026-08-06
+
+### Changed
+
+- Editors in automated runs (launched with `-automated` or in batch mode) now write actual/diff/expected comparison images to an AssetDatabase-ignored folder (`Assets/ActualImages~` by default, or the configured results root with a `~` suffix). This removes the post-run reimport of result images, which cost CI runs up to 17 minutes of teardown for work nothing consumed. Interactive editors still write to `Assets/ActualImages`, so the Graphics Tests Window comparison and promotion workflows are unchanged.
+- `GraphicsTestBuildSettings.Save` and `ClearSceneLists` now save only the settings asset (via `AssetDatabase.SaveAssetIfDirty`) instead of flushing every dirty asset in the session. The blanket flush rewrote and reimported all test-scene materials dirtied by scene loads (~10 minutes at teardown of a full HDRP playmode run) and left them modified in local checkouts.
+- Image-comparison failure messages report the batch-mode redirected save path, so the printed location matches the file on disk.
+
+## [9.0.0-pre.22] - 2026-08-04
+
+### Added
+
+- Added `[RequireTestData]`, which declares the assets a test fixture or method needs at run time. The build packs them into content bundles; `GraphicsTestCase.TestData` loads them by asset path or file name in the Editor and in players. Unresolvable declarations fail the build; `Load<T>` throws `TestDataNotFoundException` on a miss and `TryLoad<T>` covers optional assets.
+- Added the `PlayerContentBuilders` registry; the player content build runs every registered `IPlayerContentBuilder`.
+- Added `TestContentLoader.RegisterBundle` for loading content through custom `TestContentBundle` implementations.
+
+### Fixed
+
+- A failure to build the test data bundles now fails the build instead of producing a player whose settings name content that was never written.
+- Test data assets resolve the same way in the Editor as in a player: addressable names are matched case-insensitively on both sides, and a descriptor that renames its assets is addressed by the name it assigned rather than by the source file's name.
+
+### Changed
+
+- Renamed `GraphicsTestCase.TestData` (the NUnit `TestCaseData`) to `TestCaseData`; `TestData` now exposes the declared test data.
+- Prebuild setup actions deduplicate by an overridable `SetupIdentity` (default: the attribute type), so one `GraphicsPrebuildSetupAttribute` type applied with distinct configurations runs each of them.
+
+## [9.0.0-pre.21] - 2026-07-27
+
+### Added
+
+- Added the `GraphicsApiValidationMode` platform node, which lets `IgnoreGraphicsTest` ignore a test when a graphics API validation layer is active (for example `[IgnoreGraphicsTest("", "reason", GraphicsApiValidationMode.Enabled)]`). Combine with a `GraphicsDeviceType` value to scope the ignore to specific graphics APIs.
+
+## [9.0.0-pre.20] - 2026-07-21
+
+### Added
+
+- Added the derived `-combine<Node>s` command-line arguments (one per registered platform node, e.g. `-combineGraphicsVendors=AMD,Nvidia`). Each argument expands the reference-image build with one platform variant per value, the Cartesian product when several are passed. Fixture-pinned characteristics win over command-line values, which win over values detected from the build environment. Unknown, empty, or misspelled `-combine...` arguments fail the build.
+- Added per-bundle platform metadata to `GraphicsTestBuildSettings`. Reference images are bundled by the folder they resolved from and tagged with the characteristics that folder asserts. The runtime loader excludes bundles that conflict with the running platform on any declared characteristic and ranks the rest by specificity; a scene whose only reference conflicts reports a missing reference.
+- Added `IPlatformNode.GetPathSegment`, which lets a platform node pin the path segment emitted for an enum value. The GraphicsVendor node uses it to always emit `ATI` for the shared AMD/ATI PCI id, whose `ToString()` differs between Mono and CoreCLR.
+
+### Fixed
+
+- Platforms that share a schema (e.g. per-vendor variants of one build) no longer suppress each other's distinct reference images in player content bundles; only platforms of later schemata skip test cases already resolved by earlier ones. A reference-image file is still only ever assigned to one bundle.
+- The universal-fallback schema, whose images are never suppressed from the build, is now the last schema configured for the build. The exemption previously applied only to node-less schemata, so a base-reference schema that also split on a node baked no base image for test cases an earlier schema had resolved.
+- Reference-image folders assert an architecture only when their platform segment encodes one (`OSXEditor_AppleSilicon`, unlike `Switch` or `WebGLPlayer`). Bundles built on x64 agents no longer carry an `X64` tag that made runtimes with a different architecture fall back to the base references.
+- Combined player builds restore the build target's previous `PlayerSettings` graphics APIs on cleanup instead of leaving the narrowed combined list active.
+- `GraphicsTestPlatform(basePlatform, values)` no longer mutates the base platform's schema when the values introduce new dimension types.
+- `GraphicsVendorNode` now detects the current vendor by PCI vendor id first, so real GPUs (whose vendor strings such as "NVIDIA Corporation" don't match an enum name) no longer report `GraphicsVendor.Unknown`.
+
+## [9.0.0-pre.19] - 2026-07-16
+
+### Fixed
+
+- `GlobalResolutionSetter.SetResolutionWithRetry` no longer produces an unreachable-code warning (CS0162) on WebGL; the non-WebGL body is now guarded with `#else` so the assembly compiles cleanly under warnings-as-errors.
+
+### Added
+
+- `ArtifactFileMessage` — a player-to-host message that ships an arbitrary file (bytes + directory + file name) to the test runner to be collected as an artifact, preserving the file name/extension verbatim.
+
+### Changed
+
+- `CheckGCAllocWithCallstack` now gracefully falls back to scanning the entire main thread when the render-loop marker is absent, instead of throwing. Built-in RP callers can pass `"Camera.Render"` as the marker name.
+- `CheckGCAllocWithCallstack` now logs when the GC.Alloc check is skipped (invalid profiler frame, or no GC.Alloc marker) so a silent pass is visible in the log.
+- GC.Alloc failure messages now report platform context (color space / platform / graphics API), shared between the Editor and player paths.
+- In a player, the GC.Alloc count is measured once with the profiler off (so profiling does not perturb the result). A detected allocation fails the test. Because these allocations are intermittent per render, the render is then re-run with the profiler on up to 5 times to reproduce and capture the allocation callstack. If a re-run reproduces it, the `.raw` capture is sent to the test runner as a collected artifact (keeping its `.raw` extension) so the callstack can be opened in the Profiler; if it does not reproduce in 5 attempts, the test still fails but the message notes the callstack could not be captured.
+- `ImageHandler.SaveImage` now takes an explicit file-extension string instead of an `hdr` bool; callers decide the extension (defaults to `png`).
+
+
+## [9.0.0-pre.18] - 2026-07-14
+
+### Added
+
+- Added the public `DeveloperConsole` helper. `DeveloperConsole.IsVisible` reports whether the on-screen console is open, and `DeveloperConsole.ThrowIfVisible()` fails the test if it is. Tests that build their own capture can call it to guard against the console being drawn into the image.
+
+### Changed
+
+- `ImageAssert.AreEqual` and `AreEqualAsync` now fail with a clear message when the developer console is open during a backbuffer or XR capture. The console draws over the captured frame and breaks the comparison, so the test used to fail as a puzzling image mismatch. The message now points you at the error that opened the console.
+
+## [9.0.0-pre.17] - 2026-07-09
+
+### Added
+
+- Added the `[PlatformWildcard]` attribute and the `XrDevice.Any` value. A platform node value flagged with `[PlatformWildcard]` is expanded during platform combination to match every concrete value of that node, enabling loader-independent XR test ignores.
+- Added internal `ScreenCapture.CaptureXREyeTexturesToTexture2D`, which composes XR eye render textures into a side-by-side stereo Texture2D (resolving MSAA and handling the per-graphics-API read path) for XR graphics tests.
+
+## [9.0.0-pre.16] - 2026-07-07
+
+### Added
+
+- Added `ElideFromPlatformPathAttribute`, which marks a platform-dimension enum member (such as a "None"/"Unknown" sentinel) so it no longer contributes a folder segment to the reference-image path built by `PlatformPath`. The value still participates in platform equality and `GraphicsTestPlatform.GetValue<T>()`; it is simply omitted from the output tree, mirroring how `Architecture` is handled. `GraphicsTestPlatform.ResultsPathWithElided` and `GraphicsTestPlatform.AllResultsPathsWithElided` opt in to paths that still include these elided segments.
+
+### Changed
+
+- The Graphics Tests window comparison tabs and the ignore-data CSV export now key platforms by their full path (`ResultsPathWithElided`) rather than the display name, so platforms that differ only by a value elided via `ElideFromPlatformPathAttribute` remain distinct instead of being merged.
+
+## [9.0.0-pre.15] - 2026-07-04
+
+### Added
+
+- Added `ReferenceImageOptimizerBatch.Run`, a headless (`-batchmode -executeMethod`) entry point that runs `ReferenceImageOptimizer` across the open project's reference images to completion and then quits the editor via `EditorApplication.Exit`. When the `REFERENCE_IMAGE_OPTIMIZER_STATS_FILE` environment variable is set, it also writes a small JSON summary (status, deleted and moved counts, elapsed time) to that path.
+
+## [9.0.0-pre.14] - 2026-06-29
+
+### Changed
+
+- Add wait and retry strategy if failing to set player resolution for graphics tests
+- `GlobalResolutionSetter.SetResolutionWithRetry` now throws `InvalidOperationException` when the requested resolution cannot be applied after all retries, instead of logging a warning and continuing.
+- `GlobalResolutionSetter.SetResolutionWithRetry` now skips resolution changes when running in the Editor or on WebGL platform, as resolution setting only applies to Players.
+
+## [9.0.0-pre.13] - 2026-06-26
+
+### Changed
+
+- Updated `XRDeviceNode` to use the `XRGeneralSettings.Manager` API, replacing `XRGeneralSettings.AssignedSettings` which was marked obsolete.
+
 ## [9.0.0-pre.12] - 2026-06-08
 
 ### Changed
 
-- Updated `D3D12ValidationCommand` to use the renamed `UnityEngine.Rendering.GraphicsApiValidation` API (formerly `UnityEngine.D3D12Validation`).
+- Updated `D3D12ValidationCommand` to use the renamed `UnityEngine.Rendering.GraphicsApiValidation` API (formerly `UnityEngine.D3D12Validation`)
 
 ## [9.0.0-pre.11] - 2026-06-05
 
@@ -37,7 +164,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- Updated low-entropy id .meta files 
+- Updated low-entropy id .meta files
 
 ## [9.0.0-pre.8] - 2026-05-27
 
@@ -63,7 +190,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- Fixed errors being raised by `AssetDatabase.ImportAsset` when post-processing reference images. 
+- Fixed errors being raised by `AssetDatabase.ImportAsset` when post-processing reference images.
 
 ## [9.0.0-pre.4] - 2026-04-23
 
@@ -221,7 +348,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [9.0.0-exp.51] - 2026-02-06
 
 - Made the UnityEngine.TestTools.Graphics assembly internals visible to UnityEngine.TestTools.Graphics.Contexts.
-- Added a TestSettingsReader static helper to read specific settings from client code, without needing to add a new TestSetting. 
+- Added a TestSettingsReader static helper to read specific settings from client code, without needing to add a new TestSetting.
 
 ## [9.0.0-exp.50] - 2026-02-04
 

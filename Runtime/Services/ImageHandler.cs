@@ -22,6 +22,8 @@ namespace UnityEngine.TestTools.Graphics
         /// </summary>
         public string ImageResultsPath { get; set; }
 
+        internal Action<string> ArtifactReporter { get; set; }
+
         internal void HandleImageEvent(MessageEventArgs messageEventArgs)
         {
             var imageMessage = ImageMessage.Deserialize(messageEventArgs.data);
@@ -89,25 +91,55 @@ namespace UnityEngine.TestTools.Graphics
         /// <param name="imageMessage">
         /// The image message containing the image data.
         /// </param>
-        /// <param name="hdr">
-        /// Whether the image is HDR.
+        /// <param name="extension">
+        /// The file extension (without the leading dot) to save with. Null or empty defaults to "png".
         /// </param>
         /// <param name="textureImporterSettings">
         /// The settings to apply to the texture importer.
         /// </param>
         public void SaveImage(
             ImageMessage imageMessage,
-            bool hdr = false,
+            string extension = "png",
             TextureImporterSettings textureImporterSettings = null
         )
         {
+            SaveImage(imageMessage, IsAutomatedRun, extension, textureImporterSettings);
+        }
+
+        /// <summary>
+        /// Saves the image to the specified path.
+        /// </summary>
+        /// <param name="imageMessage">
+        /// The image message containing the image data.
+        /// </param>
+        /// <param name="isAutomatedRun">
+        /// When true, a save directory under Assets/ is redirected to a '~' folder the AssetDatabase ignores.
+        /// </param>
+        /// <param name="extension">
+        /// The file extension (without the leading dot) to save with. Null or empty defaults to "png".
+        /// </param>
+        /// <param name="textureImporterSettings">
+        /// The settings to apply to the texture importer.
+        /// </param>
+        public void SaveImage(
+            ImageMessage imageMessage,
+            bool isAutomatedRun,
+            string extension = "png",
+            TextureImporterSettings textureImporterSettings = null
+        )
+        {
+            if (string.IsNullOrEmpty(extension))
+                extension = "png";
+
+            var reportArtifact = ArtifactReporter ?? ReportArtifact;
             var saveDir = string.IsNullOrEmpty(ImageResultsPath) ? imageMessage.PathName : ImageResultsPath;
+            if (isAutomatedRun)
+                saveDir = ToImportIgnoredPath(saveDir);
 
             if (!Directory.Exists(saveDir))
             {
                 Directory.CreateDirectory(saveDir);
             }
-            var extension = hdr ? "exr" : "png";
 
             var actualImagePath = Path.Combine(saveDir, $"{imageMessage.ImageName}.{extension}");
 
@@ -118,7 +150,7 @@ namespace UnityEngine.TestTools.Graphics
             }
 
             File.WriteAllBytes(actualImagePath, imageMessage.ActualImage);
-            ReportArtifact(actualImagePath);
+            reportArtifact(actualImagePath);
             if (textureImporterSettings != null)
                 ReImportTextureWithSettings(actualImagePath, textureImporterSettings);
 
@@ -126,7 +158,7 @@ namespace UnityEngine.TestTools.Graphics
             {
                 var diffImagePath = Path.Combine(saveDir, $"{imageMessage.ImageName}.diff.{extension}");
                 File.WriteAllBytes(diffImagePath, imageMessage.DiffImage);
-                ReportArtifact(diffImagePath);
+                reportArtifact(diffImagePath);
                 if (textureImporterSettings != null)
                     ReImportTextureWithSettings(diffImagePath, textureImporterSettings);
             }
@@ -135,10 +167,35 @@ namespace UnityEngine.TestTools.Graphics
             {
                 var expectedImagesPath = Path.Combine(saveDir, $"{imageMessage.ImageName}.expected.{extension}");
                 File.WriteAllBytes(expectedImagesPath, imageMessage.ExpectedImage);
-                ReportArtifact(expectedImagesPath);
+                reportArtifact(expectedImagesPath);
                 if (textureImporterSettings != null)
                     ReImportTextureWithSettings(expectedImagesPath, textureImporterSettings);
             }
+        }
+
+        static bool? s_IsAutomatedRun;
+
+        internal static bool IsAutomatedRun =>
+            s_IsAutomatedRun ??= ComputeIsAutomatedRun(Application.isBatchMode, RuntimeSettings.CommandLineReader);
+
+        // UTR runs graphics playmode editors windowed (rendering needs the GPU), so batch mode alone is not enough
+        internal static bool ComputeIsAutomatedRun(bool isBatchMode, CommandLineReader commandLine) =>
+            isBatchMode || commandLine.CommandLineArgumentExists("-automated");
+
+        // '~' folder: the AssetDatabase skips it, avoiding a post-run import of every result image
+        internal static string ToImportIgnoredPath(string saveDir)
+        {
+            var normalized = saveDir.Replace('\\', '/');
+            if (!normalized.StartsWith("Assets/", StringComparison.Ordinal))
+                return saveDir;
+
+            var topFolderEnd = normalized.IndexOf('/', "Assets/".Length);
+            if (topFolderEnd < 0)
+                topFolderEnd = normalized.Length;
+            if (normalized[topFolderEnd - 1] == '~')
+                return normalized;
+
+            return normalized.Substring(0, topFolderEnd) + "~" + normalized.Substring(topFolderEnd);
         }
 
         private void ReportArtifact(string artifactPath)

@@ -104,33 +104,90 @@ namespace UnityEngine.TestTools.Graphics
         /// </returns>
         public static IEnumerator SetResolutionWithRetry(int width, int height, bool fullscreen, int maxRetries = 3)
         {
+            if (Application.isEditor)
+            {
+                GraphicsTestLogger.Log("Running test in Editor, skipping Player resolution change");
+                yield break;
+            }
+
+#if UNITY_WEBGL
+            GraphicsTestLogger.Log("Running test on WebGL platform, skipping Player resolution change");
+            yield break;
+#else
             // Check if resolution is already correct
             if (Screen.width == width && Screen.height == height)
             {
-                GraphicsTestLogger.Log($"Resolution already set to {width}x{height}, skipping resolution change entirely");
+                if (s_SettledWidth == width && s_SettledHeight == height)
+                {
+                    GraphicsTestLogger.Log($"Resolution already set to {width}x{height}, skipping resolution change entirely");
+                    yield break;
+                }
+
+                // Applied elsewhere (e.g. plain Screen.SetResolution in OneTimeSetUp); may still be in flight.
+                GraphicsTestLogger.Log($"Resolution already reports {width}x{height}, waiting for it to settle");
+                yield return WaitForModeSwitchToSettle(Application.platform, () => Time.realtimeSinceStartup);
+                s_SettledWidth = width;
+                s_SettledHeight = height;
                 yield break;
             }
 
             for (int attempt = 1; attempt <= maxRetries; attempt++)
             {
-                GraphicsTestLogger.Log($"Attempting to set resolution to {width}x{height} (Attempt {attempt}/{maxRetries})");
+                int framesToWait = attempt switch
+                {
+                    1 => 60,
+                    2 => 600,
+                    _ => 6000
+                };
+
+                GraphicsTestLogger.Log(
+                    $"Attempting to set resolution to {width}x{height} " +
+                    $"(Attempt {attempt}/{maxRetries}, waiting up to {framesToWait} frame(s) for it to apply)");
 
                 Screen.SetResolution(width, height, fullscreen);
 
-                // Wait one frame for resolution change to take effect
-                yield return null;
-
-                // Verify the resolution was applied
-                if (Screen.width == width && Screen.height == height)
+                for (int frame = 0; frame <= framesToWait; frame++)
                 {
-                    GraphicsTestLogger.Log($"Resolution successfully set to {width}x{height} on attempt {attempt}");
-                    yield break;
+                    if (Screen.width == width && Screen.height == height)
+                    {
+                        GraphicsTestLogger.Log(
+                            $"Resolution successfully set to {width}x{height} " +
+                            $"on attempt {attempt} after {frame} frame(s)");
+                        yield return WaitForModeSwitchToSettle(Application.platform, () => Time.realtimeSinceStartup);
+                        s_SettledWidth = width;
+                        s_SettledHeight = height;
+                        yield break;
+                    }
+
+                    yield return null;
                 }
 
-                GraphicsTestLogger.LogWarning($"Resolution verification failed. Current: {Screen.width}x{Screen.height}, Expected: {width}x{height}");
+                GraphicsTestLogger.Log(
+                    $"Resolution not applied after attempt {attempt}. " +
+                    $"Current: {Screen.width}x{Screen.height}, Expected: {width}x{height}");
             }
 
-            GraphicsTestLogger.LogWarning($"Failed to set resolution to {width}x{height} after {maxRetries} attempts. Current resolution: {Screen.width}x{Screen.height}");
+            throw new System.InvalidOperationException(
+                $"Failed to set resolution to {width}x{height} after {maxRetries} attempts. " +
+                $"Current resolution: {Screen.width}x{Screen.height}. " +
+                "Graphics tests require this resolution for valid image comparison."
+            );
+#endif
+        }
+
+        static int s_SettledWidth;
+        static int s_SettledHeight;
+
+        internal static IEnumerator WaitForModeSwitchToSettle(RuntimePlatform platform, System.Func<float> now)
+        {
+            const float settleSeconds = 5f;
+
+            if (platform != RuntimePlatform.OSXPlayer)
+                yield break;
+
+            float start = now();
+            while (now() - start < settleSeconds)
+                yield return null;
         }
     }
 }

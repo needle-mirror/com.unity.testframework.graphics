@@ -21,6 +21,7 @@ namespace UnityEditor.TestTools.Graphics
         bool IsValidFolder(string path);
         void Refresh();
         void SaveAssets();
+        void SaveAssetIfDirty(UnityEngine.Object asset);
         void ImportAsset(string path);
         string[] FindAssets(string filter, string[] searchInFolders);
         string GuidToAssetPath(string guid);

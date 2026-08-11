@@ -68,6 +68,14 @@ namespace UnityEngine.TestTools.Graphics
         string[] m_TestContentBundlePaths = Array.Empty<string>();
 
         [SerializeField]
+        [HideInInspector]
+        TestContentBundlePlatformInfo[] m_TestContentBundlePlatforms = Array.Empty<TestContentBundlePlatformInfo>();
+
+        [SerializeField]
+        [HideInInspector]
+        TestDataBundleInfo[] m_TestDataBundles = Array.Empty<TestDataBundleInfo>();
+
+        [SerializeField]
         [Tooltip("The directory to the image results.")]
         string m_ImageResultsPath = string.Empty;
 
@@ -96,6 +104,22 @@ namespace UnityEngine.TestTools.Graphics
         [SerializeField]
         [HideInInspector]
         bool[] m_PreviousScenesEnabled = Array.Empty<bool>();
+
+        [SerializeField]
+        [HideInInspector]
+        bool m_HasPreviousGraphicsApis;
+
+        [SerializeField]
+        [HideInInspector]
+        bool m_PreviousUseDefaultGraphicsApis;
+
+        [SerializeField]
+        [HideInInspector]
+        int[] m_PreviousGraphicsApis = Array.Empty<int>();
+
+        [SerializeField]
+        [HideInInspector]
+        int m_PreviousGraphicsApisBuildTarget;
 
         [FormerlySerializedAs("m_EnableFileSystemWatcher")]
         [SerializeField]
@@ -161,7 +185,28 @@ namespace UnityEngine.TestTools.Graphics
         public string[] TestContentBundlePaths
         {
             get => m_TestContentBundlePaths;
-            set => m_TestContentBundlePaths = value;
+            set => m_TestContentBundlePaths = value ?? Array.Empty<string>();
+        }
+
+        /// <summary>
+        /// The platform each test content bundle was built for, keyed by bundle name. Used by the
+        /// runtime loader to prefer the bundles matching the platform the player is running on.
+        /// </summary>
+        internal TestContentBundlePlatformInfo[] TestContentBundlePlatforms
+        {
+            get => m_TestContentBundlePlatforms;
+            set => m_TestContentBundlePlatforms = value ?? Array.Empty<TestContentBundlePlatformInfo>();
+        }
+
+        /// <summary>
+        /// The test data bundles produced by the most recent player content build, keyed by bundle
+        /// file name. Used by the runtime loader to exclude test data from the global asset search
+        /// and to resolve it by logical name through <see cref="GraphicsTestData"/>.
+        /// </summary>
+        internal TestDataBundleInfo[] TestDataBundles
+        {
+            get => m_TestDataBundles;
+            set => m_TestDataBundles = value ?? Array.Empty<TestDataBundleInfo>();
         }
 
         /// <summary>
@@ -351,6 +396,7 @@ namespace UnityEngine.TestTools.Graphics
             internal static Action<Object, Object> AddObjectToAsset = AssetDatabase.AddObjectToAsset;
             internal static Action<Object> SetDirty = EditorUtility.SetDirty;
             internal static Action SaveAssets = AssetDatabase.SaveAssets;
+            internal static Action<Object> SaveAssetIfDirty = AssetDatabase.SaveAssetIfDirty;
             internal static Action Refresh = AssetDatabase.Refresh;
         }
 #endif
@@ -438,7 +484,7 @@ namespace UnityEngine.TestTools.Graphics
                     AssetOps.SetDirty(this);
                 }
 
-                AssetOps.SaveAssets();
+                AssetOps.SaveAssetIfDirty(this);
                 AssetOps.Refresh();
                 return true;
             }
@@ -515,7 +561,8 @@ namespace UnityEngine.TestTools.Graphics
             }
 
             m_SceneLists.Clear();
-            AssetOps.SaveAssets();
+            AssetOps.SetDirty(this);
+            AssetOps.SaveAssetIfDirty(this);
             AssetOps.Refresh();
         }
 
@@ -552,6 +599,53 @@ namespace UnityEngine.TestTools.Graphics
 
             // Restore the previous scenes
             EditorBuildSettings.scenes = scenes;
+            Save();
+#endif
+        }
+
+        /// <summary>
+        /// Snapshot the active build target's PlayerSettings graphics APIs. The first snapshot wins
+        /// until <see cref="RestorePlayerGraphicsApis"/> consumes it.
+        /// </summary>
+        internal void SavePlayerGraphicsApis()
+        {
+#if UNITY_EDITOR
+            if (m_HasPreviousGraphicsApis)
+                return;
+
+            var target = EditorUserBuildSettings.activeBuildTarget;
+            var apis = PlayerSettings.GetGraphicsAPIs(target);
+            m_PreviousGraphicsApis = new int[apis.Length];
+            for (var i = 0; i < apis.Length; i++)
+                m_PreviousGraphicsApis[i] = (int)apis[i];
+            m_PreviousUseDefaultGraphicsApis = PlayerSettings.GetUseDefaultGraphicsAPIs(target);
+            m_PreviousGraphicsApisBuildTarget = (int)target;
+            m_HasPreviousGraphicsApis = true;
+            Save();
+#endif
+        }
+
+        /// <summary>
+        /// Restore the PlayerSettings graphics APIs captured by <see cref="SavePlayerGraphicsApis"/>.
+        /// Does nothing without a snapshot.
+        /// </summary>
+        internal void RestorePlayerGraphicsApis()
+        {
+#if UNITY_EDITOR
+            if (!m_HasPreviousGraphicsApis)
+                return;
+
+            var target = (BuildTarget)m_PreviousGraphicsApisBuildTarget;
+            if (m_PreviousGraphicsApis != null && m_PreviousGraphicsApis.Length > 0)
+            {
+                var apis = new Rendering.GraphicsDeviceType[m_PreviousGraphicsApis.Length];
+                for (var i = 0; i < m_PreviousGraphicsApis.Length; i++)
+                    apis[i] = (Rendering.GraphicsDeviceType)m_PreviousGraphicsApis[i];
+                PlayerSettings.SetGraphicsAPIs(target, apis);
+            }
+            PlayerSettings.SetUseDefaultGraphicsAPIs(target, m_PreviousUseDefaultGraphicsApis);
+            m_HasPreviousGraphicsApis = false;
+            m_PreviousGraphicsApis = Array.Empty<int>();
             Save();
 #endif
         }

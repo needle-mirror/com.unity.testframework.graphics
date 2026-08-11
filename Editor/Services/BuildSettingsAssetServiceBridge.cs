@@ -27,6 +27,7 @@ namespace UnityEditor.TestTools.Graphics.Services
             GraphicsTestBuildSettings.AssetOps.AddObjectToAsset = service.AddObjectToAsset;
             GraphicsTestBuildSettings.AssetOps.SetDirty = service.SetDirty;
             GraphicsTestBuildSettings.AssetOps.SaveAssets = service.SaveAssets;
+            GraphicsTestBuildSettings.AssetOps.SaveAssetIfDirty = service.SaveAssetIfDirty;
             GraphicsTestBuildSettings.AssetOps.Refresh = service.Refresh;
         }
     }

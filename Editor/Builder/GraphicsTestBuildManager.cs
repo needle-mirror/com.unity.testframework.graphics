@@ -58,6 +58,7 @@ namespace UnityEditor.TestTools.Graphics.Builder
             GraphicsTestLogger.Log("Cleaning up Graphics Tests.");
             settings.ShouldCleanUpAfterBuild = false;
             settings.RestoreEditorBuildSettings();
+            settings.RestorePlayerGraphicsApis();
             settings.Save();
             AssetService.Refresh();
 
@@ -98,7 +99,7 @@ namespace UnityEditor.TestTools.Graphics.Builder
             return testMode switch
             {
                 TestMode.Player => new PlayerGraphicsTestBuildManager(
-                    new AssetBundleBuilder(),
+                    new CompositeContentBuilder(PlayerContentBuilders.All),
                     platform.ToBuildTarget()
                 ),
                 TestMode.EditMode or TestMode.PlayMode => new EditorGraphicsTestBuildManager(testMode),

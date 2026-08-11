@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 using UnityEngine.TestTools.Graphics.Platforms;
 
 namespace UnityEngine.TestTools.Graphics
@@ -67,7 +68,7 @@ namespace UnityEngine.TestTools.Graphics
         /// </remarks>
         IList<TestContentBundle> Bundles { get; set; }
 
-        bool ContentLoadDone
+        internal bool ContentLoadDone
         {
             get
             {
@@ -128,18 +129,27 @@ namespace UnityEngine.TestTools.Graphics
         /// <returns>
         /// An enumerable of test content bundles.
         /// </returns>
-        public static IEnumerable<TestContentBundle> GetTestContentBundles()
+        public static IEnumerable<TestContentBundle> GetTestContentBundles() =>
+            GetTestContentBundles(GraphicsTestBuildSettings.LoadOrDefault(), GraphicsTestPlatform.Current);
+
+        /// <summary>
+        /// Discovers and classifies the content bundles for the given settings and platform,
+        /// so tests can drive the real discovery with a simulated platform.
+        /// </summary>
+        internal static IEnumerable<TestContentBundle> GetTestContentBundles(
+            GraphicsTestBuildSettings settings,
+            GraphicsTestPlatform currentPlatform
+        )
         {
-            var settings = GraphicsTestBuildSettings.LoadOrDefault();
             GraphicsTestLogger.DebugLog(
                 $"Loading test content bundles... Found {settings.TestContentBundlePaths.Length} bundle path(s):\n\t{string.Join("\n\t", settings.TestContentBundlePaths)}"
             );
 
-            if (GraphicsTestPlatform.Current.IsEditorPlatform)
+            if (currentPlatform.IsEditorPlatform)
             {
                 foreach (var schema in settings.BuildPlatformSchemata)
                 {
-                    foreach (var path in GraphicsTestPlatform.GetCurrent(schema).AllResultsPaths)
+                    foreach (var path in new GraphicsTestPlatform(currentPlatform, schema).AllResultsPaths)
                     {
                         yield return new EditorReferenceImageBundle(path);
                     }
@@ -147,17 +157,121 @@ namespace UnityEngine.TestTools.Graphics
             }
             else
             {
-                foreach (var bundlePath in settings.TestContentBundlePaths)
+                var runtimePlatform = currentPlatform.GetValue<RuntimePlatform>();
+
+                // A build can carry bundles for several platform variants (e.g. per GPU vendor).
+                // Consult the most specifically matching bundles first (Load<T> returns the first
+                // bundle that contains an asset); bundles that conflict with the running platform on
+                // any characteristic are excluded entirely.
+                var rankedPaths = RankBundlePathsForPlatform(
+                    settings.TestContentBundlePaths,
+                    settings.TestContentBundlePlatforms,
+                    currentPlatform
+                );
+
+                var testDataByFileName = new Dictionary<string, TestDataBundleInfo>();
+                foreach (var info in settings.TestDataBundles)
                 {
-                    yield return GraphicsTestPlatform.Current.GetValue<RuntimePlatform>() switch
+                    if (info != null && !string.IsNullOrEmpty(info.bundleFileName))
+                        testDataByFileName[info.bundleFileName] = info;
+                }
+
+                var useRemoteBundles =
+                    runtimePlatform is RuntimePlatform.Android or RuntimePlatform.WebGLPlayer;
+
+                foreach (var bundlePath in rankedPaths)
+                {
+                    var fullPath = Path.Combine(Application.streamingAssetsPath, bundlePath);
+
+                    // Bundles recorded as test data are addressed as-given (full asset path or file
+                    // name) and stay out of the global search so they never shadow reference images.
+                    if (testDataByFileName.TryGetValue(bundlePath, out var testDataInfo))
                     {
-                        RuntimePlatform.Android or RuntimePlatform.WebGLPlayer => new RemoteReferenceImageAssetBundle(
-                            Path.Combine(Application.streamingAssetsPath, bundlePath)
-                        ),
-                        _ => new ReferenceImageAssetBundle(Path.Combine(Application.streamingAssetsPath, bundlePath)),
-                    };
+                        TestContentBundle testDataBundle = useRemoteBundles
+                            ? new RemoteTestDataAssetBundle(fullPath)
+                            : new TestDataAssetBundle(fullPath);
+                        testDataBundle.LogicalName = testDataInfo.logicalName;
+                        yield return testDataBundle;
+                        continue;
+                    }
+
+                    yield return useRemoteBundles
+                        ? new RemoteReferenceImageAssetBundle(fullPath)
+                        : new ReferenceImageAssetBundle(fullPath);
                 }
             }
+        }
+
+        /// <summary>
+        /// Orders bundle paths so the most specifically matching bundles are consulted first. A bundle
+        /// that conflicts with the running platform on any characteristic is dropped: its references
+        /// were authored for other hardware. Bundles without metadata stay neutral, and the sort is
+        /// stable, so a build without metadata loads exactly as before.
+        /// </summary>
+        internal static List<string> RankBundlePathsForPlatform(
+            IReadOnlyList<string> bundlePaths,
+            IReadOnlyList<TestContentBundlePlatformInfo> bundlePlatforms,
+            GraphicsTestPlatform currentPlatform
+        )
+        {
+            var infosByName = new Dictionary<string, TestContentBundlePlatformInfo>();
+            if (bundlePlatforms != null)
+            {
+                foreach (var info in bundlePlatforms)
+                {
+                    if (info != null && !string.IsNullOrEmpty(info.bundleName))
+                        infosByName[info.bundleName] = info;
+                }
+            }
+
+            var ranked = new List<(string Path, int Score, int Index)>(bundlePaths.Count);
+            for (var i = 0; i < bundlePaths.Count; i++)
+            {
+                var path = bundlePaths[i];
+                if (!infosByName.TryGetValue(path, out var info))
+                {
+                    ranked.Add((path, 0, i)); // no metadata: legacy build, stay neutral
+                    continue;
+                }
+
+                if (TryScorePlatformMatch(info.ResolveData(), currentPlatform, out var score))
+                    ranked.Add((path, score, i));
+            }
+
+            // List.Sort is unstable; the index tiebreak keeps build order for equal scores.
+            ranked.Sort((a, b) => a.Score != b.Score ? b.Score.CompareTo(a.Score) : a.Index.CompareTo(b.Index));
+
+            var result = new List<string>(ranked.Count);
+            foreach (var entry in ranked)
+                result.Add(entry.Path);
+            return result;
+        }
+
+        /// <summary>
+        /// Scores how specifically a bundle's build platform matches the running platform: every
+        /// shared characteristic adds one. Returns false when any characteristic the bundle declares
+        /// differs from the running platform's value. A characteristic the running platform does not
+        /// carry stays neutral. Characteristics compare by enum value, so aliased members match.
+        /// </summary>
+        internal static bool TryScorePlatformMatch(
+            IReadOnlyDictionary<Type, Enum> bundleData,
+            GraphicsTestPlatform currentPlatform,
+            out int score
+        )
+        {
+            score = 0;
+            foreach (var pair in bundleData)
+            {
+                if (!currentPlatform.Data.TryGetValue(pair.Key, out var currentValue))
+                    continue; // the running platform doesn't know this dimension: neutral
+
+                if (!currentValue.Equals(pair.Value))
+                    return false;
+
+                score++;
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -185,6 +299,9 @@ namespace UnityEngine.TestTools.Graphics
         {
             foreach (var bundle in Bundles)
             {
+                if (!bundle.PartOfGlobalSearch)
+                    continue;
+
                 var asset = bundle.LoadAsset<T>(assetName);
                 if (asset != null)
                 {
@@ -195,13 +312,18 @@ namespace UnityEngine.TestTools.Graphics
             }
 
             var sb = new StringBuilder();
+            var searchedBundles = 0;
             foreach (var b in Bundles)
             {
+                if (!b.PartOfGlobalSearch)
+                    continue;
+
+                searchedBundles++;
                 if (sb.Length > 0)
                     sb.Append("\n\t");
                 sb.Append(b.Name).Append(" (status: ").Append(b.State).Append(") -> ").Append(b.AssetPath(assetName));
             }
-            loadMessage = $"Failed to load {assetName} from any of {Bundles.Count} bundle(s):\n\t{sb}";
+            loadMessage = $"Failed to load {assetName} from any of {searchedBundles} bundle(s):\n\t{sb}";
             return null;
         }
 
@@ -222,6 +344,15 @@ namespace UnityEngine.TestTools.Graphics
         /// </exception>
         public string AssetPath(string assetName)
         {
+            foreach (var bundle in Bundles)
+            {
+                if (bundle.PartOfGlobalSearch && bundle.ContainsAsset(assetName))
+                {
+                    return bundle.AssetPath(assetName);
+                }
+            }
+
+            // Only a miss is ambiguous: content still in flight may yet provide the asset.
             if (!ContentLoadDone)
             {
                 throw new InvalidOperationException(
@@ -229,15 +360,49 @@ namespace UnityEngine.TestTools.Graphics
                 );
             }
 
+            return null;
+        }
+
+        /// <summary>
+        /// The test data bundles registered under the given logical name; how
+        /// <see cref="GraphicsTestData"/> resolves its bundles outside the global search.
+        /// </summary>
+        internal IEnumerable<TestContentBundle> GetBundlesFor(string logicalName)
+        {
+            // An unnamed bundle is a reference image bundle, never test data; matching null to null
+            // would hand every one of them to GraphicsTestData.
+            if (string.IsNullOrEmpty(logicalName))
+                return Array.Empty<TestContentBundle>();
+
+            var matches = new List<TestContentBundle>();
             foreach (var bundle in Bundles)
             {
-                if (bundle.ContainsAsset(assetName))
-                {
-                    return bundle.AssetPath(assetName);
-                }
+                if (string.Equals(bundle.LogicalName, logicalName, StringComparison.Ordinal))
+                    matches.Add(bundle);
             }
 
-            return null;
+            return matches;
+        }
+
+        /// <summary>
+        /// Registers an additional content bundle and starts loading it; the extension point
+        /// for custom <see cref="TestContentBundle"/> implementations. Registered bundles are
+        /// searched after the ones discovered from the build settings.
+        /// </summary>
+        /// <param name="bundle">The bundle to register.</param>
+        public void RegisterBundle(TestContentBundle bundle)
+        {
+            if (bundle == null)
+                throw new ArgumentNullException(nameof(bundle));
+
+            Bundles.Add(bundle);
+
+            if (bundle.State != TestContentBundle.LoadState.NotLoaded)
+                return;
+
+            GraphicsTestLogger.DebugLog($"Loading {bundle.GetType()} bundle {bundle.Name}...");
+            bundle.State = TestContentBundle.LoadState.Loading;
+            bundle.LoadBundleAsync().ContinueWith(task => OnLoadCompleted(bundle, task));
         }
 
         /// <summary>
@@ -274,18 +439,7 @@ namespace UnityEngine.TestTools.Graphics
                 GraphicsTestLogger.DebugLog($"Loading {bundle.GetType()} bundle {bundle.Name}...");
                 bundle.State = TestContentBundle.LoadState.Loading;
 
-                bundle
-                    .LoadBundleAsync()
-                    .ContinueWith(_ =>
-                    {
-                        MainThreadDispatcher.RunOnMainThread(() =>
-                        {
-                            if (bundle.State == TestContentBundle.LoadState.Loaded)
-                                OnBundleLoaded(bundle);
-                            else
-                                GraphicsTestLogger.DebugLog($"Failed to load {bundle.GetType()} bundle {bundle.Name}");
-                        });
-                    });
+                bundle.LoadBundleAsync().ContinueWith(task => OnLoadCompleted(bundle, task));
             }
         }
 
@@ -320,6 +474,39 @@ namespace UnityEngine.TestTools.Graphics
         {
             s_TestContentLoader = new TestContentLoader(GetTestContentBundles());
             s_TestContentLoader.LoadContent();
+        }
+
+        /// <summary>
+        /// Settles a bundle's load state. A bundle whose load threw would otherwise stay
+        /// <see cref="TestContentBundle.LoadState.Loading"/> forever, so content loading would
+        /// never finish and the exception would surface only as an unobserved task fault.
+        /// </summary>
+        void OnLoadCompleted(TestContentBundle bundle, Task task)
+        {
+            var error = task.Exception;
+
+            // Settled here rather than in the dispatched callback: the dispatcher posts to Unity's
+            // synchronization context, which is not pumped in every host, and a bundle left in
+            // Loading would block content loading forever.
+            if (error != null)
+                bundle.State = TestContentBundle.LoadState.Failed;
+
+            MainThreadDispatcher.RunOnMainThread(() =>
+            {
+                if (error != null)
+                {
+                    GraphicsTestLogger.Log(
+                        LogType.Warning,
+                        $"Failed to load {bundle.GetType().Name} bundle {bundle.Name}: {error.InnerException ?? error}"
+                    );
+                    return;
+                }
+
+                if (bundle.State == TestContentBundle.LoadState.Loaded)
+                    OnBundleLoaded(bundle);
+                else
+                    GraphicsTestLogger.DebugLog($"Failed to load {bundle.GetType()} bundle {bundle.Name}");
+            });
         }
 
         /// <summary>

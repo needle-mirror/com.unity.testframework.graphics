@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.TestTools.Graphics;
+using UnityEngine.TestTools.Graphics.Platforms;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -30,14 +31,29 @@ namespace GraphicsTestFrameworkProject.Samples.AdvancedPatterns
     -- Tutorial [2] --
     Step 1: Define an enum representing the dimension's possible values.
     This enum becomes the DataType of the node and a segment in reference image paths.
+
+    Mark a sentinel value that means "absent" or "not applicable" (here, Unknown) with
+    [ElideFromPlatformPath] so it does not add a segment to reference image paths. The value
+    still participates in platform equality, GetValue<T>(), and platform filtering; only the
+    folder segment is omitted. This keeps the common case out of a redundant subfolder
+    (for example ".../Direct3D11" instead of ".../Direct3D11/Unknown").
+
+    To read the full path including elided segments (for example when debugging), use
+    GraphicsTestPlatform.ResultsPathWithElided or AllResultsPathsWithElided.
     */
 
     public enum GpuMemoryTier
     {
+        [ElideFromPlatformPath]
         Unknown = 0,
         Low = 1,
         Medium = 2,
         High = 3,
+
+        // Wildcard value: in a filter attribute this matches any concrete tier (Low, Medium,
+        // or High). See Tutorial [7]. A node never reports this as its Current value.
+        [PlatformWildcard]
+        Any = 4,
     }
 
     /*
@@ -137,5 +153,23 @@ namespace GraphicsTestFrameworkProject.Samples.AdvancedPatterns
 
     No additional registration code is needed. PlatformNodeRegistry discovers
     all IPlatformNode implementations at startup via AppDomain.CurrentDomain.GetAssemblies().
+    */
+
+    /*
+    -- Tutorial [7] --
+    A node value can be flagged with [PlatformWildcard] to act as a "match any" value for its
+    dimension. During platform combination the framework expands the wildcard to every concrete
+    value of the enum, excluding the default (0) value and any other wildcards.
+
+    GpuMemoryTier.Any (defined above) expands to { Low, Medium, High }, so this single ignore:
+
+      [IgnoreGraphicsTest("HeavyScene", "Flaky on any GPU with detectable memory. JIRA-1234", GpuMemoryTier.Any)]
+
+    is equivalent to listing Low, Medium, and High explicitly - and automatically covers any
+    new tier added to the enum later, without editing the attribute.
+
+    A wildcard is only meaningful in filter attributes: a node never returns it from Current, so
+    it never appears in a reference image path. This is how, for example, a single ignore can
+    apply across every XR loader regardless of which one is active.
     */
 }

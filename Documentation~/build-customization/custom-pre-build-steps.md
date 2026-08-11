@@ -2,6 +2,8 @@
 
 Add setup logic that runs before the graphics test build process. For example, you can use pre-build steps to validate scenes, configure project settings, or prepare assets.
 
+**Note:** To ship assets with a test player, declare them with the [`[RequireTestData]`](require-test-data.md) attribute instead of building AssetBundles in a pre-build step. The framework then builds and loads them for you on every platform.
+
 ## Bake lighting before a test
 
 To bake lighting before a test, add the `[TestFixture]` and [`[BakeLighting]`](xref:UnityEngine.TestTools.Graphics.BakeLightingAttribute) attribute to your test class with the paths of the scenes to bake:

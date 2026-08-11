@@ -7,9 +7,13 @@ using UnityEngine.TestTools.Graphics.Platforms;
 
 namespace UnityEditor.TestTools.Graphics.Builder
 {
-    sealed class AssetBundleBuilder : IPlayerContentBuilder
+    sealed class AssetBundleBuilder : IPlayerContentBuilder, IPerPlatformBundleSource
     {
         const string k_AssetBundlePath = "Assets/StreamingAssets";
+
+        readonly List<(string BundleName, GraphicsTestPlatform Platform)> m_BuiltBundles = new();
+
+        public IEnumerable<(string BundleName, GraphicsTestPlatform Platform)> BuiltBundles => m_BuiltBundles;
 
         public IEnumerable<string> BuildContent(
             IList<GraphicsTestCase> testCases,
@@ -17,12 +21,20 @@ namespace UnityEditor.TestTools.Graphics.Builder
             BuildTarget buildTarget
         )
         {
-            var assetBundlesToBuild = new List<AssetBundleBuild>();
-            var alreadyFound = new HashSet<string>();
+            var tracker = new ReferenceImageDedupTracker();
+            m_BuiltBundles.Clear();
 
-            foreach (var platform in platforms)
+            var groups = new List<ResolvedImageGroup>();
+            var groupsByDirectory = new Dictionary<string, ResolvedImageGroup>();
+
+            var platformList = platforms as IReadOnlyList<GraphicsTestPlatform>
+                ?? new List<GraphicsTestPlatform>(platforms);
+            var fallbackSchema = platformList.Count > 0 ? platformList[platformList.Count - 1]?.Schema : null;
+
+            foreach (var platform in platformList)
             {
                 GraphicsTestLogger.Log($"Searching for reference images for platform {platform}...");
+                tracker.BeginPlatform(platform, SameSchemaFamily(platform?.Schema, fallbackSchema));
 
                 var filteredTestCases = new List<GraphicsTestCase>();
                 foreach (var tc in testCases)
@@ -32,23 +44,25 @@ namespace UnityEditor.TestTools.Graphics.Builder
                         throw new InvalidOperationException($"Test case '{tc.Name}' has null ReferenceImageDescriptor. This is a bug in test setup.");
                     }
 
-                    if (!alreadyFound.Contains(tc.ReferenceImageDescriptor.BuildDefaultName()) &&
-                        !alreadyFound.Contains(tc.ReferenceImageDescriptor.BuildVariant(0)))
+                    if (tracker.ShouldCollect(tc))
                     {
                         filteredTestCases.Add(tc);
                     }
                 }
 
                 var images = ReferenceImageUtility.Default.CollectReferenceImagePathsFor(filteredTestCases, platform);
+                var newImages = tracker.FilterNewImages(images);
 
-                foreach (var key in images.Keys)
-                    alreadyFound.Add(key);
+                GroupImagesByResolvedPath(platform, newImages, groups, groupsByDirectory);
+            }
 
-                var assetBundle = GetAssetBundlesForPlatform(images, platform);
-
-                if (assetBundle != null)
+            var assetBundlesToBuild = new List<AssetBundleBuild>();
+            foreach (var group in groups)
+            {
+                foreach (var bundle in GetAssetBundlesForPlatform(group.Images, group.Platform))
                 {
-                    assetBundlesToBuild.AddRange(assetBundle);
+                    assetBundlesToBuild.Add(bundle);
+                    m_BuiltBundles.Add((bundle.assetBundleName, group.Platform));
                 }
             }
 
@@ -73,6 +87,61 @@ namespace UnityEditor.TestTools.Graphics.Builder
         public void CleanUp()
         {
             // Nothing to clean up
+        }
+
+        /// <summary>
+        /// Whether two schemata are the same family: same name and root path (combination expansion
+        /// appends node types but keeps both). The last platform's family is the universal fallback
+        /// and always collects (see <see cref="ReferenceImageDedupTracker.BeginPlatform"/>).
+        /// </summary>
+        internal static bool SameSchemaFamily(PlatformSchema a, PlatformSchema b) =>
+            a != null && b != null && a.name == b.name && a.rootPath == b.rootPath;
+
+        /// <summary>
+        /// One bundle-worth of reference images that all resolved from the same folder, tagged with
+        /// the platform level that folder encodes.
+        /// </summary>
+        internal sealed class ResolvedImageGroup
+        {
+            internal GraphicsTestPlatform Platform;
+            internal readonly Dictionary<string, string> Images = new();
+        }
+
+        /// <summary>
+        /// Sorts each resolved image into the group for the folder it was found in. The group's
+        /// platform tag comes from that folder, not from the platform that searched for the image: an
+        /// image in a shared fallback folder must not carry characteristics its folder does not assert.
+        /// </summary>
+        internal static void GroupImagesByResolvedPath(
+            GraphicsTestPlatform platform,
+            Dictionary<string, string> images,
+            List<ResolvedImageGroup> groups,
+            Dictionary<string, ResolvedImageGroup> groupsByDirectory
+        )
+        {
+            foreach (var pair in images)
+            {
+                var directory = Path.GetDirectoryName(pair.Value)?.Replace('\\', '/') ?? string.Empty;
+                if (!groupsByDirectory.TryGetValue(directory, out var group))
+                {
+                    var levelPlatform = platform.ForResultsPath(directory);
+                    if (levelPlatform == null)
+                    {
+                        GraphicsTestLogger.Log(
+                            LogType.Warning,
+                            $"Reference image '{pair.Value}' does not sit in any results path of "
+                                + $"platform {platform}; tagging its bundle with the full platform."
+                        );
+                        levelPlatform = platform;
+                    }
+
+                    group = new ResolvedImageGroup { Platform = levelPlatform };
+                    groupsByDirectory.Add(directory, group);
+                    groups.Add(group);
+                }
+
+                group.Images.Add(pair.Key, pair.Value);
+            }
         }
 
         internal IEnumerable<AssetBundleBuild> GetAssetBundlesForPlatform(

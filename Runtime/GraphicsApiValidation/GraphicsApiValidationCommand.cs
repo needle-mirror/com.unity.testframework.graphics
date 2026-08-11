@@ -13,7 +13,9 @@ namespace UnityEngine.TestTools.Graphics.GraphicsApiValidation
 {
     /// <summary>
     /// Abstract base class for graphics API validation commands.
-    /// Wraps test execution to detect validation errors from graphics APIs (D3D12, Metal, Vulkan, etc.).
+    /// Wraps test execution to detect validation errors from graphics APIs (D3D12, Metal, Vulkan, etc.)
+    /// Before adding a custom implementation for this, consider instead if you should implement Rendering.GraphicsApiValidation on the relevant GfxDevice
+    /// Doing so will allow you to use ManagedApiValidationCommand
     /// </summary>
     internal abstract class GraphicsApiValidationCommand : DelegatingTestCommand, IEnumerableTestMethodCommand
     {
@@ -47,6 +49,11 @@ namespace UnityEngine.TestTools.Graphics.GraphicsApiValidation
         protected abstract void ClearErrors();
 
         /// <summary>
+        /// Returns if validation error logging to the console is currently suppressed.
+        /// </summary>
+        protected abstract bool IsLoggingSuppressed();
+
+        /// <summary>
         /// Sets whether validation error logging to the console is suppressed.
         /// </summary>
         protected abstract void SetLoggingSuppressed(bool suppressed);
@@ -71,17 +78,34 @@ namespace UnityEngine.TestTools.Graphics.GraphicsApiValidation
         /// </summary>
         protected abstract string ValidationPrefix { get; }
 
+        /// <summary>
+        /// Returns true if validation layers have been requested but for some reason are not active
+        /// Returns false if validation layers are not requested, or if they are requested & active
+        /// </summary>
+        protected abstract bool GraphicsLayersMisconfigured();
+
+        /// <summary>
+        /// Throws if GraphicsLayersMisconfigured returns true
+        /// </summary>
+        private void ThrowIfMisconfigured()
+        {
+            if (GraphicsLayersMisconfigured())
+                throw new InvalidOperationException(
+                    "Validation has been requested but is not active. Double check this project has been setup correctly for validation layers. For example, Vulkan validation layers require libVkLayer_khronos_validation.so or the Vulkan SDK.");
+        }
+
         public override TestResult Execute(ITestExecutionContext context)
         {
+            ThrowIfMisconfigured();
             if (!IsValidationActive())
             {
                 innerCommand.Execute(context);
                 return context.CurrentResult;
             }
 
+            using var _ = new WithLogSuppression(this);
             try
             {
-                SetLoggingSuppressed(true);
                 ClearErrors();
                 innerCommand.Execute(context);
             }
@@ -94,8 +118,27 @@ namespace UnityEngine.TestTools.Graphics.GraphicsApiValidation
             return context.CurrentResult;
         }
 
+        private struct WithLogSuppression: IDisposable
+        {
+            GraphicsApiValidationCommand m_Command;
+            bool m_SuppressState;
+
+            public WithLogSuppression(GraphicsApiValidationCommand commmand)
+            {
+                m_SuppressState = commmand.IsLoggingSuppressed();
+                m_Command = commmand;
+                m_Command.SetLoggingSuppressed(true);
+            }
+
+            public void Dispose()
+            {
+                m_Command.SetLoggingSuppressed(m_SuppressState);
+            }
+        }
+
         public IEnumerable ExecuteEnumerable(ITestExecutionContext context)
         {
+            ThrowIfMisconfigured();
             if (!(innerCommand is IEnumerableTestMethodCommand enumerableCommand))
             {
                 try
@@ -116,9 +159,9 @@ namespace UnityEngine.TestTools.Graphics.GraphicsApiValidation
                 yield break;
             }
 
+            using var _ = new WithLogSuppression(this);
             try
             {
-                SetLoggingSuppressed(true);
                 ClearErrors();
 
                 foreach (var item in enumerableCommand.ExecuteEnumerable(context))

@@ -5,13 +5,13 @@ using UnityEngine.TestRunner.NUnitExtensions.Runner;
 
 namespace UnityEngine.TestTools.Graphics.GraphicsApiValidation
 {
-    internal class D3D12ValidationWrapper : ITestCommandWrapper
+    internal class ManagedApiValidationWrapper : ITestCommandWrapper
     {
         public int Order => 1000;
 
-        public bool ShouldWrap(TestMethod test) => D3D12ValidationCommand.IsEnabled;
+        public bool ShouldWrap(TestMethod test) => ManagedApiValidationCommand.IsEnabled;
 
-        public TestCommand Wrap(TestCommand command) => new D3D12ValidationCommand(command);
+        public TestCommand Wrap(TestCommand command) => new ManagedApiValidationCommand(command);
     }
 }
 #endif

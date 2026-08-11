@@ -25,16 +25,23 @@ namespace UnityEditor.TestTools.Graphics.UI
                 if (testCase.IgnoreData == null)
                     continue;
 
+                // Deduplicate and display by the identity string (which keeps segments elided via
+                // ElideFromPlatformPathAttribute) so platforms that differ only by a elided dimension
+                // value stay as distinct, distinguishable rows rather than being collapsed or duplicated.
                 var platformSet = new HashSet<string>();
+                var platforms = new List<string>();
                 foreach (var ignore in testCase.IgnoreData)
                 {
                     if (ignore.m_Platforms != null)
                     {
                         foreach (var platform in ignore.m_Platforms)
-                            platformSet.Add(platform.ToString());
+                        {
+                            var identity = platform.ToIdentityString();
+                            if (platformSet.Add(identity))
+                                platforms.Add(identity);
+                        }
                     }
                 }
-                var platforms = new List<string>(platformSet);
                 platforms.Sort(StringComparer.Ordinal);
 
                 if (platforms.Count == 0)

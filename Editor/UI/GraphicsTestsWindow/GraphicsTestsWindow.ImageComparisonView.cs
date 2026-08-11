@@ -250,16 +250,19 @@ namespace UnityEditor.TestTools.Graphics.UI
             foreach (var schema in schemaList)
             {
                 var platform = GraphicsTestPlatform.GetCurrent(schema);
-                if (m_ImageComparisonTabs.ContainsKey(platform.Name))
+                // Key tabs by the identity string (which keeps segments elided via ElideFromPlatformPathAttribute)
+                // so platforms that differ only by a elided dimension value stay distinct rather than merging.
+                var tabKey = platform.ToIdentityString();
+                if (m_ImageComparisonTabs.ContainsKey(tabKey))
                     continue;
 
                 var tab = new Tab(string.IsNullOrWhiteSpace(platform.Name) ? "Base" : platform.Name)
                 {
                     closeable = !string.IsNullOrWhiteSpace(platform.Name),
                     tabIndex = m_TabCount++,
-                    name = platform.Name,
+                    name = tabKey,
                 };
-                m_ImageComparisonTabs.Add(platform.Name, new ImageComparisonTab(platform));
+                m_ImageComparisonTabs.Add(tabKey, new ImageComparisonTab(platform));
                 m_ComparisonTabView.Add(tab);
                 tab.closed += tab1 =>
                 {
@@ -476,10 +479,12 @@ namespace UnityEditor.TestTools.Graphics.UI
                 if (platform.Schema.rootPath == PlatformSchema.k_DefaultSchemaBase.rootPath)
                     continue;
 
+                // Match the identity key used when tabs are first created (see SetupImageComparisonView).
+                var tabKey = platform.ToIdentityString();
                 Tab tab = null;
                 foreach (var c in m_ComparisonTabView.Children())
                 {
-                    if (c.name == platform.Name)
+                    if (c.name == tabKey)
                     {
                         tab = (Tab)c;
                         break;
@@ -491,13 +496,13 @@ namespace UnityEditor.TestTools.Graphics.UI
                     {
                         closeable = true,
                         tabIndex = m_TabCount++,
-                        name = platform.Name,
+                        name = tabKey,
                     };
                     m_ComparisonTabView.Add(tab);
                 }
 
                 m_ComparisonTabView.selectedTabIndex = tab.tabIndex;
-                m_ImageComparisonTabs.TryAdd(platform.Name, new ImageComparisonTab(platform));
+                m_ImageComparisonTabs.TryAdd(tabKey, new ImageComparisonTab(platform));
             }
         }
 

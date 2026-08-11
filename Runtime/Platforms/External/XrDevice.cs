@@ -45,5 +45,11 @@ namespace UnityEngine.TestTools.Graphics.Platforms
         /// VisionOSLoader device.
         /// </summary>
         VisionOSLoader,
+
+        /// <summary>
+        /// Matches any active XR device, regardless of loader. For use in ignore attributes only.
+        /// </summary>
+        [PlatformWildcard]
+        Any,
     }
 }

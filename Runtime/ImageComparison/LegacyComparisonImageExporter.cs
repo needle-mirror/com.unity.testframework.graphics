@@ -127,11 +127,9 @@ namespace UnityEngine.TestTools.Graphics
 
         protected virtual void SaveImage(ImageMessage imageMessage, string extension)
         {
-            var isHDR = extension.ToUpperInvariant() == "EXR";
-
             // In the original logic,  SaveFailedImage was sent to player even if saveFailedImage was set to false. I guess it was a bug, and we change this behavior here.
 #if UNITY_EDITOR
-            ImageHandler.instance.SaveImage(imageMessage, isHDR, new ImageHandler.TextureImporterSettings());
+            ImageHandler.instance.SaveImage(imageMessage, extension, new ImageHandler.TextureImporterSettings());
 #else
             PlayerConnection.instance.Send(ImageMessage.MessageId, imageMessage.Serialize());
 #endif

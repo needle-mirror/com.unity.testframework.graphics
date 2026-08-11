@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace UnityEngine.TestTools.Graphics
@@ -58,9 +59,9 @@ namespace UnityEngine.TestTools.Graphics
         protected string Path { get; }
 
         /// <summary>
-        /// The priority of the content bundle.
-        /// This is used to determine the order in which content bundles are loaded.
-        /// A higher priority value indicates that the content bundle should be loaded first.
+        /// The chunk index parsed from the trailing "-N" of <see cref="Name"/>. Content bundles are
+        /// loaded in ascending order of it. It does not affect the order they are searched in, which
+        /// is the order <see cref="TestContentLoader"/> discovered them (most specific platform first).
         /// </summary>
         public int Priority => GetPriorityFromIndex(Name);
 
@@ -79,6 +80,21 @@ namespace UnityEngine.TestTools.Graphics
         /// Whether to always reload assets from the content bundle.
         /// </summary>
         public virtual bool AlwaysReloadAssets { get; set; } = false;
+
+        /// <summary>
+        /// Whether the bundle participates in <see cref="TestContentLoader"/>'s global asset search.
+        /// Test data bundles opt out so their assets never shadow reference images (and vice versa);
+        /// they are resolved only through <see cref="GraphicsTestData"/> via <see cref="LogicalName"/>.
+        /// </summary>
+        public bool PartOfGlobalSearch { get; set; } = true;
+
+        /// <summary>
+        /// The logical name a test data bundle was declared under, or null for content bundles that
+        /// are part of the global search. <see cref="GraphicsTestData"/> resolves its bundles by
+        /// this name, so a bundle registered through <see cref="TestContentLoader.RegisterBundle"/>
+        /// must set it to serve the test data declared under that name.
+        /// </summary>
+        public string LogicalName { get; set; }
 
         /// <summary>
         /// Constructor for the TestContentBundle class.
@@ -139,6 +155,13 @@ namespace UnityEngine.TestTools.Graphics
         /// True if the content bundle contains the asset with the specified name, false otherwise.
         /// </returns>
         public abstract bool ContainsAsset(string assetName);
+
+        /// <summary>
+        /// Enumerates the addressable names of the assets in the content bundle. Bundles that
+        /// cannot enumerate their contents return an empty sequence.
+        /// </summary>
+        /// <returns>The addressable asset names, or an empty sequence.</returns>
+        public virtual IEnumerable<string> GetAssetNames() => Array.Empty<string>();
 
         /// <summary>
         /// Gets the path to an asset within the content bundle.

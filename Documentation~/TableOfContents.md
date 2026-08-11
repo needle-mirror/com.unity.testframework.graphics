@@ -17,6 +17,7 @@
     * [Customize a test](build-customization/customize-a-test.md)
     * [Test specific platforms](test-authoring/get-platform-information.md)
     * [Run code before a test](build-customization/custom-pre-build-steps.md)
+    * [Bundle test data with a test](build-customization/require-test-data.md)
     * [Deduplicate reference images](performance-optimization/reference-image-optimization.md)
     * [Strip shader variants from test builds](performance-optimization/graphics-test-shader-stripping.md)
 * [Sample projects](sample-projects.md)

@@ -33,6 +33,16 @@ namespace UnityEngine.TestTools.Graphics
         Enum Build => Current;
 
         /// <summary>
+        /// The path segment emitted for <paramref name="value"/> when building reference-image paths
+        /// and bundle names. Defaults to the value's name. Override when a value's name is ambiguous —
+        /// e.g. aliased enum members sharing one underlying value stringify differently across
+        /// scripting runtimes — to pin a single canonical segment.
+        /// </summary>
+        /// <param name="value">The enum value to produce a path segment for.</param>
+        /// <returns>The path segment for <paramref name="value"/>.</returns>
+        string GetPathSegment(Enum value) => value.ToString();
+
+        /// <summary>
         /// Activates the given context value. Override in mutable context nodes
         /// (via <see cref="GlobalContext{TEnum}"/>) to change platform state at runtime.
         /// Read-only nodes should not override this method.

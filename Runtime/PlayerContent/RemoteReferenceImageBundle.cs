@@ -6,7 +6,7 @@ namespace UnityEngine.TestTools.Graphics
 {
     class RemoteReferenceImageAssetBundle : TestContentBundle
     {
-        AssetBundle m_AssetBundle;
+        protected AssetBundle m_AssetBundle;
         const int k_MaxRetryCount = 3;
 
         internal RemoteReferenceImageAssetBundle(string path)

@@ -68,7 +68,7 @@ namespace UnityEngine.TestTools.Graphics.Platforms
 
             if (IsXrActive(settings))
             {
-                var firstLoader = settings.AssignedSettings.activeLoaders[0];
+                var firstLoader = settings.Manager.activeLoaders[0];
                 return FromString(firstLoader?.name);
             }
             return XrDevice.None;
@@ -77,7 +77,7 @@ namespace UnityEngine.TestTools.Graphics.Platforms
         static bool IsXrActive(XRGeneralSettings settings)
         {
             if (settings?.InitManagerOnStart ?? false)
-                return (settings.AssignedSettings?.activeLoaders?.Count ?? 0) > 0;
+                return (settings.Manager?.activeLoaders?.Count ?? 0) > 0;
             else
                 return false;
         }

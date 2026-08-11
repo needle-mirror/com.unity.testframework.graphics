@@ -21,6 +21,8 @@ Each dropdown section in the **Platform Schemata** creates a new set of subfolde
 
 Unity looks for images in the order of the sections, then from the deepest subfolder up.
 
+To prevent a specific node value, such as a `None` or `Unknown` sentinel, from creating a subfolder, mark its enum member with the [`[ElideFromPlatformPath]`](xref:UnityEngine.TestTools.Graphics.Platforms.ElideFromPlatformPathAttribute) attribute. For more information, refer to [Test specific platforms](../test-authoring/get-platform-information.md).
+
 | **Property** | **Description** |
 |:---|:--|
 | **Name** | Sets the name of the section. The name must correspond to a C# type name that implements [`IPlatformNode`](xref:UnityEngine.TestTools.Graphics.IPlatformNode). |
