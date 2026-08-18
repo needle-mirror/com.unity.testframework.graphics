@@ -49,7 +49,7 @@ namespace UnityEngine.TestTools.Graphics
             GraphicsTestLogger.Log(LogType.Log, $"ShaderWarningCollector: publishing artifact {fullPath}");
             Debug.Log(UnityTestProtocolMessageBuilder.Serialize(message));
 #else 
-            GraphicsTestLogger.DebugWarning($"ShaderWarningCollector: Artifact publishing requires com.unity.external.test-protocol. Please install the package to enable this feature. Received artifact path: {fullPath}");
+            GraphicsTestLogger.DebugWarning($"ShaderWarningCollector: Artifact publishing requires com.unity.external.test-protocol 2.0.0-exp or newer. Install or upgrade the package to enable this feature. Received artifact path: {fullPath}");
 #endif
 
             return filePath;

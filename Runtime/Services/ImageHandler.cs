@@ -206,7 +206,7 @@ namespace UnityEngine.TestTools.Graphics
             GraphicsTestLogger.Log(LogType.Log, "[ImageHandler] Received Artifact: " + fullpath);
             Debug.Log(UnityTestProtocolMessageBuilder.Serialize(message));
 #else
-            GraphicsTestLogger.DebugWarning($"[ImageHandler] Artifact publishing requires com.unity.external.test-protocol. Please install the package to enable this feature. Received artifact path: {fullpath}");
+            GraphicsTestLogger.DebugWarning($"[ImageHandler] Artifact publishing requires com.unity.external.test-protocol 2.0.0-exp or newer. Install or upgrade the package to enable this feature. Received artifact path: {fullpath}");
 #endif
         }
     }

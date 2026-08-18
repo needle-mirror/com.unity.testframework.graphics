@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [9.0.0-pre.26] - 2026-08-18
+
+### Fixed
+
+- The `UNITY_TEST_PROTOCOL` version define now requires `com.unity.external.test-protocol` 2.0.0-exp or newer. It carried no version expression before, so it was set for any resolved version of the package, including 1.x; the guarded two-argument `ArtifactPublishMessage.Create(path, allowOverwrite)` call does not exist in 1.x, so any project whose package graph resolved test-protocol to 1.x failed to compile the framework with `CS1501`.
+- The warning logged when artifact publishing is unavailable names the required version and asks the user to install *or upgrade*. It previously asked them to install a package that a 1.x user already has.
+
 ## [9.0.0-pre.25] - 2026-08-11
 
 ### Changed
