@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [9.0.0-pre.32] - 2026-09-15
+
+### Fixed
+
+- Reference images whose name is a prefix of another image's name in the same folder are collected again. Matching walks the reference images and the test cases in lockstep, and both orderings now use an ordinal comparison of the image name: sorting the file paths put `Name.png` after `Name_Suffix.png` and dropped `Name` from the bundles, leaving its test with no reference image.
+
+## [9.0.0-pre.31] - 2026-09-12
+
+### Fixed
+
+- The test content bundles of a player build now use the Editor's active build target when that target belongs to the platform under test. A build for `BuildTarget.StandaloneWindows` or `BuildTarget.LinuxHeadlessSimulation` therefore builds its content for that same target, not for the default target of its `RuntimePlatform`. `RuntimePlatform.WindowsPlayer` and `RuntimePlatform.WindowsEditor` now convert to `BuildTarget.StandaloneWindows64`. A Windows player build no longer changes the active build target to 32-bit Windows and back. Each change reimported every VFX, Shader Graph and compute asset in the project, and every shader that uses build-target defines.
+
+## [9.0.0-pre.30] - 2026-09-07
+
+### Added
+
+- Added `ComparisonResultMessage`, a player connection message carrying the expected thresholds and measured values of every image comparison, pass or fail, as JSON objects (`ExpectedJson`/`ActualJson`). Any `TextureComparisonAlgorithm` can report structured values by overriding the new `DescribeExpected`/`DescribeActual` virtual methods, and each algorithm owns its keys (the built-in algorithms override them); algorithms without overrides fall back to their `Description` and the result's `ToString()`. Covers `ImageAssert.AreEqual` and comparisons made through `EqualToTextureConstraint`. Publishing requires the `com.unity.external.test-protocol` otherwise nothing is sent.
+
+## [9.0.0-pre.29] - 2026-09-01
+
+### Added
+
+- Added `GraphicsTestImageBuildSettings`, an asset that contributes reference-image `PlatformSchema`s to the build from anywhere in the project, so a package can ship its own reference images. Every instance is discovered automatically and unioned with the `GraphicsTestBuildSettings` asset's schemata. **Extract to Image Build Settings** and **Import from GraphicsTestBuildSettings** move schemata between the two inspectors.
+- Added `ImageBuildSettingsUtility.DiscoverImageBuildSettings`.
+- Added a **Contributed by Image Build Settings** section to the Graphics Test Build Settings inspector, listing the schemata each discovered asset adds to the build and marking the ones the build drops as duplicates.
+- Added `[NotAnIdentity]`, which marks a member of an identity dimension that names no machine, such as an `Unknown` sentinel. A schema whose identity dimensions all report such a value resolves reference images after the configuration schemata instead of before them. It is separate from `[ElideFromPlatformPath]`: that attribute decides whether a value appears in the path, this one decides whether it says what the machine is.
+- Added `PlatformDimensionKind` and `IPlatformNode.Kind`, which classify a platform dimension as `Configuration` (the default), `Identity` or `Context`. A dimension marked `Identity` names the machine itself, so the schema declaring it resolves reference images before any configuration schema, however many dimensions that schema constrains. `GlobalContext<TEnum>` reports `Context`; every other built-in dimension reports `Configuration`.
+
+### Changed
+
+- Platform schemata resolve in this order: schemata whose identity dimensions name this machine, then schemata that only constrain configuration, then schemata whose identity dimension reported nothing to identify, then schemata that constrain no dimension at all. Schemata of the same kind are ordered by how many dimensions they constrain, most first, then by name, then by root path, then by node sequence. The order is a function of the schemata alone, so it does not depend on where a schema was declared or the order it was discovered in, and no arrangement of schemata fails the build.
+- A global context never affects which schema resolves a reference image first. A test fixture appends its context to every schema that does not already declare one, so counting it would let the fixture decide the order; a schema left with nothing but contexts still matches every run and stays the universal fallback. Declaring a context in a schema therefore only fixes the depth of its folder, and no longer ranks that schema above one constraining the same platform dimensions.
+- Bundle names for two schemata that share a name but resolve to different images now carry a short hash of the root path and nodes. The build logs the mapping.
+- **Platform Schemata** is no longer reorderable in the inspector, and its tooltip and API documentation no longer recommend ordering it by specificity. Dragging an entry suggested it changed which schema resolves first, which it no longer does.
+- `PlatformSchema` no longer implements `IEquatable<PlatformSchema>`; use `ResolvesToSamePathsAs`. The name-based `Equals` treated schemata reading from different roots as equal.
+- Changed the reference image path segment for `GraphicsVendor.Unknown` from `Unknown` to `UnknownVendor`. A sentinel named `Unknown` is ambiguous when another dimension declares its own sentinel at the same folder depth, with no way to tell which one wrote it.
+
+  To migrate, rename each existing `Unknown` folder written by a `GraphicsVendor` node to `UnknownVendor`. Open the schema in **Graphics Test Build Settings** to see which dimension sits at that depth, or look at the folder's siblings — vendor names such as `NVIDIA` or `ATI` mean the folder is a `GraphicsVendor` one. Leaving it named `Unknown` leaves the images in place but unreachable, since no schema will look there.
+ - A build with test cases but no schemata fails with an actionable message instead of producing no content. A run with no test cases remains a no-op.
+## [9.0.0-pre.28] - 2026-08-28
+
+### Added
+
+- Failed comparison images are now collected from players that report their results through the player log instead of over player connection. The actual, expected and diff images are written beside the log the test runner reads back and announced as `ArtifactPublish` messages. Players that use player connection are unaffected. A write that fails is reported as a warning instead of throwing, so it cannot mask the test failure that produced the images.
+
+## [9.0.0-pre.27] - 2026-08-27
+
+### Changed
+
+- Combined player builds no longer restore the build target's previous `PlayerSettings` graphics APIs on cleanup. Writing the API list back reimported every graphics-API-dependent asset, which added around a minute to the end of each combined-API player build. The combined API list stays active for the rest of the editor session.
+
 ## [9.0.0-pre.26] - 2026-08-18
 
 ### Fixed

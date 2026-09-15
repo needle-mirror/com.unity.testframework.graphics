@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -25,7 +24,7 @@ namespace UnityEditor.TestTools.Graphics
             var sortedTestCases = new List<GraphicsTestCase>(testCases);
             sortedTestCases.Sort(
                 (a, b) =>
-                    StringComparer.InvariantCulture.Compare(
+                    string.CompareOrdinal(
                         a.ReferenceImageDescriptor?.Root ?? string.Empty,
                         b.ReferenceImageDescriptor?.Root ?? string.Empty
                     )
@@ -35,28 +34,26 @@ namespace UnityEditor.TestTools.Graphics
             {
                 GraphicsTestLogger.Log(LogType.Log, $"Searching for reference images in {platformPath}...");
 
-                var assetPaths = new List<string>();
+                var assets = new List<(string Name, string Path)>();
                 foreach (var p in AssetService.FindAssets(platformPath, string.Empty))
                 {
                     if (Path.GetDirectoryName(p)?.Replace("\\", "/") == platformPath)
-                        assetPaths.Add(p);
+                        assets.Add((Path.GetFileNameWithoutExtension(p), p));
                 }
-                assetPaths.Sort(StringComparer.InvariantCulture);
+                assets.Sort((a, b) => string.CompareOrdinal(a.Name, b.Name));
 
                 var testCaseIndex = 0;
 
-                for (var i = 0; i < assetPaths.Count; )
+                for (var i = 0; i < assets.Count; )
                 {
-                    var assetPath = assetPaths[i];
-
-                    var imageName = Path.GetFileNameWithoutExtension(assetPath);
+                    var imageName = assets[i].Name;
 
                     // Advance to the test case alphabetically right before the current asset name
                     while (testCaseIndex < sortedTestCases.Count - 1)
                     {
                         var nextRoot =
                             sortedTestCases[testCaseIndex + 1].ReferenceImageDescriptor?.Root ?? string.Empty;
-                        if (string.Compare(nextRoot, imageName, StringComparison.InvariantCulture) <= 0)
+                        if (string.CompareOrdinal(nextRoot, imageName) <= 0)
                             testCaseIndex++;
                         else
                             break;
@@ -76,11 +73,10 @@ namespace UnityEditor.TestTools.Graphics
 
                     // Collect this asset and any subsequent assets that match this test case if it has additional reference images
                     var j = i;
-                    while (j < assetPaths.Count)
+                    while (j < assets.Count)
                     {
-                        var matchingAssetPath = assetPaths[j];
+                        var (matchingImageName, matchingAssetPath) = assets[j];
                         var matchingFileName = Path.GetFileName(matchingAssetPath);
-                        var matchingImageName = Path.GetFileNameWithoutExtension(matchingAssetPath);
 
                         if (
                             !currentReferenceImageDescriptor.TryParse(

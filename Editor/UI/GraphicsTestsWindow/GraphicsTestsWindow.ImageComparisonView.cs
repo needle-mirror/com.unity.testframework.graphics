@@ -244,9 +244,14 @@ namespace UnityEditor.TestTools.Graphics.UI
 
             m_OverlayHeatmapToggle.RegisterValueChangedCallback((_) => m_ShouldUpdateImageComparisonView = true);
 
-            var schemata = GraphicsTestBuildSettings.LoadOrDefault().PlatformSchemata;
-            var schemaList = new List<PlatformSchema>(schemata);
-            schemaList.Sort((a, b) => a.Types.Count.CompareTo(b.Types.Count));
+            // The build's union and ordering, so the tabs match what will resolve.
+            var settings = GraphicsTestBuildSettings.LoadOrDefault();
+            var union = GraphicsTestAutoBuilder.CollectSchemata(
+                settings.PlatformSchemata,
+                ImageBuildSettingsUtility.DiscoverImageBuildSettings()
+            );
+            var schemaList = PlatformSchema.OrderForResolution(union);
+
             foreach (var schema in schemaList)
             {
                 var platform = GraphicsTestPlatform.GetCurrent(schema);
@@ -476,7 +481,7 @@ namespace UnityEditor.TestTools.Graphics.UI
         {
             foreach (var platform in builder.Platforms)
             {
-                if (platform.Schema.rootPath == PlatformSchema.k_DefaultSchemaBase.rootPath)
+                if (platform.Schema.rootPath == PlatformSchema.k_DefaultReferenceImagesBaseRoot)
                     continue;
 
                 // Match the identity key used when tabs are first created (see SetupImageComparisonView).

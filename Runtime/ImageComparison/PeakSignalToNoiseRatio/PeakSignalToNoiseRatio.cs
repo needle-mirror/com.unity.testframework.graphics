@@ -30,8 +30,29 @@ namespace UnityEngine.TestTools.Graphics
         public PeakSignalToNoiseRatio(ITextureComparisonSettings settings)
             : base(settings)
         {
-            m_Settings = settings as PeakSignalToNoiseRatioSettings;
-            Description = $"Peak Signal-to-Noise Ratio above {((PeakSignalToNoiseRatioSettings)settings).Value}";
+            m_Settings = (PeakSignalToNoiseRatioSettings)settings;
+            Description = $"Peak Signal-to-Noise Ratio above {m_Settings.Value}";
+        }
+
+        /// <inheritdoc />
+        public override IReadOnlyDictionary<string, object> DescribeExpected()
+        {
+            return new Dictionary<string, object> { ["minPeakSignalToNoiseRatio"] = m_Settings.Value };
+        }
+
+        /// <inheritdoc />
+        public override IReadOnlyDictionary<string, object> DescribeActual(ITextureComparisonResult result)
+        {
+            if (result is not PeakSignalToNoiseRatioResult psnrResult)
+            {
+                return null;
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["peakSignalToNoiseRatio"] = psnrResult.overallRatio,
+                ["perTexturePeakSignalToNoiseRatio"] = psnrResult.perTextureRatio,
+            };
         }
 
         /// <summary>
@@ -142,8 +163,7 @@ namespace UnityEngine.TestTools.Graphics
         /// <returns>A tuple containing the result and whether it passes the evaluation</returns>
         public override (object, bool) Evaluate(ITextureComparisonResult result)
         {
-            return
-                ((PeakSignalToNoiseRatioResult)result).overallRatio > ((PeakSignalToNoiseRatioSettings)Settings).Value
+            return ((PeakSignalToNoiseRatioResult)result).overallRatio > m_Settings.Value
                 ? (result, true)
                 : (result, false);
         }

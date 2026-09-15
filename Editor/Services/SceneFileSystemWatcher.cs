@@ -33,7 +33,7 @@ namespace UnityEditor.TestTools.Graphics.Services
 
         static void RegisterFileSystemWatcher(string path)
         {
-            var dir = Path.Combine(Path.GetDirectoryName(Application.dataPath), path);
+            var dir = Path.Combine(Path.GetDirectoryName(Application.dataPath), FileUtil.GetPhysicalPath(path));
             var pathNotInWatchers = true;
             foreach (var w in k_Watchers)
             {

@@ -1,4 +1,5 @@
 using System;
+using UnityEngine.TestTools.Graphics.Platforms;
 
 namespace UnityEngine.TestTools.Graphics
 {
@@ -32,6 +33,13 @@ namespace UnityEngine.TestTools.Graphics
 
         /// <inheritdoc/>
         public Type DataType => typeof(TEnum);
+
+        /// <inheritdoc/>
+        /// <remarks>
+        /// A context is something a fixture chose, not something the machine is, so it never
+        /// affects which schema resolves a reference image first.
+        /// </remarks>
+        public virtual PlatformDimensionKind Kind => PlatformDimensionKind.Context;
 
         /// <inheritdoc/>
         public virtual Enum Current => m_Current;

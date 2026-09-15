@@ -40,6 +40,9 @@ namespace UnityEngine.TestTools.Graphics
         internal bool CommandLineArgumentExists(string argName) =>
             FindCommandLineArgument(argName) != null;
 
+        // The arguments as given, for a caller that parses them itself rather than through the helpers here.
+        internal string[] GetRawArguments() => m_CommandLineProvider.GetCommandLineArgs();
+
         /// <summary>
         /// Returns the trimmed value of <paramref name="argName"/>, <see cref="string.Empty"/> when the
         /// flag is present but has no value, or <c>null</c> when the flag is absent. Results are memoized.

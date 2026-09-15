@@ -123,6 +123,24 @@ namespace UnityEditor.TestTools.Graphics.Builder
                 throw new InvalidOperationException("BuildManager must be set.");
             }
 
+            var hasTestCases = false;
+            foreach (var tc in TestCases)
+            {
+                hasTestCases = true;
+                break;
+            }
+            if (!hasTestCases)
+            {
+                GraphicsTestLogger.Log("Graphics test build finished: No test cases found to build.");
+                return GraphicsTestBuildResult.Success;
+            }
+
+            if (Platforms.Count == 0)
+                throw new InvalidOperationException(
+                    "No test platforms to build. Configure PlatformSchemata on the GraphicsTestBuildSettings "
+                        + "asset, or add a GraphicsTestImageBuildSettings asset."
+                );
+
             // Check Cli Settings Consistency
             var consistencyResult = CliSettingsConsistencyValidator.Validate(
                 GraphicsTestPlatform.Current.GetValue<GraphicsDeviceType>(),
@@ -149,18 +167,6 @@ namespace UnityEditor.TestTools.Graphics.Builder
             GraphicsTestLogger.Log(
                 $"Building graphics tests ({BuildManager.TestMode}) for the following platforms  --> {string.Join(string.Empty, platformInfos)}"
             );
-
-            var hasTestCases = false;
-            foreach (var tc in TestCases)
-            {
-                hasTestCases = true;
-                break;
-            }
-            if (!hasTestCases)
-            {
-                GraphicsTestLogger.Log("Graphics test build finished: No test cases found to build.");
-                return GraphicsTestBuildResult.Success;
-            }
 
             Settings.OverwriteSettingsFromCommandLine();
 
@@ -256,7 +262,6 @@ namespace UnityEditor.TestTools.Graphics.Builder
             catch
             {
                 Settings.RestoreEditorBuildSettings();
-                Settings.RestorePlayerGraphicsApis();
                 throw;
             }
         }
@@ -398,13 +403,11 @@ namespace UnityEditor.TestTools.Graphics.Builder
                 settings.PreviousScenesEnabled[i] = scenes[i].enabled;
             }
 
-            var schemaComparer = new PlatformSchema.SchemaEqualityComparer();
-            var schemataSet = new HashSet<PlatformSchema>(schemaComparer);
+            var schemataSet = new HashSet<PlatformSchema>(new PlatformSchemaResolutionComparer());
             foreach (var p in testPlatforms)
                 schemataSet.Add(p.Schema);
-            var schemataList = new List<PlatformSchema>(schemataSet);
-            schemataList.Sort((a, b) => string.Compare(a.name, b.name, StringComparison.Ordinal));
-            settings.BuildPlatformSchemata = schemataList.ToArray();
+
+            settings.BuildPlatformSchemata = PlatformSchema.OrderForResolution(schemataSet).ToArray();
 
             var platformNames = new List<string>();
             foreach (var t in testPlatforms)

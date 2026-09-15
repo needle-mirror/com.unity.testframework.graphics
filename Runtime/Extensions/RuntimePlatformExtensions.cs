@@ -71,7 +71,7 @@ namespace UnityEngine.TestTools.Graphics.Platforms
                 (RuntimePlatform)51 => (BuildTarget)48,
                 RuntimePlatform.tvOS => BuildTarget.tvOS,
                 RuntimePlatform.WebGLPlayer => BuildTarget.WebGL,
-                RuntimePlatform.WindowsEditor or RuntimePlatform.WindowsPlayer => BuildTarget.StandaloneWindows,
+                RuntimePlatform.WindowsEditor or RuntimePlatform.WindowsPlayer => BuildTarget.StandaloneWindows64,
                 RuntimePlatform.WSAPlayerARM or RuntimePlatform.WSAPlayerX64 or RuntimePlatform.WSAPlayerX86 =>
                     BuildTarget.WSAPlayer,
                 RuntimePlatform.XboxOne => BuildTarget.XboxOne,

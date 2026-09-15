@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using UnityEditor.TestTools.Graphics.Platforms;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.TestTools.Graphics;
@@ -58,7 +59,6 @@ namespace UnityEditor.TestTools.Graphics.Builder
             GraphicsTestLogger.Log("Cleaning up Graphics Tests.");
             settings.ShouldCleanUpAfterBuild = false;
             settings.RestoreEditorBuildSettings();
-            settings.RestorePlayerGraphicsApis();
             settings.Save();
             AssetService.Refresh();
 
@@ -100,11 +100,37 @@ namespace UnityEditor.TestTools.Graphics.Builder
             {
                 TestMode.Player => new PlayerGraphicsTestBuildManager(
                     new CompositeContentBuilder(PlayerContentBuilders.All),
-                    platform.ToBuildTarget()
+                    ResolveBuildTarget(platform, EditorUserBuildSettings.activeBuildTarget)
                 ),
                 TestMode.EditMode or TestMode.PlayMode => new EditorGraphicsTestBuildManager(testMode),
                 _ => throw new System.ArgumentException("Unknown Test Mode: " + testMode),
             };
+        }
+
+        /// <summary>
+        /// Picks the BuildTarget to build test content for.
+        /// </summary>
+        /// <param name="platform">The platform the test run targets.</param>
+        /// <param name="activeBuildTarget">The BuildTarget the Editor is currently set to.</param>
+        /// <returns>
+        /// <paramref name="activeBuildTarget"/> when it belongs to <paramref name="platform"/>, so that two
+        /// BuildTargets sharing a RuntimePlatform stay distinct, otherwise the default BuildTarget of
+        /// <paramref name="platform"/>.
+        /// </returns>
+          /// <remarks>
+          /// When both are candidates the active target wins, because RuntimePlatform cannot express the
+          /// distinction the caller asked for: it collapses StandaloneWindows/StandaloneWindows64 and
+          /// StandaloneLinux64/LinuxHeadlessSimulation. A run whose -buildTarget and -testPlatform disagree
+          /// therefore builds content for -buildTarget. UTR derives both from one --platform flag, and the
+          /// Test Runner window passes the active target as the target platform, so neither can produce that
+          /// disagreement.
+          /// </remarks>
+        internal static BuildTarget ResolveBuildTarget(RuntimePlatform platform, BuildTarget activeBuildTarget)
+        {
+            if (activeBuildTarget.ToRuntimePlatformOrNull() == platform)
+                return activeBuildTarget;
+
+            return platform.ToBuildTarget();
         }
     }
 }

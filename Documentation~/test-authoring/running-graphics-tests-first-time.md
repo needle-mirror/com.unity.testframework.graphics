@@ -10,7 +10,7 @@ Follow these steps after you [write a test](./writing-graphics-tests.md):
 
     The test fails, but saves the image it captures to the `Assets/ActualImages` folder in the **Project** window.
 
-    **Note:** By default, Unity organizes the `ActualImages` folder by color space, platform, architecture, graphics API, and XR device. To customize the folder structure, refer to [Graphics Test Build Settings Inspector window reference](../test-investigation/graphics-test-build-settings-inspector.md).
+    **Note:** The **Default** schema decides how the `ActualImages` folder is organized: by color space, platform, architecture, graphics API, and XR device. If a test fixture activates a global context, Unity adds a further subfolder for it after the schema's last node. To customize the folder structure, refer to [Graphics Test Build Settings Inspector window reference](../test-investigation/graphics-test-build-settings-inspector.md) and [Test specific platforms](get-platform-information.md).
 
 3. From the main menu, select **Window** > **General** > **Graphics Tests** to open the Graphics Tests window.
 

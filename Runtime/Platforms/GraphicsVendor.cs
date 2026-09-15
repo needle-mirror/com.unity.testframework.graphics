@@ -21,11 +21,20 @@ namespace UnityEngine.TestTools.Graphics.Platforms
         /// <summary>
         /// AMD graphics vendor
         /// </summary>
+        /// <remarks>
+        /// <see cref="AMD"/> and <see cref="ATI"/> are the same PCI id, so they are the same value.
+        /// Reference image paths and bundle names always spell this value <c>ATI</c>.
+        /// </remarks>
         AMD = 0x1002,
 
         /// <summary>
         /// ATI graphics vendor
         /// </summary>
+        /// <remarks>
+        /// The same PCI id as <see cref="AMD"/>, and therefore the same value. Reference image paths
+        /// and bundle names always spell it <c>ATI</c>, so a folder for an AMD GPU is named
+        /// <c>ATI</c>.
+        /// </remarks>
         ATI = AMD,
 
         /// <summary>

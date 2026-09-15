@@ -5,6 +5,7 @@ using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
+using UnityEditor.TestTools.Graphics;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.TestTools.Graphics;
@@ -41,13 +42,12 @@ namespace UnityEditor.TestTools.Graphics.Builder
             var combinations = new PlatformCombinationCliReader().ReadCombinations();
 
             // A combined player must build exactly the graphics APIs it carries, so drive the player's
-            // API list from the combined set instead of relying on the project's PlayerSettings. The
-            // previous configuration is restored on cleanup.
+            // API list from the combined set instead of relying on the project's PlayerSettings.
             if (testData.TestMode.HasFlag(TestMode.Player))
-                ApplyCombinedGraphicsApis(settings, combinations);
+                ApplyCombinedGraphicsApis(combinations);
 
             var platforms = GraphicsTestPlatformResolver.ResolvePlatforms(
-                settings.PlatformSchemata, currentPlatform, fixtureArgSets, combinations);
+                ResolveSchemata(settings), currentPlatform, fixtureArgSets, combinations);
 
             var builder = new GraphicsTestBuilder
             {
@@ -63,7 +63,80 @@ namespace UnityEditor.TestTools.Graphics.Builder
             builder.Build();
         }
 
-        static void ApplyCombinedGraphicsApis(GraphicsTestBuildSettings settings, PlatformCombinations combinations)
+        /// <summary>
+        /// The schemata to build, ordered so the ones identifying this machine resolve first.
+        /// </summary>
+        internal static IReadOnlyList<PlatformSchema> ResolveSchemata(GraphicsTestBuildSettings settings)
+        {
+            var union = CollectSchemata(
+                settings.PlatformSchemata,
+                ImageBuildSettingsUtility.DiscoverImageBuildSettings()
+            );
+            return PlatformSchema.OrderForResolution(union);
+        }
+
+        /// <summary>
+        /// The union of both sources, collapsing schemata that resolve identically. Same-named
+        /// schemata resolving differently are both kept; the bundle builder disambiguates their names.
+        /// </summary>
+        /// <remarks>
+        /// The project's own schemata are collected before those contributed by discovered assets,
+        /// which decides only which of two duplicates survives — the project's, so the surviving
+        /// name is one the project chose. It does not decide resolution order:
+        /// <see cref="PlatformSchema.OrderForResolution"/> derives that from the schemata alone, so
+        /// a package's schema is ranked by the same rule as the project's.
+        /// </remarks>
+        internal static List<PlatformSchema> CollectSchemata(
+            IReadOnlyList<PlatformSchema> settingsSchemata,
+            IEnumerable<GraphicsTestImageBuildSettings> imageBuildSettings
+        )
+        {
+            var claimedLocations = new HashSet<PlatformSchema>(new PlatformSchemaResolutionComparer());
+            var union = new List<PlatformSchema>();
+
+            foreach (var schema in settingsSchemata ?? Array.Empty<PlatformSchema>())
+                AddUnlessDuplicate(schema, claimedLocations, union);
+
+            foreach (var ibs in imageBuildSettings ?? Array.Empty<GraphicsTestImageBuildSettings>())
+            {
+                foreach (var schema in ibs?.PlatformSchemata ?? Array.Empty<PlatformSchema>())
+                    AddUnlessDuplicate(schema, claimedLocations, union);
+            }
+
+            if (union.Count == 0)
+            {
+                GraphicsTestLogger.Log(
+                    LogType.Warning,
+                    "No PlatformSchemata configured on GraphicsTestBuildSettings or any Image Build Settings; "
+                        + "using the defaults."
+                );
+                union.Add(PlatformSchema.k_DefaultSchema.Clone());
+                union.Add(PlatformSchema.k_DefaultSchemaBase.Clone());
+            }
+
+            return union;
+        }
+
+        /// <summary>
+        /// Adds <paramref name="schema"/> to <paramref name="union"/> unless a schema already there
+        /// reads the same root path and nodes.
+        /// </summary>
+        /// <param name="claimedLocations">
+        /// The locations already read by <paramref name="union"/>. Compared with
+        /// <see cref="PlatformSchemaResolutionComparer"/>, so two schemata count as the same location
+        /// whatever they are named: they would resolve the same images and build identical bundles.
+        /// </param>
+        static void AddUnlessDuplicate(
+            PlatformSchema schema,
+            HashSet<PlatformSchema> claimedLocations,
+            List<PlatformSchema> union
+        )
+        {
+            if (schema != null && claimedLocations.Add(schema))
+                union.Add(schema);
+        }
+
+        static void ApplyCombinedGraphicsApis(PlatformCombinations combinations)
         {
             var combined = combinations.ValuesFor(typeof(UnityEngine.Rendering.GraphicsDeviceType));
             if (combined.Count == 0)
@@ -73,7 +146,6 @@ namespace UnityEditor.TestTools.Graphics.Builder
             for (var i = 0; i < combined.Count; i++)
                 apis[i] = (UnityEngine.Rendering.GraphicsDeviceType)combined[i];
 
-            settings.SavePlayerGraphicsApis();
             var target = EditorUserBuildSettings.activeBuildTarget;
             PlayerSettings.SetUseDefaultGraphicsAPIs(target, false);
             PlayerSettings.SetGraphicsAPIs(target, apis);

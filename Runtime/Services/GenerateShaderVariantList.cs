@@ -25,7 +25,7 @@ namespace UnityEngine.TestTools.Graphics
         /// The string used to identify compiled shaders in the log.
         /// </summary>
         public static readonly Regex s_CompiledShaderRegex = new Regex(
-            @$"({k_CompiledShaderString}|Compiled shader): (?<shaderName>[^,]*), pass: (?<passName>[^,]*), stage: (?<stage>[^,]*), keywords (?<keywords>.*)",
+            @$"({k_CompiledShaderString}|Compiled shader): (?<shaderName>[^,]*), pass: (?<passName>[^,]*), stages?: (?<stage>[^,]*), keywords (?<keywords>.*)",
             RegexOptions.None,
             k_Timeout
         );
@@ -43,7 +43,7 @@ namespace UnityEngine.TestTools.Graphics
         /// The string used to identify compiled shader snippets in a UnityShaderCompiler log.
         /// </summary>
         public static readonly Regex s_CompiledSnippetRegex = new Regex(
-            @$"name: (?<shaderName>[^,]*) pass: (?<passName>[^,]*) stage: (?<stage>[^,]*) keywords: (?<keywords>.*)",
+            @$"name: (?<shaderName>[^,]*) pass: (?<passName>[^,]*) stages?: (?<stage>[^,]*) keywords: (?<keywords>.*)",
             RegexOptions.None,
             k_Timeout
         );

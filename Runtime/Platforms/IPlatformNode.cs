@@ -1,4 +1,5 @@
 using System;
+using UnityEngine.TestTools.Graphics.Platforms;
 
 namespace UnityEngine.TestTools.Graphics
 {
@@ -19,6 +20,14 @@ namespace UnityEngine.TestTools.Graphics
         /// The data type that this node will use. This must be an Enum type.
         /// </summary>
         Type DataType { get; }
+
+        /// <summary>
+        /// What this dimension says about a run. Defaults to
+        /// <see cref="PlatformDimensionKind.Configuration"/>; override to
+        /// <see cref="PlatformDimensionKind.Identity"/> for a dimension that identifies the machine
+        /// itself, which lets its schema resolve reference images ahead of configuration schemata.
+        /// </summary>
+        PlatformDimensionKind Kind => PlatformDimensionKind.Configuration;
 
         /// <summary>
         /// Retrieves the current platform state at any given time.

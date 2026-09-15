@@ -56,10 +56,17 @@ namespace UnityEditor.TestTools.Graphics.Builder
                 GroupImagesByResolvedPath(platform, newImages, groups, groupsByDirectory);
             }
 
+            var groupSchemata = new List<PlatformSchema>(groups.Count);
+            foreach (var group in groups)
+                groupSchemata.Add(group.Platform?.Schema);
+            var disambiguators = ComputeBundleDisambiguators(groupSchemata);
+            LogDisambiguators(disambiguators);
+
             var assetBundlesToBuild = new List<AssetBundleBuild>();
             foreach (var group in groups)
             {
-                foreach (var bundle in GetAssetBundlesForPlatform(group.Images, group.Platform))
+                disambiguators.TryGetValue(group.Platform.Schema, out var disambiguator);
+                foreach (var bundle in GetAssetBundlesForPlatform(group.Images, group.Platform, disambiguator))
                 {
                     assetBundlesToBuild.Add(bundle);
                     m_BuiltBundles.Add((bundle.assetBundleName, group.Platform));
@@ -146,7 +153,8 @@ namespace UnityEditor.TestTools.Graphics.Builder
 
         internal IEnumerable<AssetBundleBuild> GetAssetBundlesForPlatform(
             Dictionary<string, string> images,
-            GraphicsTestPlatform platform
+            GraphicsTestPlatform platform,
+            string disambiguator = ""
         )
         {
             var assetBundles = new List<AssetBundleBuild>();
@@ -180,14 +188,103 @@ namespace UnityEditor.TestTools.Graphics.Builder
                         chunkValues[j] = images[sortedKeys[startIndex + j]];
                     }
 
-                    var name = (
-                        platform.Schema.name.ToLower().Replace(' ', '-') + "-" + platform.Name + "-" + chunkNumber++
-                    ).Replace("--", "-");
+                    var name = BuildBundleName(platform.Schema.name, platform.Name, disambiguator, chunkNumber++);
                     assetBundles.Add(CreateAssetBundleBuild(chunkKeys, chunkValues, name));
                 }
             }
 
             return assetBundles;
+        }
+
+        /// <summary>
+        /// Composes {schemaName}-{platformName}[-{disambiguator}]-{chunk}. The chunk stays last:
+        /// <see cref="TestContentBundle.Priority"/> parses it off the end.
+        /// </summary>
+        internal static string BuildBundleName(string schemaName, string platformName, string disambiguator, int chunk)
+        {
+            var namePart = (schemaName ?? string.Empty).ToLower().Replace(' ', '-');
+            var disambiguatorPart = string.IsNullOrEmpty(disambiguator) ? string.Empty : disambiguator + "-";
+            return (namePart + "-" + platformName + "-" + disambiguatorPart + chunk).Replace("--", "-");
+        }
+
+        /// <summary>
+        /// Maps each schema to a bundle-name suffix, empty unless its name is shared by a schema that
+        /// resolves elsewhere. Bundle names derive from the schema name alone, so those would collide.
+        /// </summary>
+        internal static Dictionary<PlatformSchema, string> ComputeBundleDisambiguators(
+            IEnumerable<PlatformSchema> schemata
+        )
+        {
+            var result = new Dictionary<PlatformSchema, string>();
+            var byName = new Dictionary<string, List<PlatformSchema>>();
+            foreach (var schema in schemata)
+            {
+                if (schema == null)
+                    continue;
+                var key = (schema.name ?? string.Empty).ToLower();
+                if (!byName.TryGetValue(key, out var group))
+                {
+                    group = new List<PlatformSchema>();
+                    byName[key] = group;
+                }
+                group.Add(schema);
+            }
+
+            foreach (var group in byName.Values)
+            {
+                var distinctResolutions = new HashSet<string>();
+                foreach (var schema in group)
+                    distinctResolutions.Add(StableResolutionHash(schema));
+
+                var collides = distinctResolutions.Count > 1;
+                foreach (var schema in group)
+                    result[schema] = collides ? StableResolutionHash(schema) : string.Empty;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Hashes root path and nodes. FNV-1a, not <see cref="string.GetHashCode"/>, which is
+        /// randomized per process and would rename bundles on every build.
+        /// </summary>
+        internal static string StableResolutionHash(PlatformSchema schema)
+        {
+            var nodes = schema.nodes == null ? string.Empty : string.Join(",", schema.nodes);
+            var identity = (schema.rootPath ?? string.Empty) + "\n" + nodes;
+
+            const uint offsetBasis = 2166136261;
+            const uint prime = 16777619;
+            var hash = offsetBasis;
+            foreach (var c in identity)
+            {
+                hash ^= c;
+                hash *= prime;
+            }
+
+            return hash.ToString("x8").Substring(0, 6);
+        }
+
+        static void LogDisambiguators(Dictionary<PlatformSchema, string> disambiguators)
+        {
+            var lines = new List<string>();
+            foreach (var pair in disambiguators)
+            {
+                if (!string.IsNullOrEmpty(pair.Value))
+                    lines.Add($"  {pair.Value} -> {pair.Key.rootPath}");
+            }
+
+            if (lines.Count == 0)
+                return;
+
+            lines.Sort(StringComparer.Ordinal);
+            GraphicsTestLogger.Log(
+                LogType.Warning,
+                "Reference-image bundle names for same-named schemata were disambiguated by resolution hash:\n"
+                    + string.Join("\n", lines)
+                    + "\nRename the conflicting schema in its Image Build Settings or Graphics Test Build "
+                    + "Settings asset so each schema name is unique."
+            );
         }
 
         static AssetBundleBuild CreateAssetBundleBuild(string[] addressableNames, string[] assetNames, string name)

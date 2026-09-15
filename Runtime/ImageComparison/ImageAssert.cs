@@ -756,6 +756,13 @@ namespace UnityEngine.TestTools.Graphics
             var compareResult = (LegacyColorDifferenceAggregate)algorithm.Compare(expected, actual);
             result = compareResult.ImageComparisonResults;
 
+            ComparisonResultReporterProvider.Instance.Report(
+                algorithm,
+                compareResult,
+                result.Success,
+                settings.ActualImageFileName
+            );
+
             ComparisonImageExporterProvider.Instance.WriteImages(
                 actual,
                 expected,

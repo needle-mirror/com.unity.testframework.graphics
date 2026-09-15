@@ -53,6 +53,7 @@ namespace UnityEngine.TestTools.Graphics
 
             var result = m_ComparisonAlgorithm.Compare(m_Expected, actualTexture);
             var (evaluation, passed) = m_ComparisonAlgorithm.Evaluate(result);
+            ComparisonResultReporterProvider.Instance.Report(m_ComparisonAlgorithm, result, passed);
             Description = m_ComparisonAlgorithm.Description;
 
             return new ConstraintResult(this, evaluation, passed);

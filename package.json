@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Test Framework",
-  "version": "9.0.0-pre.26",
+  "version": "9.0.0-pre.32",
   "unity": "6000.0",
   "unityRelease": "59f1",
   "description": "Unity's automated visual validation system for graphics rendering. Enables developers to catch visual regressions, validate rendering consistency across platforms and graphics APIs, and test custom Scriptable Render Pipelines through automated image comparison testing.",
@@ -57,14 +57,14 @@
     "com.unity.burst": "1.8.27"
   },
   "_upm": {
-    "changelog": "### Fixed\n\n- The `UNITY_TEST_PROTOCOL` version define now requires `com.unity.external.test-protocol` 2.0.0-exp or newer. It carried no version expression before, so it was set for any resolved version of the package, including 1.x; the guarded two-argument `ArtifactPublishMessage.Create(path, allowOverwrite)` call does not exist in 1.x, so any project whose package graph resolved test-protocol to 1.x failed to compile the framework with `CS1501`.\n- The warning logged when artifact publishing is unavailable names the required version and asks the user to install *or upgrade*. It previously asked them to install a package that a 1.x user already has."
+    "changelog": "### Fixed\n\n- Reference images whose name is a prefix of another image's name in the same folder are collected again. Matching walks the reference images and the test cases in lockstep, and both orderings now use an ordinal comparison of the image name: sorting the file paths put `Name.png` after `Name_Suffix.png` and dropped `Name` from the bundles, leaving its test with no reference image."
   },
   "upmCi": {
-    "footprint": "26c41d3bd0e10b450d67ca55c65eecd941a09f1f"
+    "footprint": "5f41695baf6fd5f0bcfeee60787337fe643f6d35"
   },
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "2324a52b6ad2aaba5c2e17dda92dc904d93b9de7"
+    "revision": "5d82d70bc3b1883e1379c3a3b671d0c328d4e2b7"
   }
 }

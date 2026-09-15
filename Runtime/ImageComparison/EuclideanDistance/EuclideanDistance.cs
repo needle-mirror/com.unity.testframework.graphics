@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace UnityEngine.TestTools.Graphics
@@ -17,6 +18,8 @@ namespace UnityEngine.TestTools.Graphics
         static ComputeBuffer s_CachedBuffer;
         static int s_CachedBufferSize;
 
+        readonly EuclideanDistanceSettings m_Settings;
+
         /// <summary>
         /// Initializes a new instance of the Euclidean distance algorithm with the given settings.
         /// The Euclidean distance is calculated as the square root of the sum of
@@ -29,7 +32,8 @@ namespace UnityEngine.TestTools.Graphics
         public EuclideanDistance(ITextureComparisonSettings settings)
             : base(settings)
         {
-            Description = $"Euclidean distance below {((EuclideanDistanceSettings)settings).MaximumDistance}";
+            m_Settings = (EuclideanDistanceSettings)settings;
+            Description = $"Euclidean distance below {m_Settings.MaximumDistance}";
         }
 
         internal EuclideanDistance() { }
@@ -58,6 +62,28 @@ namespace UnityEngine.TestTools.Graphics
             s_CachedBuffer = new ComputeBuffer(pixelCount, sizeof(float));
             s_CachedBufferSize = pixelCount;
             return s_CachedBuffer;
+        }
+
+
+        /// <inheritdoc />
+        public override IReadOnlyDictionary<string, object> DescribeExpected()
+        {
+            return new Dictionary<string, object> { ["maxAverageDistance"] = m_Settings.MaximumDistance };
+        }
+
+        /// <inheritdoc />
+        public override IReadOnlyDictionary<string, object> DescribeActual(ITextureComparisonResult result)
+        {
+            if (result is not EuclideanDistanceResult euclideanResult)
+            {
+                return null;
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["averageDistance"] = euclideanResult.Average,
+                ["maxDistance"] = euclideanResult.Max,
+            };
         }
 
         /// <summary>
@@ -204,8 +230,7 @@ namespace UnityEngine.TestTools.Graphics
         public override (object, bool) Evaluate(ITextureComparisonResult result)
         {
             var euclideanResult = (EuclideanDistanceResult)result;
-            var settings = (EuclideanDistanceSettings)Settings;
-            return euclideanResult.Average <= settings.MaximumDistance ? (result, true) : (result, false);
+            return euclideanResult.Average <= m_Settings.MaximumDistance ? (result, true) : (result, false);
         }
 
         static float[] CreateFilledArray(float value, int length)

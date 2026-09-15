@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Unity.Collections;
 using Unity.Jobs;
@@ -22,6 +23,38 @@ namespace UnityEngine.TestTools.Graphics.LegacyColorDifference
             var settingsOrDefault = settings ?? new ImageComparisonSettings();
             m_EvaluationGuide = new PixelEvaluationGuide(settingsOrDefault);
             Description = m_EvaluationGuide.ToString();
+        }
+
+        /// <inheritdoc />
+        public override IReadOnlyDictionary<string, object> DescribeExpected()
+        {
+            return new Dictionary<string, object>
+            {
+                ["maxAverageDeltaE"] = m_EvaluationGuide.AverageCorrectnessThreshold,
+                ["maxBadPixelsRatio"] = m_EvaluationGuide.IncorrectPixelsThreshold,
+                ["deltaEThresholdPerPixel"] = m_EvaluationGuide.DeltaEThreshold,
+                ["gammaThresholdPerPixel"] = m_EvaluationGuide.GammaThreshold,
+                ["alphaThresholdPerPixel"] = m_EvaluationGuide.AlphaThreshold,
+                ["enabledTests"] = m_EvaluationGuide.EnabledModes.ToString(),
+            };
+        }
+
+        /// <inheritdoc />
+        public override IReadOnlyDictionary<string, object> DescribeActual(ITextureComparisonResult result)
+        {
+            if (result is not LegacyColorDifferenceAggregate aggregate)
+            {
+                return null;
+            }
+
+            var results = aggregate.ImageComparisonResults;
+            return new Dictionary<string, object>
+            {
+                ["averageDeltaE"] = results.AverageDeltaE,
+                ["badPixelsRatio"] = results.BadPixelsCount,
+                ["averageDeltaEWithinThreshold"] = results.AverageDeltaEWithinThreshold,
+                ["badPixelsRatioWithinThreshold"] = results.BadPixelsCountWithinThreshold,
+            };
         }
 
         /// <summary>

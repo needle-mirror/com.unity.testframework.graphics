@@ -61,9 +61,13 @@ namespace UnityEditor.TestTools.Graphics.Builder
             return platforms;
         }
 
+        /// <summary>
+        /// The schema is part of the identity here: <see cref="GraphicsTestPlatform.Equals"/> compares
+        /// dimension values only, which would collapse two schemata reading from different roots.
+        /// </summary>
         static void AddIfMissing(List<GraphicsTestPlatform> platforms, GraphicsTestPlatform platform)
         {
-            if (!platforms.Contains(platform))
+            if (!platforms.Exists(p => p.Equals(platform) && p.Schema.ResolvesToSamePathsAs(platform.Schema)))
                 platforms.Add(platform);
         }
 

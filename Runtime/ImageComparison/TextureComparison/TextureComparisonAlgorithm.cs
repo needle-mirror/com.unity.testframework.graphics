@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace UnityEngine.TestTools.Graphics
@@ -16,6 +17,24 @@ namespace UnityEngine.TestTools.Graphics
         /// Gets or sets the description of the algorithm, used when displaying assertion results.
         /// </summary>
         public string Description { get; protected init; }
+
+        /// <summary>
+        /// Describes the thresholds this algorithm compares against, as named values for structured
+        /// result reporting. The algorithm owns the keys. Returns null when the algorithm does not
+        /// provide structured values; reporting then falls back to <see cref="Description"/>.
+        /// </summary>
+        /// <returns>The configured thresholds as named values, or null.</returns>
+        public virtual IReadOnlyDictionary<string, object> DescribeExpected() => null;
+
+        /// <summary>
+        /// Describes the measured values of a comparison result produced by this algorithm, as named
+        /// values for structured result reporting. The algorithm owns the keys. Returns null when the
+        /// algorithm does not provide structured values (or the result is not one of its own);
+        /// reporting then falls back to the result's ToString().
+        /// </summary>
+        /// <param name="result">The result of a comparison run by this algorithm.</param>
+        /// <returns>The measured values as named values, or null.</returns>
+        public virtual IReadOnlyDictionary<string, object> DescribeActual(ITextureComparisonResult result) => null;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TextureComparisonAlgorithm"/> class with the specified threshold.

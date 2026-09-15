@@ -34,6 +34,27 @@ namespace UnityEngine.TestTools.Graphics
             Description = $"Structural Similarity Index Measure equal or above {m_Settings.MinimumIndexMeasure}";
         }
 
+        /// <inheritdoc />
+        public override IReadOnlyDictionary<string, object> DescribeExpected()
+        {
+            return new Dictionary<string, object> { ["minIndexMeasure"] = m_Settings.MinimumIndexMeasure };
+        }
+
+        /// <inheritdoc />
+        public override IReadOnlyDictionary<string, object> DescribeActual(ITextureComparisonResult result)
+        {
+            if (result is not StructuralSimilarityResult ssimResult)
+            {
+                return null;
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["averageIndexMeasure"] = ssimResult.AverageIndexMeasure,
+                ["perTextureIndexMeasure"] = ssimResult.PerTextureIndexMeasure,
+            };
+        }
+
         /// <summary>
         /// Compares two Texture2D and returns a Structural Similarity Index Measure.
         /// </summary>

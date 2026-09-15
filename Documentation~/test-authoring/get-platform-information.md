@@ -66,6 +66,47 @@ To get information about the platform of the running Unity Editor or built appli
 
 To add a custom platform feature, for example a new type of graphics API or GPU manufacturer, implement the [`IPlatformNode`](xref:UnityEngine.TestTools.Graphics.IPlatformNode) interface. For an example, refer to [Sample projects](../sample-projects.md).
 
+### Identify the machine rather than describe it
+
+A node's [`Kind`](xref:UnityEngine.TestTools.Graphics.IPlatformNode.Kind) says what its dimension tells Unity about a run:
+
+| Kind | Meaning | Example |
+| :--- | :--- | :--- |
+| `Configuration` | How the run was set up. The default. | Color space, graphics API |
+| `Identity` | What the machine is. | Device model |
+| `Context` | What a test fixture chose. Set for you on `GlobalContext<TEnum>`. | Renderer feature toggled per fixture |
+
+Return `Identity` when a value names the machine itself. An image stored in that dimension's subfolder was captured on that machine, so Unity searches the schema declaring the dimension before any schema that only constrains configuration, however many dimensions those constrain.
+
+Use it sparingly. A dimension isn't an identity just because a machine only ever reports one value for it. A console supports a single graphics API, but that says how the run is set up, not what the machine is, so the API stays `Configuration`.
+
+Mark the sentinel value of an identity dimension with [`[NotAnIdentity]`](xref:UnityEngine.TestTools.Graphics.Platforms.NotAnIdentityAttribute). A run reporting it names no machine, so Unity searches that schema after the configuration schemata instead of before them.
+
+## Vary a test by a global context
+
+A global context is a platform dimension a test fixture chooses, rather than one Unity detects from the machine. It derives from `GlobalContext<TEnum>`, and the fixture activates a value for the duration of its tests, for example `GpuResidentDrawerContext.GRDDisabled`. Unlike `RuntimePlatform` or `GraphicsDeviceType`, nothing about the hardware determines it.
+
+A context contributes a subfolder like any other platform value. Unity appends it after the last node the schema declares, so the schema decides how deep the context folder sits.
+
+### Use two schemata to place the context at different depths
+
+Two schemata over the same root path give you two places to store context-specific images. Add a second schema that repeats the first schema's nodes but stops before the dimension you want to ignore:
+
+| Schema | Nodes | Resulting path for `GRDDisabled` |
+| :--- | :--- | :--- |
+| **Default** | ColorSpace, RuntimePlatform, GraphicsDeviceType, XrDevice | `Linear/WindowsEditor/Direct3D12/None/GRDDisabled` |
+| **Xr Agnostic** | ColorSpace, RuntimePlatform, GraphicsDeviceType | `Linear/WindowsEditor/Direct3D12/GRDDisabled` |
+
+Neither schema declares the context. The paths differ only because **Xr Agnostic** stops one node earlier, so the appended context folder attaches directly to the shared prefix.
+
+Use **Default** for an image specific to one XR device and one context. Use **Xr Agnostic** for an image that varies by context but is the same whether or not XR is active.
+
+Neither schema names the machine, so Unity searches the one with more nodes first: **Default**. If **Default** finds no image for a test, **Xr Agnostic** supplies one. Where you list them makes no difference.
+
+**Important**: The first schema to resolve any image for a test case claims it, including an image it finds by falling back to a shallower folder. If the test also has an ordinary image in `Linear/WindowsEditor/Direct3D12/None`, **Default** resolves that image and **Xr Agnostic** never supplies its context-specific image, so the test compares against the ordinary image instead. This pattern therefore suits tests whose reference images are only context-specific. If Unity doesn't use a context-specific image, check whether an image for the same test exists higher up the earlier schema's folder chain.
+
+To place a context at a fixed position instead of appending it, declare it in a schema's nodes like any other dimension.
+
 ## Build for multiple platform characteristics from the command line
 
 By default, Unity builds reference-image content for the platform of the machine that runs the build. To make a single build carry content for several values of a platform characteristic — for example, so one player build serves test machines with different GPU vendors — pass a `-combine<Node>s` command-line argument to the Unity Editor that performs the build:

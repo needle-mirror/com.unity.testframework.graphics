@@ -105,22 +105,6 @@ namespace UnityEngine.TestTools.Graphics
         [HideInInspector]
         bool[] m_PreviousScenesEnabled = Array.Empty<bool>();
 
-        [SerializeField]
-        [HideInInspector]
-        bool m_HasPreviousGraphicsApis;
-
-        [SerializeField]
-        [HideInInspector]
-        bool m_PreviousUseDefaultGraphicsApis;
-
-        [SerializeField]
-        [HideInInspector]
-        int[] m_PreviousGraphicsApis = Array.Empty<int>();
-
-        [SerializeField]
-        [HideInInspector]
-        int m_PreviousGraphicsApisBuildTarget;
-
         [FormerlySerializedAs("m_EnableFileSystemWatcher")]
         [SerializeField]
         [Tooltip(
@@ -153,7 +137,13 @@ namespace UnityEngine.TestTools.Graphics
         int m_MaxConcurrentImageOptimizations = k_DefaultMaxConcurrentOptimizations;
 
         [SerializeField]
-        PlatformSchema[] m_PlatformSchemata = { PlatformSchema.k_DefaultSchema, PlatformSchema.k_DefaultSchemaBase };
+        [Tooltip(
+            "Folder hierarchies used to locate reference images. The order listed here has no effect: "
+                + "Unity searches schemata that name the machine first, then by how many dimensions "
+                + "each one constrains."
+        )]
+        PlatformSchema[] m_PlatformSchemata =
+            { PlatformSchema.k_DefaultSchema.Clone(), PlatformSchema.k_DefaultSchemaBase.Clone() };
 
         [SerializeField]
         PlatformSchema[] m_BuildPlatformSchemata = { };
@@ -343,9 +333,11 @@ namespace UnityEngine.TestTools.Graphics
         /// The platform schemata to use in this project.
         /// </summary>
         /// <remarks>
-        /// The schemata are resolved in sequence, meaning that test cases that have their test assets
-        /// found using one schema will be skipped by latter schemata. It is recommended to order the
-        /// schemata in order of specificity or priority.
+        /// The first schema to resolve a reference image for a test case claims it, so the rest are
+        /// only consulted for test cases it did not answer. The order they are searched in comes from
+        /// <see cref="PlatformSchema.OrderForResolution"/>, which derives it from what each schema
+        /// constrains; the order of this array has no effect. Schemata contributed by
+        /// <see cref="GraphicsTestImageBuildSettings"/> assets are searched by the same rule.
         /// </remarks>
         public PlatformSchema[] PlatformSchemata
         {
@@ -599,53 +591,6 @@ namespace UnityEngine.TestTools.Graphics
 
             // Restore the previous scenes
             EditorBuildSettings.scenes = scenes;
-            Save();
-#endif
-        }
-
-        /// <summary>
-        /// Snapshot the active build target's PlayerSettings graphics APIs. The first snapshot wins
-        /// until <see cref="RestorePlayerGraphicsApis"/> consumes it.
-        /// </summary>
-        internal void SavePlayerGraphicsApis()
-        {
-#if UNITY_EDITOR
-            if (m_HasPreviousGraphicsApis)
-                return;
-
-            var target = EditorUserBuildSettings.activeBuildTarget;
-            var apis = PlayerSettings.GetGraphicsAPIs(target);
-            m_PreviousGraphicsApis = new int[apis.Length];
-            for (var i = 0; i < apis.Length; i++)
-                m_PreviousGraphicsApis[i] = (int)apis[i];
-            m_PreviousUseDefaultGraphicsApis = PlayerSettings.GetUseDefaultGraphicsAPIs(target);
-            m_PreviousGraphicsApisBuildTarget = (int)target;
-            m_HasPreviousGraphicsApis = true;
-            Save();
-#endif
-        }
-
-        /// <summary>
-        /// Restore the PlayerSettings graphics APIs captured by <see cref="SavePlayerGraphicsApis"/>.
-        /// Does nothing without a snapshot.
-        /// </summary>
-        internal void RestorePlayerGraphicsApis()
-        {
-#if UNITY_EDITOR
-            if (!m_HasPreviousGraphicsApis)
-                return;
-
-            var target = (BuildTarget)m_PreviousGraphicsApisBuildTarget;
-            if (m_PreviousGraphicsApis != null && m_PreviousGraphicsApis.Length > 0)
-            {
-                var apis = new Rendering.GraphicsDeviceType[m_PreviousGraphicsApis.Length];
-                for (var i = 0; i < m_PreviousGraphicsApis.Length; i++)
-                    apis[i] = (Rendering.GraphicsDeviceType)m_PreviousGraphicsApis[i];
-                PlayerSettings.SetGraphicsAPIs(target, apis);
-            }
-            PlayerSettings.SetUseDefaultGraphicsAPIs(target, m_PreviousUseDefaultGraphicsApis);
-            m_HasPreviousGraphicsApis = false;
-            m_PreviousGraphicsApis = Array.Empty<int>();
             Save();
 #endif
         }

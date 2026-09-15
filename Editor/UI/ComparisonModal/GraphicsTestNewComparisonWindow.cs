@@ -63,11 +63,18 @@ namespace UnityEditor.TestTools.Graphics.UI
             var settings = GraphicsTestBuildSettings.LoadOrDefault();
             m_PlatformTrees = new Dictionary<string, PlatformSchema>();
 
+            // First writer wins, so authored schemata take precedence over the last build's record.
+            foreach (var tree in settings.PlatformSchemata)
+                m_PlatformTrees.TryAdd(tree.name, tree);
+
             foreach (var tree in settings.BuildPlatformSchemata)
                 m_PlatformTrees.TryAdd(tree.name, tree);
 
-            foreach (var tree in settings.PlatformSchemata)
-                m_PlatformTrees.TryAdd(tree.name, tree);
+            foreach (var imageBuildSettings in ImageBuildSettingsUtility.DiscoverImageBuildSettings())
+            {
+                foreach (var tree in imageBuildSettings?.PlatformSchemata ?? Array.Empty<PlatformSchema>())
+                    m_PlatformTrees.TryAdd(tree.name, tree);
+            }
 
             m_XmlModeContainer = m_Root.Q<VisualElement>("XmlModeContainer");
             m_PlatformModeContainer = m_Root.Q<VisualElement>("PlatformModeContainer");

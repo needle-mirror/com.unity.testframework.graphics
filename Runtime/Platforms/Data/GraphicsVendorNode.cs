@@ -48,9 +48,16 @@ namespace UnityEngine.TestTools.Graphics.Platforms
         /// <summary>
         /// AMD and ATI share PCI id 0x1002, so <c>ToString()</c> picks either name depending on the
         /// scripting runtime. Reference-image folders on disk use "ATI"; pin that segment so paths and
-        /// bundle names stay deterministic. Non-aliased vendors keep their single name.
+        /// bundle names stay deterministic. The sentinel is qualified so that a folder written by this
+        /// dimension is distinguishable from one written by any other dimension whose sentinel is also
+        /// called "Unknown" and which a schema may nest at the same depth. Other vendors keep their name.
         /// </summary>
         public string GetPathSegment(Enum value) =>
-            (GraphicsVendor)value == GraphicsVendor.ATI ? nameof(GraphicsVendor.ATI) : value.ToString();
+            (GraphicsVendor)value switch
+            {
+                GraphicsVendor.ATI => nameof(GraphicsVendor.ATI),
+                GraphicsVendor.Unknown => "UnknownVendor",
+                _ => value.ToString(),
+            };
     }
 }

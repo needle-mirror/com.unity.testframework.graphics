@@ -14,6 +14,17 @@ namespace UnityEditor.TestTools.Graphics.Platforms
         /// <exception cref="ArgumentOutOfRangeException">Thrown when the BuildTarget is unknown.</exception>
         public static RuntimePlatform ToRuntimePlatform(this BuildTarget target)
         {
+            return target.ToRuntimePlatformOrNull()
+                ?? throw new ArgumentOutOfRangeException(nameof(target), target, "Unknown BuildTarget");
+        }
+
+        /// <summary>
+        /// Converts the BuildTarget to a RuntimePlatform, without throwing on an unknown BuildTarget.
+        /// </summary>
+        /// <param name="target">The BuildTarget to convert.</param>
+        /// <returns>The RuntimePlatform equivalent of the BuildTarget, or null when the BuildTarget is unknown.</returns>
+        internal static RuntimePlatform? ToRuntimePlatformOrNull(this BuildTarget target)
+        {
             return target switch
             {
                 BuildTarget.Android => RuntimePlatform.Android,
@@ -35,7 +46,7 @@ namespace UnityEditor.TestTools.Graphics.Platforms
                 BuildTarget.EmbeddedLinux => RuntimePlatform.EmbeddedLinuxArm64,
                 BuildTarget.QNX => RuntimePlatform.QNXArm64,
                 BuildTarget.VisionOS => RuntimePlatform.VisionOS,
-                _ => throw new ArgumentOutOfRangeException(nameof(target), target, "Unknown BuildTarget"),
+                _ => null,
             };
         }
     }

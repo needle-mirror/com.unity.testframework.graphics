@@ -82,12 +82,12 @@ namespace UnityEngine.TestTools.Graphics
 
             var stem = Path.GetFileNameWithoutExtension(filename);
 
-            if (string.Equals(stem, expectedRoot, StringComparison.InvariantCulture))
+            if (string.Equals(stem, expectedRoot, StringComparison.Ordinal))
             {
                 return true;
             }
 
-            if (stem.StartsWith(expectedRoot, StringComparison.InvariantCulture))
+            if (stem.StartsWith(expectedRoot, StringComparison.Ordinal))
             {
                 var rest = stem.AsSpan(expectedRoot.Length);
                 if (rest.Length == 0)
