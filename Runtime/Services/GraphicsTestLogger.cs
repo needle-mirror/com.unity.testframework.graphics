@@ -76,7 +76,11 @@ namespace UnityEngine.TestTools.Graphics
             PlayerConnection.instance.RegisterConnection((id) => { });
             PlayerConnection.instance.RegisterDisconnection((id) => { });
 #endif
+            // WebGL runs thread-pool work on the main thread, which resets its SynchronizationContext,
+            // so there Log drains the queue on the calling thread instead of a background writer.
+#if !(UNITY_WEBGL && !UNITY_EDITOR)
             Task.Run(() => LogWriterLoop(k_Cts.Token));
+#endif
         }
 
         static void EnsureLogDirectory()
@@ -182,7 +186,11 @@ namespace UnityEngine.TestTools.Graphics
             }
 
             k_LOGQueue.Enqueue(formattedMessage);
+#if UNITY_WEBGL && !UNITY_EDITOR
+            DrainQueue(); // no background writer on WebGL, see Initialize
+#else
             k_LOGSignal.Release();
+#endif
             Interlocked.Increment(ref s_TotalLogsAdded);
         }
 
@@ -329,22 +337,7 @@ namespace UnityEngine.TestTools.Graphics
                     try
                     {
                         await k_LOGSignal.WaitAsync(token);
-                        while (k_LOGQueue.TryDequeue(out var line))
-                        {
-                            lock (k_LOGBufferLock)
-                            {
-                                k_LOGBuffer.Add(line);
-                                if (k_LOGBuffer.Count > k_BufferSize)
-                                    k_LOGBuffer.RemoveAt(0);
-                            }
-
-#if UNITY_EDITOR
-                            WriteToFile(line);
-#else
-                            SendToConnectedEditor(line);
-#endif
-                            Interlocked.Increment(ref s_TotalLogsProcessed);
-                        }
+                        DrainQueue();
                     }
                     catch (OperationCanceledException)
                     {
@@ -361,6 +354,26 @@ namespace UnityEngine.TestTools.Graphics
                 Debug.LogError(
                     $"[GraphicsTestLogger] LogWriterLoop unhandled outer exception: {outerEx}"
                 );
+            }
+        }
+
+        static void DrainQueue()
+        {
+            while (k_LOGQueue.TryDequeue(out var line))
+            {
+                lock (k_LOGBufferLock)
+                {
+                    k_LOGBuffer.Add(line);
+                    if (k_LOGBuffer.Count > k_BufferSize)
+                        k_LOGBuffer.RemoveAt(0);
+                }
+
+#if UNITY_EDITOR
+                WriteToFile(line);
+#else
+                SendToConnectedEditor(line);
+#endif
+                Interlocked.Increment(ref s_TotalLogsProcessed);
             }
         }
 

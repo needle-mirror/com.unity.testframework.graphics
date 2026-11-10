@@ -87,6 +87,11 @@ namespace UnityEngine.TestTools.Graphics
         static void RunOnStart()
         {
             GraphicsSettings.logWhenShaderIsCompiled = true;
+
+            // Empty on platforms without a player log file, such as Android
+            if (string.IsNullOrEmpty(Application.consoleLogPath))
+                return;
+
             GraphicsTestLogger.Log(LogType.Log, "Register log file processing");
             Application.quitting += ConvertShaderErrorsToLog;
         }
@@ -95,6 +100,8 @@ namespace UnityEngine.TestTools.Graphics
         static void ConvertShaderErrorsToLog()
         {
             var logFilePath = Application.consoleLogPath;
+            if (string.IsNullOrEmpty(logFilePath) || !File.Exists(logFilePath))
+                return;
 
             StringBuilder finalList;
             // Read log while the handle is still controlled by Unity

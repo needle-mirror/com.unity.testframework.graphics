@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.TestTools.Graphics;
 
@@ -6,6 +8,104 @@ namespace UnityEditor.TestTools.Graphics.UI
     [CustomPropertyDrawer(typeof(ImageComparisonSettings))]
     class ImageComparisonSettingsDrawer : PropertyDrawer
     {
+        static readonly string[] k_LegacyColorDifferenceSettingNames =
+        {
+            nameof(ImageComparisonSettings.PerPixelCorrectnessThreshold),
+            nameof(ImageComparisonSettings.PerPixelGammaThreshold),
+            nameof(ImageComparisonSettings.PerPixelAlphaThreshold),
+            nameof(ImageComparisonSettings.AverageCorrectnessThreshold),
+            nameof(ImageComparisonSettings.IncorrectPixelsThreshold),
+            nameof(ImageComparisonSettings.ActiveImageTests),
+            nameof(ImageComparisonSettings.ActivePixelTests),
+        };
+
+        // Includes the per-pixel deltaE threshold: the frame average and each tile average only the deltaE above it.
+        static readonly string[] k_TiledDeltaESettingNames =
+        {
+            nameof(ImageComparisonSettings.PerPixelCorrectnessThreshold),
+            nameof(ImageComparisonSettings.AverageCorrectnessThreshold),
+            nameof(ImageComparisonSettings.TilesPerAxis),
+            nameof(ImageComparisonSettings.MaxTileDeltaEThreshold),
+        };
+
+        /// <summary>
+        /// The settings the drawer shows for the given algorithm, in the order it shows them. A setting that
+        /// cannot affect the algorithm's comparison is not shown.
+        /// </summary>
+        internal static IReadOnlyList<string> ComparisonSettingNames(ComparisonAlgorithm algorithm)
+        {
+            return algorithm switch
+            {
+                ComparisonAlgorithm.LegacyColorDifference => k_LegacyColorDifferenceSettingNames,
+                ComparisonAlgorithm.TiledDeltaE => k_TiledDeltaESettingNames,
+                _ => Array.Empty<string>(),
+            };
+        }
+
+        /// <summary>
+        /// The properties the comparison section draws, in order: the selector, whatever its value, then the
+        /// settings of the algorithm it selects. Nothing follows the selector when the selected objects use
+        /// different algorithms, since no one algorithm's settings apply to all of them.
+        /// </summary>
+        internal static IEnumerable<SerializedProperty> ComparisonSettingProperties(SerializedProperty settings)
+        {
+            var algorithm = settings.FindPropertyRelative(nameof(ImageComparisonSettings.ComparisonAlgorithm));
+            yield return algorithm;
+
+            if (algorithm.hasMultipleDifferentValues)
+            {
+                yield break;
+            }
+
+            foreach (var settingName in ComparisonSettingNames((ComparisonAlgorithm)algorithm.intValue))
+            {
+                yield return settings.FindPropertyRelative(settingName);
+            }
+        }
+
+        /// <summary>
+        /// The note the comparison section shows under the selector, or null when it shows none: one when the
+        /// selected objects use different algorithms, one when the stored value selects no algorithm, and one
+        /// when the selected objects use the tiled algorithm with the tile threshold unset.
+        /// </summary>
+        internal static (string Message, MessageType Type)? ComparisonNotice(SerializedProperty settings)
+        {
+            var algorithm = settings.FindPropertyRelative(nameof(ImageComparisonSettings.ComparisonAlgorithm));
+            if (algorithm.hasMultipleDifferentValues)
+            {
+                return (
+                    "The selected objects use different comparison algorithms. "
+                        + "Select objects that use the same one to edit its settings.",
+                    MessageType.Info);
+            }
+
+            if (!Enum.IsDefined(typeof(ComparisonAlgorithm), (ComparisonAlgorithm)algorithm.intValue))
+            {
+                return (
+                    "No comparison algorithm has this value, so ImageAssert.AreEqual rejects it. "
+                        + "Pick one above.",
+                    MessageType.Warning);
+            }
+
+            if ((ComparisonAlgorithm)algorithm.intValue == ComparisonAlgorithm.TiledDeltaE)
+            {
+                var maxTileDeltaEThreshold =
+                    settings.FindPropertyRelative(nameof(ImageComparisonSettings.MaxTileDeltaEThreshold));
+
+                // Negative means unset, the condition PixelEvaluationGuide resolves the threshold with.
+                if (!maxTileDeltaEThreshold.hasMultipleDifferentValues && maxTileDeltaEThreshold.floatValue < 0f)
+                {
+                    return (
+                        "Max Tile Delta E Threshold is unset, so every tile must stay within "
+                            + "Average Correctness Threshold. "
+                            + "Set it to allow a tile more than the frame average.",
+                        MessageType.Info);
+                }
+            }
+
+            return null;
+        }
+
         bool m_ImageComparisonSettingFoldoutStatus = true;
         bool m_ComparisonSettingsFoldoutStatus;
 
@@ -47,13 +147,16 @@ namespace UnityEditor.TestTools.Graphics.UI
                 if (m_ComparisonSettingsFoldoutStatus)
                 {
                     EditorGUI.indentLevel++;
-                    EditorGUILayout.PropertyField(property.FindPropertyRelative("PerPixelCorrectnessThreshold"));
-                    EditorGUILayout.PropertyField(property.FindPropertyRelative("PerPixelGammaThreshold"));
-                    EditorGUILayout.PropertyField(property.FindPropertyRelative("PerPixelAlphaThreshold"));
-                    EditorGUILayout.PropertyField(property.FindPropertyRelative("AverageCorrectnessThreshold"));
-                    EditorGUILayout.PropertyField(property.FindPropertyRelative("IncorrectPixelsThreshold"));
-                    EditorGUILayout.PropertyField(property.FindPropertyRelative("ActiveImageTests"));
-                    EditorGUILayout.PropertyField(property.FindPropertyRelative("ActivePixelTests"));
+                    foreach (var comparisonSetting in ComparisonSettingProperties(property))
+                    {
+                        EditorGUILayout.PropertyField(comparisonSetting);
+                    }
+
+                    var notice = ComparisonNotice(property);
+                    if (notice.HasValue)
+                    {
+                        EditorGUILayout.HelpBox(notice.Value.Message, notice.Value.Type);
+                    }
                     EditorGUI.indentLevel--;
                 }
 

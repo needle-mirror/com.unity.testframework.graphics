@@ -19,7 +19,7 @@ namespace UnityEngine.TestTools.Graphics
         {
             await Awaitable.MainThreadAsync();
 
-            if (System.IO.Directory.Exists(Path))
+            if (System.IO.Directory.Exists(ToPhysicalPath(Path)))
             {
                 m_LoadState = LoadState.Loaded;
                 OnBundleLoaded?.Invoke(this);
@@ -61,7 +61,17 @@ namespace UnityEngine.TestTools.Graphics
 
         public override bool ContainsAsset(string assetName)
         {
-            return System.IO.File.Exists(AssetPath(assetName));
+            return System.IO.File.Exists(ToPhysicalPath(AssetPath(assetName)));
+        }
+
+        // System.IO cannot see "Packages/..." asset paths of packages that live outside the project
+        static string ToPhysicalPath(string assetPath)
+        {
+#if UNITY_EDITOR
+            return FileUtil.GetPhysicalPath(assetPath);
+#else
+            return assetPath;
+#endif
         }
 
         public override void Unload()

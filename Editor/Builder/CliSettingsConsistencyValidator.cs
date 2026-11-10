@@ -38,43 +38,27 @@ namespace UnityEditor.TestTools.Graphics.Builder
             m_SettingsReader = new TestSettingsReader(settingsReader);
         }
 
-        // Graphics API arguments, used to start the Editor with the selected api
-        // List compiled from: https://docs.unity3d.com/6000.0/Documentation/Manual/EditorCommandLineArguments.html
-        internal static readonly Dictionary<string, GraphicsDeviceType> k_ForceGfxApiArguments = new()
-        {
-            { "-force-d3d11", GraphicsDeviceType.Direct3D11 },
-            { "-force-d3d12", GraphicsDeviceType.Direct3D12 },
-            { "-force-glcore", GraphicsDeviceType.OpenGLCore },
-            { "-force-gles", GraphicsDeviceType.OpenGLES3 },
-            { "-force-vulkan", GraphicsDeviceType.Vulkan },
-            { "-force-metal", GraphicsDeviceType.Metal },
-        };
-
-        // Bool-style threading-mode flags. Mapping mirrors CalculateGfxDeviceThreadingMode
-        // in Runtime/GfxDevice/GfxDeviceSetup.cpp.
-        internal static readonly Dictionary<string, RenderingThreadingMode> k_ForceThreadingArguments = new()
-        {
-            { "-force-gfx-direct", RenderingThreadingMode.Direct },
-            { "-force-gfx-st", RenderingThreadingMode.SingleThreaded },
-            { "-force-gfx-mt", RenderingThreadingMode.MultiThreaded },
-        };
-
-        // Value-style flag: -force-gfx-jobs <value>. Mapping mirrors CalculateGfxDeviceThreadingMode
-        // in Runtime/GfxDevice/GfxDeviceSetup.cpp.
-        internal const string k_ForceGfxJobsArgument = "-force-gfx-jobs";
-        internal static readonly Dictionary<string, RenderingThreadingMode> k_ForceGfxJobsValues = new(StringComparer.OrdinalIgnoreCase)
-        {
-            { "native", RenderingThreadingMode.NativeGraphicsJobs },
-            { "legacy", RenderingThreadingMode.LegacyJobified },
-            { "split", RenderingThreadingMode.NativeGraphicsJobsSplitThreading },
-            { "off", RenderingThreadingMode.MultiThreaded },
-        };
+        // Defined in the runtime, where VerifyRunConfigurationAttribute checks the same arguments in Editor
+        // and player runs.
+        internal static readonly Dictionary<string, GraphicsDeviceType> k_ForceGfxApiArguments =
+            ForcedGraphicsArguments.k_GraphicsApiArguments;
+        internal static readonly Dictionary<string, RenderingThreadingMode> k_ForceThreadingArguments =
+            ForcedGraphicsArguments.k_ThreadingArguments;
+        internal const string k_ForceGfxJobsArgument = ForcedGraphicsArguments.k_GfxJobsArgument;
+        internal static readonly Dictionary<string, RenderingThreadingMode> k_ForceGfxJobsValues =
+            ForcedGraphicsArguments.k_GfxJobsValues;
 
         internal CliSettingsConsistencyResult ValidateEditor(
             GraphicsDeviceType editorGraphicsDeviceType,
             ref StringBuilder sb
         )
         {
+            var undocumented = ForcedGraphicsArguments.FindUndocumentedForms(
+                m_CommandLineReader, k_ForceGfxApiArguments.Keys);
+            if (undocumented.Count > 0)
+                return new CliSettingsConsistencyResult(
+                    ForcedGraphicsArguments.DescribeUndocumentedForms(undocumented), false);
+
             var forceApiArguments = new List<string>();
             foreach (var key in k_ForceGfxApiArguments.Keys)
             {
@@ -110,6 +94,12 @@ namespace UnityEditor.TestTools.Graphics.Builder
             ref StringBuilder sb
         )
         {
+            var undocumented = ForcedGraphicsArguments.FindUndocumentedForms(
+                m_CommandLineReader, ForcedGraphicsArguments.ThreadingArgumentNames);
+            if (undocumented.Count > 0)
+                return new CliSettingsConsistencyResult(
+                    ForcedGraphicsArguments.DescribeUndocumentedForms(undocumented), false);
+
             var forceArguments = new List<string>();
             foreach (var key in k_ForceThreadingArguments.Keys)
             {

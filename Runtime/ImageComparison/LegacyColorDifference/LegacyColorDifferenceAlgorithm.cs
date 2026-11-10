@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Unity.Collections;
-using Unity.Jobs;
 
 namespace UnityEngine.TestTools.Graphics.LegacyColorDifference
 {
@@ -12,7 +10,6 @@ namespace UnityEngine.TestTools.Graphics.LegacyColorDifference
     public class LegacyColorDifferenceAlgorithm : TextureComparisonAlgorithm
     {
         readonly PixelEvaluationGuide m_EvaluationGuide;
-        const int k_BatchSize = 1024;
 
         /// <summary>
         /// Instantiates the algorithm with the right thresholds, based on the legacy settings
@@ -75,42 +72,14 @@ namespace UnityEngine.TestTools.Graphics.LegacyColorDifference
                 throw new ArgumentNullException(nameof(actual));
             }
 
-            using var results = new NativeArray<LegacyColorDifferencePixelResult>(
-                expected.width * expected.height,
-                Allocator.TempJob
-            );
-            using var expectedPixels = new NativeArray<Color32>(expected.GetPixels32(0), Allocator.TempJob);
-            using var actualPixels = new NativeArray<Color32>(actual.GetPixels32(0), Allocator.TempJob);
-            new PixelDifferenceAggregationJob
-            {
-                expected = expectedPixels,
-                actual = actualPixels,
-                evaluationGuide = m_EvaluationGuide,
-                m_results = results,
-            }
-                .Schedule(expectedPixels.Length, k_BatchSize)
-                .Complete();
+            var pass = PixelComparisonPass.Run(expected, actual, m_EvaluationGuide, capturePerPixelExcess: false);
 
-            var sumOverThreshold = 0f;
-            var badPixels = 0;
-            var diffPixels = new Color32[expectedPixels.Length];
-
-            foreach (var pixelResult in results)
-            {
-                sumOverThreshold += pixelResult.DeltaEOverThreshold;
-                badPixels += pixelResult.PixelIsCorrect ? 0 : 1;
-
-                diffPixels[pixelResult.Index] = pixelResult.ColorDifference;
-            }
-
-            var colorDifferenceReport = new LegacyColorDifferenceAggregate(
-                diffPixels,
-                (float)badPixels / expectedPixels.Length,
-                sumOverThreshold / expectedPixels.Length,
+            return new LegacyColorDifferenceAggregate(
+                pass.DiffPixels,
+                (float)pass.BadPixelCount / pass.PixelCount,
+                pass.SumOverThreshold / pass.PixelCount,
                 m_EvaluationGuide
             );
-
-            return colorDifferenceReport;
         }
 
         /// <summary>
@@ -152,34 +121,6 @@ namespace UnityEngine.TestTools.Graphics.LegacyColorDifference
             }
 
             return (result, aggregate.ImageComparisonResults.Success);
-        }
-
-        struct PixelDifferenceAggregationJob : IJobParallelFor
-        {
-            [ReadOnly]
-            public NativeArray<Color32> expected;
-
-            [ReadOnly]
-            public NativeArray<Color32> actual;
-
-            [ReadOnly]
-            public PixelEvaluationGuide evaluationGuide;
-
-            [WriteOnly]
-            public NativeArray<LegacyColorDifferencePixelResult> m_results;
-
-            public void Execute(int index)
-            {
-                var exp = expected[index];
-                var act = actual[index];
-
-                var pixelScoreCard = new LegacyColorDifferencePixelResult { PixelIsCorrect = true };
-
-                var pixelResult = PixelProcessor.ProcessPixel(exp, act, evaluationGuide, pixelScoreCard);
-                pixelResult.Index = index;
-
-                m_results[index] = pixelResult;
-            }
         }
     }
 }

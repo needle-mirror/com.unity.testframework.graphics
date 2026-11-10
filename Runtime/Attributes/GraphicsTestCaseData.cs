@@ -285,16 +285,16 @@ $"Could not create reference image naming strategy {strategyType.FullName}: {ex}
                     foreach (var data in testCaseData)
                     {
                         var extraArgs = data.Arguments.Length > 1 ? data.Arguments[1..] : null;
-                        finalTestCases.Add(
-                            CreateParameterizedTestCase(
-                                testCase,
-                                testCaseName,
-                                data.TestName,
-                                methodName,
-                                ignoreIndex,
-                                extraArgs
-                            )
+                        var parameterized = CreateParameterizedTestCase(
+                            testCase,
+                            testCaseName,
+                            data.TestName,
+                            methodName,
+                            ignoreIndex,
+                            extraArgs
                         );
+                        Parameterizer.CopyRunStateAndProperties(data, parameterized.TestCaseData);
+                        finalTestCases.Add(parameterized);
                     }
                 }
                 else
@@ -337,6 +337,15 @@ $"Could not create reference image naming strategy {strategyType.FullName}: {ex}
             return result;
         }
 
+        // The argument list appended to the raw full name can contain the raw name again
+        static int IndexOfTestName(string fullName, string rawFullName, string rawName)
+        {
+            var nameEnd = rawFullName != null && fullName.StartsWith(rawFullName, StringComparison.Ordinal)
+                ? rawFullName.Length
+                : fullName.Length;
+            return nameEnd == 0 ? -1 : fullName.LastIndexOf(rawName, nameEnd - 1, nameEnd, StringComparison.Ordinal);
+        }
+
         GraphicsTestCase CreateParameterizedTestCase(
             GraphicsTestCase testCase,
             string testCaseName,
@@ -346,7 +355,7 @@ $"Could not create reference image naming strategy {strategyType.FullName}: {ex}
             object[] additionalArgs
         )
         {
-            var idx = fullName.LastIndexOf(testCaseName, StringComparison.Ordinal);
+            var idx = IndexOfTestName(fullName, testCase.FullName, testCaseName);
             var testName = idx >= 0 ? fullName.Substring(idx) : fullName;
             var imageParts = CreateReferenceImageDescriptor(testCase, testName);
 

@@ -6,12 +6,13 @@ namespace UnityEngine.TestTools.Graphics.LegacyColorDifference
     /// <summary>
     ///  Represents aggregated results of all the pixels when comparing two images using the legacy color difference algorithm (delta E, alpha, gamma).
     /// </summary>
-    public class LegacyColorDifferenceAggregate : ITextureComparisonResult
+    public class LegacyColorDifferenceAggregate : ITextureComparisonResult, IColorDifferenceResult
     {
         readonly string m_DifferenceMessage;
         readonly PixelEvaluationGuide m_PixelEvaluationGuide;
         bool m_AverageDeltaEIsWithinThreshold;
         bool m_BadPixelsCountIsWithinThreshold;
+        ImageAssert.ComparisonStatistics m_Evaluated;
 
         /// <summary>
         /// Gets a collection of pixels that represents the difference between two images
@@ -25,7 +26,7 @@ namespace UnityEngine.TestTools.Graphics.LegacyColorDifference
         public ImageAssert.ImageComparisonResults ImageComparisonResults { get; }
 
         /// <summary>
-        /// Instantiate a LegacyColorDifferenceAggregateResult with aggregation difference values
+        /// Instantiate a LegacyColorDifferenceAggregateResult with aggregation difference values.
         /// </summary>
         /// <param name="differencePixels">A collection of pixels representing the difference between two images</param>
         /// <param name="badPixelsAverage">Average of pixels that are considered bad based on threshold</param>
@@ -38,7 +39,6 @@ namespace UnityEngine.TestTools.Graphics.LegacyColorDifference
             PixelEvaluationGuide evaluationGuide
         )
         {
-            m_DifferenceMessage = "Image difference has not been evaluated.";
             DifferencePixels = differencePixels;
             m_PixelEvaluationGuide = evaluationGuide;
             var averageDeltaE = sumOverThresholdAverage;
@@ -49,10 +49,16 @@ namespace UnityEngine.TestTools.Graphics.LegacyColorDifference
             ImageComparisonResults = new ImageAssert.ImageComparisonResults
             {
                 Success = m_AverageDeltaEIsWithinThreshold && m_BadPixelsCountIsWithinThreshold,
+                Evaluated = m_Evaluated,
                 AverageDeltaE = averageDeltaE,
                 BadPixelsCount = badPixelsCount,
                 AverageDeltaEWithinThreshold = m_AverageDeltaEIsWithinThreshold,
                 BadPixelsCountWithinThreshold = m_BadPixelsCountIsWithinThreshold,
+                // MaxTileDeltaE and WorstTile take the values ImageComparisonResults documents when no tile was scored;
+                // the flag reads as within threshold, as every unevaluated statistic does here.
+                MaxTileDeltaE = 0f,
+                WorstTile = new Vector2Int(-1, -1),
+                MaxTileDeltaEWithinThreshold = true,
             };
         }
 
@@ -60,16 +66,21 @@ namespace UnityEngine.TestTools.Graphics.LegacyColorDifference
         {
             var description = new List<string>();
 
+            m_Evaluated = ImageAssert.ComparisonStatistics.None;
+            // An unevaluated statistic reads as within threshold: Success ANDs these flags, and
+            // callers that read a flag without checking Evaluated rely on that.
             m_AverageDeltaEIsWithinThreshold = true;
             m_BadPixelsCountIsWithinThreshold = true;
 
-            if (
-                (m_PixelEvaluationGuide.EnabledModes.IsSet(PixelEvaluationModes.TestAverageDeltaE))
-                && averageDeltaE > m_PixelEvaluationGuide.AverageCorrectnessThreshold
-            )
+            if (m_PixelEvaluationGuide.EnabledModes.IsSet(PixelEvaluationModes.TestAverageDeltaE))
             {
-                description.Add($"Average deltaE deviation: '{averageDeltaE:G}'");
-                m_AverageDeltaEIsWithinThreshold = false;
+                m_Evaluated |= ImageAssert.ComparisonStatistics.AverageDeltaE;
+
+                if (averageDeltaE > m_PixelEvaluationGuide.AverageCorrectnessThreshold)
+                {
+                    description.Add($"Average deltaE deviation: '{averageDeltaE:G}'");
+                    m_AverageDeltaEIsWithinThreshold = false;
+                }
             }
 
             if (
@@ -78,12 +89,15 @@ namespace UnityEngine.TestTools.Graphics.LegacyColorDifference
                     PixelEvaluationModes.CountBadGamma,
                     PixelEvaluationModes.CountBadAlpha
                 )
-                && badPixelsCount > m_PixelEvaluationGuide.IncorrectPixelsThreshold
             )
             {
-                description.Add($"Bad pixels ratio: '{badPixelsCount}'");
+                m_Evaluated |= ImageAssert.ComparisonStatistics.BadPixelsCount;
 
-                m_BadPixelsCountIsWithinThreshold = false;
+                if (badPixelsCount > m_PixelEvaluationGuide.IncorrectPixelsThreshold)
+                {
+                    description.Add($"Bad pixels ratio: '{badPixelsCount}'");
+                    m_BadPixelsCountIsWithinThreshold = false;
+                }
             }
 
             return description.Count > 0

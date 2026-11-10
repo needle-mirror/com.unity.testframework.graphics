@@ -35,13 +35,15 @@ namespace UnityEngine.TestTools.Graphics
 
                 string overrideName = (attr as GraphicsTestParamAttribute)?.TestName;
 
-                foreach (var argSet in provider.GetArgSets())
+                foreach (var argSet in provider.GetArgSets(method))
                 {
-                    var combined = new object[baseArgs.Length + argSet.Length];
+                    var args = argSet.Arguments;
+                    var combined = new object[baseArgs.Length + args.Length];
                     Array.Copy(baseArgs, combined, baseArgs.Length);
-                    Array.Copy(argSet, 0, combined, baseArgs.Length, argSet.Length);
+                    Array.Copy(args, 0, combined, baseArgs.Length, args.Length);
 
                     var tcd = new TestCaseData(combined);
+                    CopyRunStateAndProperties(argSet, tcd);
                     if (!string.IsNullOrEmpty(overrideName))
                         tcd.TestName = overrideName;
                     result.Add(tcd);

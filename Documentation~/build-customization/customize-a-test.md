@@ -31,6 +31,7 @@ To change the comparison algorithm Unity uses, create an algorithm instance and 
 Unity has the following built-in algorithm types:
 
 - [`LegacyColorDifferenceAlgorithm`](xref:UnityEngine.TestTools.Graphics.LegacyColorDifference.LegacyColorDifferenceAlgorithm): Reflects how humans see color. This algorithm provides a balance between accuracy and performance, and you can use it for most tests. This is the default.
+- [`TiledDeltaEAlgorithm`](xref:UnityEngine.TestTools.Graphics.TiledDeltaEAlgorithm): Scores the whole image and each tile of a grid, so a difference confined to a small area is not diluted by the rest of the frame.
 - [`PeakSignalToNoiseRatio`](xref:UnityEngine.TestTools.Graphics.PeakSignalToNoiseRatio) (PSNR): Measures signal power against noise power in decibels.  
 - [`StructuralSimilarity`](xref:UnityEngine.TestTools.Graphics.StructuralSimilarity): Uses a similarity index measure (SSIM) from &minus;1 to 1. Compares luminance, contrast, and structure. Use this algorithm to detect invisible differences in patterns and compression.
 - [`EuclideanDistance`](xref:UnityEngine.TestTools.Graphics.EuclideanDistance): Calculates the difference as a root mean square error. This algorithm is fast but sensitive, and might not align well with how humans see color.
@@ -49,7 +50,7 @@ To change the algorithm, follow these steps:
     Assert.That(actualTexture, IsTexture.EqualTo(expectedTexture).Using(algorithm));
     ```
 
-    **Note**: If you use [`ImageAssert.AreEqual`](xref:UnityEngine.TestTools.Graphics.ImageAssert.AreEqual(UnityEngine.Texture2D,UnityEngine.Camera,UnityEngine.TestTools.Graphics.ImageComparisonSettings,System.String,System.Boolean)), you can only configure the default algorithm in an [`ImageComparisonSettings`](xref:UnityEngine.TestTools.Graphics.ImageComparisonSettings) object. You can't use a different algorithm.
+    **Note**: [`ImageAssert.AreEqual`](xref:UnityEngine.TestTools.Graphics.ImageAssert.AreEqual(UnityEngine.Texture2D,UnityEngine.Camera,UnityEngine.TestTools.Graphics.ImageComparisonSettings,System.String,System.Boolean)) doesn't take an algorithm instance. To choose its algorithm, set the `ComparisonAlgorithm` property of the [`ImageComparisonSettings`](xref:UnityEngine.TestTools.Graphics.ImageComparisonSettings) object you pass to it, or the **Comparison Algorithm** field of a Graphics Test Settings component, to `LegacyColorDifference` (the default) or `TiledDeltaE`. The other built-in algorithms work only with `IsTexture.EqualTo`.
 
 To implement a custom algorithm instead, refer to [`TextureComparisonAlgorithm`](xref:UnityEngine.TestTools.Graphics.TextureComparisonAlgorithm). 
 
@@ -77,6 +78,25 @@ To pass multiple parameters, create a class that implements `IEnumerable<object[
 public void DataDrivenTest(GraphicsTestCase testCase, float threshold)
 {
     // Parameters provided by MyTestData
+}
+```
+
+The source can also be a static method, property or field of the test class. Pass its name instead of a type.
+
+To set categories or the run state per test case, provide `TestCaseData` instead of `object[]`. Each test case keeps the categories, run state and properties of its `TestCaseData`, so `SetCategory`, `Explicit` and `Ignore` work as they do with the NUnit `[TestCaseSource]` attribute. Unity names each test case from its arguments, not from the `TestCaseData` name. For example:
+
+```csharp
+static IEnumerable<TestCaseData> BackendTestData()
+{
+    yield return new TestCaseData("GPU").SetCategory("GpuBackend").Explicit("Runs only in GPU jobs.");
+    yield return new TestCaseData("CPU");
+}
+
+[Test, GraphicsTest]
+[GraphicsTestParamSource(nameof(BackendTestData))]
+public void BackendTest(GraphicsTestCase testCase, string backend)
+{
+    // The GPU test case runs only when you select the GpuBackend category
 }
 ```
 

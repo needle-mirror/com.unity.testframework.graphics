@@ -67,6 +67,23 @@ namespace UnityEditor.TestTools.Graphics.Builder
             DeleteDirectory("Assets/Resources");
         }
 
+        /// <summary>
+        /// Deletes <paramref name="settings"/>, and its folder if that is left empty, when it is the
+        /// asset at <see cref="GraphicsTestBuildSettings.TransientAssetPath"/>.
+        /// </summary>
+        internal void DeleteTransientSettings(GraphicsTestBuildSettings settings)
+        {
+            var path = AssetService.GetAssetPath(settings);
+            if (string.IsNullOrEmpty(path) || path != GraphicsTestBuildSettings.TransientAssetPath)
+                return;
+
+            GraphicsTestLogger.Log($"Deleting {path}, which was created for this test run.");
+            GraphicsTestBuildSettings.TransientAssetPath = string.Empty;
+            GraphicsTestBuildSettings.TransientAssetDeleted = true;
+            AssetService.DeleteAsset(path);
+            DeleteDirectory(Path.GetDirectoryName(path).SanitizeBackslashes());
+        }
+
         void DeleteDirectory(string path, bool deleteIfNotEmpty = false)
         {
             var isEmpty = true;

@@ -38,12 +38,14 @@ namespace UnityEngine.TestTools.Graphics
 
         /// <summary>
         /// The permitted difference between the RGB components (in gamma) of individual pixels of the images.
+        /// The tiled deltaE algorithm ignores this setting.
         /// </summary>
         [Tooltip("The permitted difference between the RGB components (in gamma) of individual pixels of the images.")]
         public float PerPixelGammaThreshold = 1f / 255;
 
         /// <summary>
         /// The permitted difference between the alpha component of individual pixels of the images.
+        /// The tiled deltaE algorithm ignores this setting.
         /// </summary>
         [Tooltip("The permitted difference between the alpha component of individual pixels of the images.")]
         public float PerPixelAlphaThreshold = 1f / 255;
@@ -51,7 +53,8 @@ namespace UnityEngine.TestTools.Graphics
         /// <summary>
         /// The maximum permitted root mean squared error value across the entire image. If the root mean squared
         /// per-pixel error across the image is above this value, the images are considered
-        /// not to be equal.
+        /// not to be equal. Neither comparison algorithm reads this setting; only
+        /// <c>ImageAssert.AreEqualLinearHDR</c> does.
         /// </summary>
         [Tooltip("The maximum permitted root mean squared error value across the entire image.")]
         public float RMSEThreshold;
@@ -67,9 +70,26 @@ namespace UnityEngine.TestTools.Graphics
         /// <summary>
         /// The maximum ratio of pixels allowed to be incorrect across the image. A pixel is
         /// incorrect if it exceeds the specified per-pixel thresholds.
+        /// The tiled deltaE algorithm ignores this setting.
         /// </summary>
         [Tooltip("The maximum ratio of pixels allowed to be incorrect across the image.")]
         public float IncorrectPixelsThreshold = 1f / 512 / 512;
+
+        /// <summary>
+        /// The number of tiles along each axis. A value of 16 divides the image into a 16 by 16 grid,
+        /// whatever its resolution. It is clamped to at least 1, and to the smaller image dimension so that
+        /// no tile is empty. Only the tiled deltaE algorithm reads this setting.
+        /// </summary>
+        [Tooltip("The number of tiles along each axis the tiled deltaE algorithm divides the image into.")]
+        public int TilesPerAxis = 16;
+
+        /// <summary>
+        /// The maximum permitted average deltaE within any single tile. A negative value means the
+        /// threshold has not been set, in which case <see cref="AverageCorrectnessThreshold"/> is
+        /// used instead. Only the tiled deltaE algorithm reads this setting.
+        /// </summary>
+        [Tooltip("The maximum permitted average deltaE within any single tile. Negative means unset.")]
+        public float MaxTileDeltaEThreshold = -1f;
 
         /// <summary>
         /// Use HDR rendering
@@ -84,7 +104,25 @@ namespace UnityEngine.TestTools.Graphics
         public bool UseBackBuffer;
 
         /// <summary>
-        /// Determines which tests are active when comparing the images.
+        /// The algorithm <c>ImageAssert.AreEqual</c> uses to compare the rendered image with the reference
+        /// image. It defaults to
+        /// <see cref="UnityEngine.TestTools.Graphics.ComparisonAlgorithm.LegacyColorDifference"/>, the zero
+        /// value, so settings that do not store it run the legacy algorithm, which evaluates the tests
+        /// selected by <see cref="ActiveImageTests"/>.
+        /// <see cref="UnityEngine.TestTools.Graphics.ComparisonAlgorithm.TiledDeltaE"/> always evaluates the
+        /// average deltaE and the tiled deltaE, and ignores <see cref="ActiveImageTests"/>.
+        /// <c>ImageAssert.AreEqualLinearHDR</c> runs none of these algorithms: it compares with its own
+        /// statistics, and throws an <see cref="System.ArgumentException"/> for any value but the default.
+        /// </summary>
+        [Tooltip("The algorithm that compares the rendered image with the reference image. "
+                 + "Tiled Delta E measures with the corrected deltaE formula; "
+                 + "Legacy Color Difference measures with the original, "
+                 + "which existing reference images were made with.")]
+        public ComparisonAlgorithm ComparisonAlgorithm;
+
+        /// <summary>
+        /// Determines which tests are active when comparing the images. The tiled deltaE algorithm ignores
+        /// this setting: it always evaluates the average and the tiles.
         /// </summary>
         [Tooltip("Determines which tests are active when comparing the images.")]
         public ImageTests ActiveImageTests = ImageTests.AverageDeltaE;
@@ -134,7 +172,7 @@ namespace UnityEngine.TestTools.Graphics
         /// Determines which tests are active when determining whether an individual pixel is
         /// correct or not. An incorrect pixel will increase the counter associated with the
         /// IncorrectPixelsCount image test. This is only relevant when ActiveImageTests has
-        /// the IncorrectPixelsCount flag set.
+        /// the IncorrectPixelsCount flag set. The tiled deltaE algorithm ignores this setting.
         /// </summary>
         [Tooltip("Determines which tests affect the counter used by the IncorrectPixelsCount image test.")]
         public PixelTests ActivePixelTests = PixelTests.DeltaE | PixelTests.DeltaAlpha | PixelTests.DeltaGamma;

@@ -78,8 +78,8 @@ namespace UnityEngine.TestTools.Graphics.Platforms
                 RuntimePlatform.GameCoreXboxSeries => BuildTarget.GameCoreXboxSeries,
                 RuntimePlatform.GameCoreXboxOne => BuildTarget.GameCoreXboxOne,
                 RuntimePlatform.PS5 => BuildTarget.PS5,
-                RuntimePlatform.EmbeddedLinuxArm64 => BuildTarget.EmbeddedLinux,
-                RuntimePlatform.QNXArm64 => BuildTarget.QNX,
+                RuntimePlatform.EmbeddedLinuxArm64 or RuntimePlatform.EmbeddedLinuxX64 => BuildTarget.EmbeddedLinux,
+                RuntimePlatform.QNXArm64 or RuntimePlatform.QNXX64 => BuildTarget.QNX,
                 RuntimePlatform.VisionOS => BuildTarget.VisionOS,
                 _ => throw new ArgumentOutOfRangeException(nameof(platform), $"Unknown RuntimePlatform: {platform}"),
             };

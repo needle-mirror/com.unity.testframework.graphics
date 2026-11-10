@@ -24,6 +24,7 @@ namespace UnityEditor.TestTools.Graphics.Builder
         public void Setup(TestData testData)
         {
             GraphicsTestLogger.DebugLog($"Received test data from UTF:\n{testData}");
+            GraphicsTestBuildSettings.BeginTestRun();
             var settings = GraphicsTestBuildSettings.LoadOrDefault();
             if (!settings.AutoBuildTestCases)
                 return;
@@ -185,9 +186,12 @@ namespace UnityEditor.TestTools.Graphics.Builder
                 BuildManager = GraphicsTestBuildManager.FromContext(testData.TestMode, testData.TestPlatform),
             };
 
-            if (settings.AutoBuildTestCases && settings.ShouldCleanUpAfterBuild && !BuildPipeline.isBuildingPlayer)
+            if (!BuildPipeline.isBuildingPlayer)
             {
-                builder.BuildManager.CleanUp(settings);
+                if (settings.AutoBuildTestCases && settings.ShouldCleanUpAfterBuild)
+                    builder.BuildManager.CleanUp(settings);
+
+                builder.BuildManager.DeleteTransientSettings(settings);
             }
 
             if (settings.ShaderWarningsAsErrors && ShaderWarningCollector.HasWarnings)

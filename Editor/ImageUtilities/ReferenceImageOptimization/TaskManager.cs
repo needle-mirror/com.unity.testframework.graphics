@@ -56,26 +56,20 @@ namespace UnityEditor.TestTools.Graphics
             return guid;
         }
 
-        internal async Task UpdateProgress(Guid id, float progress, string description)
+        internal Task UpdateProgress(Guid id, float progress, string description)
         {
             if (m_Tasks.TryGetValue(id, out var status))
-            {
-                await MainThreadDispatcher.RunOnMainThread(() =>
-                {
-                    Progress.Report(status.ProgressId, progress, description);
-                });
-            }
+                Progress.Report(status.ProgressId, progress, description);
+
+            return Task.CompletedTask;
         }
 
-        internal async Task UpdateProgress(Guid id, int currentStep, int totalSteps, string description)
+        internal Task UpdateProgress(Guid id, int currentStep, int totalSteps, string description)
         {
             if (m_Tasks.TryGetValue(id, out var status))
-            {
-                await MainThreadDispatcher.RunOnMainThread(() =>
-                {
-                    Progress.Report(status.ProgressId, currentStep, totalSteps, description);
-                });
-            }
+                Progress.Report(status.ProgressId, currentStep, totalSteps, description);
+
+            return Task.CompletedTask;
         }
 
         internal void Complete(Guid id)

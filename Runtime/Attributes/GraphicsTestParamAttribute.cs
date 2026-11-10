@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using NUnit.Framework;
+using NUnit.Framework.Interfaces;
 
 namespace UnityEngine.TestTools.Graphics
 {
@@ -49,9 +51,9 @@ namespace UnityEngine.TestTools.Graphics
             Arguments = args;
         }
 
-        IEnumerable<object[]> IGraphicsTestArgProvider.GetArgSets()
+        IEnumerable<TestCaseData> IGraphicsTestArgProvider.GetArgSets(IMethodInfo method)
         {
-            yield return Arguments;
+            yield return new TestCaseData(Arguments);
         }
     }
 }

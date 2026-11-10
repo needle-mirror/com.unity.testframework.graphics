@@ -18,6 +18,7 @@ namespace UnityEditor.TestTools.Graphics
             {
                 s_AssetService = value;
                 s_VariantListsInitialized = false;
+                s_CurrentVariantListResolved = false;
             }
         }
 
@@ -29,11 +30,15 @@ namespace UnityEditor.TestTools.Graphics
         [NonSerialized]
         static ShaderVariantList s_CurrentVariantListInUse;
 
+        [NonSerialized]
+        static bool s_CurrentVariantListResolved;
+
         public int callbackOrder => 0;
 
         public void OnPreprocessBuild(BuildReport report)
         {
             s_CurrentVariantListInUse = null;
+            s_CurrentVariantListResolved = false;
         }
 
         static void EnsureVariantListsInitialized()
@@ -63,7 +68,7 @@ namespace UnityEditor.TestTools.Graphics
                 return null;
             }
 
-            if (s_CurrentVariantListInUse == null)
+            if (!s_CurrentVariantListResolved)
             {
                 var currentAPI = GetCurrentGraphicsAPI();
                 var matchingVariant = k_AllVariantListAssets.Find(s =>
@@ -89,6 +94,7 @@ namespace UnityEditor.TestTools.Graphics
                     );
                 }
                 s_CurrentVariantListInUse = matchingVariant;
+                s_CurrentVariantListResolved = true;
             }
 
             return s_CurrentVariantListInUse;

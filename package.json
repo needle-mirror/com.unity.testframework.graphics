@@ -1,7 +1,7 @@
 {
   "name": "com.unity.testframework.graphics",
   "displayName": "Graphics Test Framework",
-  "version": "9.0.0-pre.32",
+  "version": "9.0.0-pre.43",
   "unity": "6000.0",
   "unityRelease": "59f1",
   "description": "Unity's automated visual validation system for graphics rendering. Enables developers to catch visual regressions, validate rendering consistency across platforms and graphics APIs, and test custom Scriptable Render Pipelines through automated image comparison testing.",
@@ -57,14 +57,14 @@
     "com.unity.burst": "1.8.27"
   },
   "_upm": {
-    "changelog": "### Fixed\n\n- Reference images whose name is a prefix of another image's name in the same folder are collected again. Matching walks the reference images and the test cases in lockstep, and both orderings now use an ordinal comparison of the image name: sorting the file paths put `Name.png` after `Name_Suffix.png` and dropped `Name` from the bundles, leaving its test with no reference image."
+    "changelog": "### Fixed\n\n- An Android player no longer logs `ArgumentException: Path is empty` from `GenerateShaderVariantList` when it quits. The framework read the player log back at quit to convert shader variant not found errors, but Android writes the player log to logcat and has no log file. Players without a log file now skip that step."
   },
   "upmCi": {
-    "footprint": "5f41695baf6fd5f0bcfeee60787337fe643f6d35"
+    "footprint": "bc042c5183924d0f0edf1d084c5c248fbfcc44eb"
   },
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.testframework.graphics.git",
     "type": "git",
-    "revision": "5d82d70bc3b1883e1379c3a3b671d0c328d4e2b7"
+    "revision": "271295f7cca3fec532135d4ce9012de9ab17d754"
   }
 }

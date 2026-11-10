@@ -36,6 +36,20 @@ namespace UnityEngine.TestTools.Graphics
             return testCases;
         }
 
+        internal static void CopyRunStateAndProperties(TestCaseData source, TestCaseData target)
+        {
+            if (source.RunState != RunState.Runnable)
+                target.RunState = source.RunState;
+
+            foreach (var key in source.Properties.Keys)
+            {
+                foreach (var value in source.Properties[key])
+                {
+                    target.Properties.Add(key, value);
+                }
+            }
+        }
+
         internal static HashSet<TestCaseData> GenerateSerialParametricTestCases(
             List<List<object>> arguments,
             TestCaseData testCase

@@ -102,6 +102,11 @@ namespace UnityEngine.TestTools.Graphics
         /// <returns>
         /// Coroutine enumerator
         /// </returns>
+        /// <remarks>
+        /// On a mobile platform, when <paramref name="width"/> is greater than or equal to <paramref name="height"/>,
+        /// the method first requests landscape orientation and waits up to 10 seconds for the device to report it.
+        /// Portrait resolutions get no orientation handling.
+        /// </remarks>
         public static IEnumerator SetResolutionWithRetry(int width, int height, bool fullscreen, int maxRetries = 3)
         {
             if (Application.isEditor)
@@ -114,6 +119,22 @@ namespace UnityEngine.TestTools.Graphics
             GraphicsTestLogger.Log("Running test on WebGL platform, skipping Player resolution change");
             yield break;
 #else
+            // On Android, a rotation that lands after the resolution is applied swaps it to portrait.
+            // Square resolutions also wait, so every test starts in landscape. Portrait is not handled,
+            // because every graphics test device runs in landscape.
+            if (width >= height && Application.isMobilePlatform && !IsLandscape(Screen.orientation))
+            {
+                GraphicsTestLogger.Log(
+                    $"Waiting for the device to rotate to landscape before setting {width}x{height}. " +
+                    $"Current: {Screen.width}x{Screen.height}, orientation: {Screen.orientation}");
+                Screen.orientation = ScreenOrientation.LandscapeLeft;
+                yield return WaitForLandscapeOrientation(
+                    () => Screen.orientation, () => Time.realtimeSinceStartup, RequestLandscapeOrientation);
+                GraphicsTestLogger.Log(
+                    "Finished waiting for landscape. " +
+                    $"Current: {Screen.width}x{Screen.height}, orientation: {Screen.orientation}");
+            }
+
             // Check if resolution is already correct
             if (Screen.width == width && Screen.height == height)
             {
@@ -142,7 +163,12 @@ namespace UnityEngine.TestTools.Graphics
 
                 GraphicsTestLogger.Log(
                     $"Attempting to set resolution to {width}x{height} " +
-                    $"(Attempt {attempt}/{maxRetries}, waiting up to {framesToWait} frame(s) for it to apply)");
+                    $"(Attempt {attempt}/{maxRetries}, waiting up to {framesToWait} frame(s) for it to apply). " +
+                    $"Current: {Screen.width}x{Screen.height}, orientation: {Screen.orientation}");
+
+                // A rotation requested earlier may still be under way on the first attempt.
+                if (attempt > 1 && ShouldRequestLandscape(Application.isMobilePlatform, width, height, Screen.width, Screen.height))
+                    RequestLandscapeOrientation();
 
                 Screen.SetResolution(width, height, fullscreen);
 
@@ -164,12 +190,12 @@ namespace UnityEngine.TestTools.Graphics
 
                 GraphicsTestLogger.Log(
                     $"Resolution not applied after attempt {attempt}. " +
-                    $"Current: {Screen.width}x{Screen.height}, Expected: {width}x{height}");
+                    $"Current: {Screen.width}x{Screen.height}, orientation: {Screen.orientation}, Expected: {width}x{height}");
             }
 
             throw new System.InvalidOperationException(
                 $"Failed to set resolution to {width}x{height} after {maxRetries} attempts. " +
-                $"Current resolution: {Screen.width}x{Screen.height}. " +
+                $"Current resolution: {Screen.width}x{Screen.height}, orientation: {Screen.orientation}. " +
                 "Graphics tests require this resolution for valid image comparison."
             );
 #endif
@@ -177,6 +203,62 @@ namespace UnityEngine.TestTools.Graphics
 
         static int s_SettledWidth;
         static int s_SettledHeight;
+
+        // iOS swaps a landscape resolution requested in portrait, and Android swaps it when the device next rotates,
+        // so only a rotation to landscape can apply it.
+        internal static bool ShouldRequestLandscape(
+            bool isMobilePlatform, int requestedWidth, int requestedHeight, int screenWidth, int screenHeight)
+        {
+            return isMobilePlatform && requestedWidth >= requestedHeight && screenWidth < screenHeight;
+        }
+
+        // iOS ignores a request for the orientation already requested, even when the device never rotated,
+        // so passing through the other landscape orientation forces a new one.
+        // iOS and Android both apply only the last request made in a frame, so the device never turns to LandscapeRight.
+        static void RequestLandscapeOrientation()
+        {
+            Screen.orientation = ScreenOrientation.LandscapeRight;
+            Screen.orientation = ScreenOrientation.LandscapeLeft;
+        }
+
+        internal static bool IsLandscape(ScreenOrientation orientation)
+        {
+            return orientation == ScreenOrientation.LandscapeLeft || orientation == ScreenOrientation.LandscapeRight;
+        }
+
+        // Screen.orientation reports the orientation the device is in, not the one requested.
+        internal static IEnumerator WaitForLandscapeOrientation(
+            System.Func<ScreenOrientation> orientation, System.Func<float> now, System.Action requestLandscapeAgain)
+        {
+            // Not an iterator, so the wait is timed from the call rather than from the first MoveNext.
+            return WaitForLandscapeOrientation(orientation, now, requestLandscapeAgain, now());
+        }
+
+        static IEnumerator WaitForLandscapeOrientation(
+            System.Func<ScreenOrientation> orientation,
+            System.Func<float> now,
+            System.Action requestLandscapeAgain,
+            float start)
+        {
+            const float reRequestSeconds = 3f;
+            const float timeoutSeconds = 10f;
+
+            bool requestedAgain = false;
+            while (!IsLandscape(orientation()))
+            {
+                float elapsed = now() - start;
+                if (elapsed >= timeoutSeconds)
+                    yield break;
+
+                if (!requestedAgain && elapsed >= reRequestSeconds)
+                {
+                    requestLandscapeAgain();
+                    requestedAgain = true;
+                }
+
+                yield return null;
+            }
+        }
 
         internal static IEnumerator WaitForModeSwitchToSettle(RuntimePlatform platform, System.Func<float> now)
         {

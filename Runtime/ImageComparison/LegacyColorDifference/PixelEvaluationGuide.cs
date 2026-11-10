@@ -47,9 +47,28 @@ namespace UnityEngine.TestTools.Graphics.LegacyColorDifference
         public float IncorrectPixelsThreshold { get; init; }
 
         /// <summary>
+        /// Gets the number of tiles along each axis used by the tiled deltaE algorithm, clamped to at
+        /// least 1. Not clamped against the image resolution, which this type does not know;
+        /// callers must clamp to the smaller image dimension so that no tile is empty.
+        /// </summary>
+        internal int TilesPerAxis { get; init; }
+
+        /// <summary>
+        /// Gets the maximum permitted average deltaE within any single tile, already resolved: when
+        /// the setting was left unset this is the average correctness threshold.
+        /// </summary>
+        internal float MaxTileDeltaEThreshold { get; init; }
+
+        /// <summary>
         /// Gets or sets the modes that are used for pixel evaluation.
         /// </summary>
         internal PixelEvaluationModes EnabledModes { get; init; }
+
+        /// <summary>
+        /// Gets the deltaE formula the per-pixel pass measures with. The default is
+        /// <see cref="DeltaEFormula.Original"/>, the formula reference images have been made with.
+        /// </summary>
+        internal DeltaEFormula DeltaEFormula { get; init; }
 
         /// <summary>
         /// Initializes a new instance of the PixelEvaluationGuide by evaluating the different flags in the more general ImageComparisonSettings.
@@ -63,6 +82,7 @@ namespace UnityEngine.TestTools.Graphics.LegacyColorDifference
             }
 
             EnabledModes = PixelEvaluationModes.None;
+            DeltaEFormula = DeltaEFormula.Original;
 
             if (settings.ActiveImageTests.HasFlag(ImageComparisonSettings.ImageTests.AverageDeltaE))
             {
@@ -92,6 +112,11 @@ namespace UnityEngine.TestTools.Graphics.LegacyColorDifference
             AlphaThreshold = settings.PerPixelAlphaThreshold;
             AverageCorrectnessThreshold = settings.AverageCorrectnessThreshold;
             IncorrectPixelsThreshold = settings.IncorrectPixelsThreshold;
+            TilesPerAxis = Mathf.Max(1, settings.TilesPerAxis);
+            MaxTileDeltaEThreshold =
+                settings.MaxTileDeltaEThreshold < 0f
+                    ? settings.AverageCorrectnessThreshold
+                    : settings.MaxTileDeltaEThreshold;
         }
 
         /// <inheritdoc />

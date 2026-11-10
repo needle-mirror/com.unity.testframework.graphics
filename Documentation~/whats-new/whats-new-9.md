@@ -24,7 +24,13 @@ The [`[IgnoreGraphicsTest]`](xref:UnityEngine.TestTools.Graphics.IgnoreGraphicsT
 
 ## New image comparison algorithms
 
-You can now select different built-in algorithms, include the DeltaE algorithm, peak signal-to-noise ratio (PSNR), and structural similarity index measure (SSIM). Use `Assert.That(actual, IsTexture.EqualTo(expected).Using(algorithm))` to select an algorithm. For more information, refer to [Customize tests](../build-customization/customize-a-test.md).
+You can now select different built-in algorithms, including the DeltaE algorithm, tiled DeltaE algorithm, peak signal-to-noise ratio (PSNR), and structural similarity index measure (SSIM). Use `Assert.That(actual, IsTexture.EqualTo(expected).Using(algorithm))` to select an algorithm. For more information, refer to [Customize tests](../build-customization/customize-a-test.md).
+
+## New tiled image comparison
+
+The new **Tiled Delta E** comparison algorithm divides the image into a grid of **Tiles Per Axis** by **Tiles Per Axis** tiles, measures the average perceptual difference inside each tile, and fails when the tile that differs most is over **Max Tile Delta E Threshold**. It also checks the average over the whole image against **Average Correctness Threshold**. The average alone divides by the whole pixel count, so a difference confined to a small area is diluted in proportion to how little of the frame it covers. The tiled algorithm scores that difference close to its local magnitude instead.
+
+To use it, set **Comparison Algorithm** to **Tiled Delta E** in a test's comparison settings. When a comparison fails, the message names each tile over the threshold with its pixel rectangle, and the diff image gets a dashed frame around those tiles. The tiled algorithm measures deltaE with the corrected formula, and the legacy algorithm keeps the original, so existing results don't change. For more information, refer to [Graphics Test Settings component reference](../test-investigation/graphics-test-settings-component.md). To pick the two thresholds, refer to [Choose thresholds for Tiled Delta E](../test-investigation/graphics-test-settings-component.md#choose-thresholds-for-tiled-delta-e). To learn how the two formulas differ, refer to [DeltaE formulas](../test-investigation/graphics-test-settings-component.md#deltae-formulas).
 
 ## Test shaders
 

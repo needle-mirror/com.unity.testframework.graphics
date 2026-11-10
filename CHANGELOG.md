@@ -7,6 +7,94 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ---
 
+## [9.0.0-pre.43] - 2026-11-10
+
+### Fixed
+
+- An Android player no longer logs `ArgumentException: Path is empty` from `GenerateShaderVariantList` when it quits. The framework read the player log back at quit to convert shader variant not found errors, but Android writes the player log to logcat and has no log file. Players without a log file now skip that step.
+
+## [9.0.0-pre.42] - 2026-11-05
+
+### Added
+
+- `GraphicsTestParamSource` also takes the name of a static method, property or field of the test's class that provides the rows.
+
+## [9.0.0-pre.41] - 2026-10-30
+
+### Changed
+
+- `GlobalResolutionSetter.SetResolutionWithRetry` now waits, for up to 10 seconds, for a mobile device to report a landscape `Screen.orientation` before it applies a landscape or square resolution. Before, on Android, a resolution applied while the device was still rotating was swapped to portrait when the rotation finished, and backbuffer captures came out 1080 pixels wide instead of 1920.
+
+## [9.0.0-pre.40] - 2026-10-29
+
+### Fixed
+
+- A test run in batch mode no longer leaves a `GraphicsTestBuildSettings` asset in `Assets/Resources` when the project has none. The framework deletes the asset it created for the run when the run ends. A project's own settings asset is kept.
+
+### Changed
+
+- `ImageAssert` counts GC allocations with `ProfilerRecorder` instead of `Recorder`.
+
+## [9.0.0-pre.39] - 2026-10-29
+
+### Added
+
+- Added support for `[GraphicsTestParamSource]` source types that implement `IEnumerable<TestCaseData>`. Each generated test keeps the categories, run state and properties of its `TestCaseData`, so `SetCategory`, `Explicit` and `Ignore` work per case as they do with NUnit's `[TestCaseSource]`.
+
+### Fixed
+
+- Fixed the Editor not finding reference images and `[RequireTestData]` assets in a package outside the project folder, such as a package referenced by a `file:` path, when the Editor uses the CoreCLR scripting runtime.
+- Fixed the name and reference image name of a parameterized graphics test whose argument contains the test method's name. For example, `Occlusion(FourLightsOcclusion)` was named `Occlusion)`.
+
+## [9.0.0-pre.38] - 2026-10-27
+
+### Fixed
+
+- `GlobalResolutionSetter.SetResolutionWithRetry` requests landscape orientation again on each retry when a mobile screen stays in portrait while a landscape resolution is requested. Its log and exception messages now include `Screen.orientation`.
+
+## [9.0.0-pre.37] - 2026-10-26
+
+### Fixed
+
+- An Embedded Linux or QNX player build now collects the reference images of the selected architecture. Every `BuildTarget.EmbeddedLinux` or `BuildTarget.QNX` build used to collect the `EmbeddedLinuxArm64` or `QNXArm64` images, so an X64 player never used its `EmbeddedLinuxX64` or `QNXX64` reference images. The architecture is read from the active build profile. When the platform support is installed but its architecture setting cannot be read, the build fails with a `MissingMemberException` instead of guessing the architecture.
+- `RuntimePlatform.EmbeddedLinuxX64` and `RuntimePlatform.QNXX64` now resolve to `BuildTarget.EmbeddedLinux` and `BuildTarget.QNX` instead of throwing `ArgumentOutOfRangeException` when building test content for those platforms.
+
+## [9.0.0-pre.36] - 2026-10-22
+
+### Fixed
+
+- The Reference Image Optimizer no longer waits for an Editor update each time it reports progress, which made each optimization take up to several hundred milliseconds longer.
+
+## [9.0.0-pre.35] - 2026-10-14
+
+### Added
+
+- Added `VerifyRunConfigurationAttribute`, which stops tests when the run doesn't render the way its command line asks, for example when the graphics device falls back to WARP, the Direct3D software rasterizer.
+
+### Changed
+
+- The build of graphics test content now fails when the Editor's command line writes a `-force-` graphics API or threading argument in a form Unity doesn't document, such as `--force-d3d12` or `-force-gfx-jobs=split`. The engine reads such forms for some arguments and ignores them for others. Write `-force-d3d12` or `-force-gfx-jobs split` instead.
+
+## [9.0.0-pre.34] - 2026-10-08
+
+### Added
+
+- Added `TiledDeltaEAlgorithm` and its result type `TiledDeltaEResult`. The algorithm checks the average deltaE over the whole image and within each tile of a grid, and measures deltaE with the corrected formula.
+- Added `ImageComparisonSettings.ComparisonAlgorithm` to select the algorithm `ImageAssert.AreEqual` compares with. The default is `LegacyColorDifference`.
+- Added `ImageComparisonSettings.TilesPerAxis` and `ImageComparisonSettings.MaxTileDeltaEThreshold` for the tiled algorithm.
+- Added `ImageAssert.ImageComparisonResults.Evaluated` and the tile results `MaxTileDeltaE`, `WorstTile` and `MaxTileDeltaEWithinThreshold`.
+
+### Changed
+
+- The Graphics Test Settings Inspector shows only the settings of the selected comparison algorithm.
+- `ImageAssert.AreEqualLinearHDR` throws an `ArgumentException` when `ComparisonAlgorithm` isn't `LegacyColorDifference`.
+
+## [9.0.0-pre.33] - 2026-10-06
+
+### Fixed
+
+- A UWP player build now collects the reference images of the architecture selected in `EditorUserBuildSettings.wsaArchitecture`. Every `BuildTarget.WSAPlayer` build used to collect the `MetroPlayerARM` images, so an x64 or x86 player never used its `MetroPlayerX64` or `MetroPlayerX86` reference images. An architecture other than `x64`, `x86` or `ARM64` now fails the build with an `ArgumentOutOfRangeException` instead of collecting the images of another architecture.
+
 ## [9.0.0-pre.32] - 2026-09-15
 
 ### Fixed
@@ -765,7 +853,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [8.6.3-exp.1] - 2024-05-29
 
 - Update ImageAssert to properly encode RGBAFloat images as full-precision EXR files, rather than half-precision.
-- Fixed UUM-73039: Error is thrown if reference image is not present on Android and WebGL
+- Fixed an error thrown on Android and WebGL when a reference image is not present.
 
 ## [8.6.2-exp.2] - 2024-05-10
 

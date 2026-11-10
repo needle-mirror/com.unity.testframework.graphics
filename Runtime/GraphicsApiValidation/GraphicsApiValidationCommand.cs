@@ -186,7 +186,6 @@ namespace UnityEngine.TestTools.Graphics.GraphicsApiValidation
         {
             try
             {
-                FlushGPU();
                 WaitForGPUCompletion();
 
                 int errorCount = GetErrorCount();
@@ -220,7 +219,10 @@ namespace UnityEngine.TestTools.Graphics.GraphicsApiValidation
             if (s_SupportsFences.Value)
                 WaitWithFence();
             else
+            {
+                FlushGPU();
                 System.Threading.Thread.Sleep(FallbackSleepMs);
+            }
         }
 
         void WaitWithFence()
@@ -231,12 +233,16 @@ namespace UnityEngine.TestTools.Graphics.GraphicsApiValidation
                     GraphicsFenceType.CPUSynchronisation,
                     SynchronisationStageFlags.AllGPUOperations);
 
+                // The flush must submit the fence, otherwise UGK only signals it at frame end
+                FlushGPU();
+
                 var sw = System.Diagnostics.Stopwatch.StartNew();
                 while (!fence.passed && sw.ElapsedMilliseconds < GPUSyncTimeoutMs)
                     System.Threading.Thread.Sleep(1);
             }
             catch
             {
+                FlushGPU();
                 System.Threading.Thread.Sleep(FallbackSleepMs);
             }
         }

@@ -408,11 +408,68 @@ namespace UnityEngine.TestTools.Graphics
 
             if (s_Instance == null)
             {
-                s_Instance = Create();
+                s_Instance = CreateDefault();
             }
 
             return s_Instance;
         }
+
+        static GraphicsTestBuildSettings CreateDefault()
+        {
+#if UNITY_EDITOR
+            // An asset written after the test run deleted the transient one would be left behind.
+            if (TransientAssetDeleted)
+                return CreateUnsaved();
+
+            var hadAsset = File.Exists(k_DefaultSavePath);
+            var settings = Create();
+
+            // In batch mode no one can edit the asset before the end of the test run deletes it.
+            if (Application.isBatchMode && !hadAsset && File.Exists(k_DefaultSavePath))
+                TransientAssetPath = k_DefaultSavePath;
+
+            return settings;
+#else
+            return Create();
+#endif
+        }
+
+#if UNITY_EDITOR
+        const string k_TransientAssetPathKey = "GraphicsTestBuildSettings.TransientAssetPath";
+        const string k_TransientAssetDeletedKey = "GraphicsTestBuildSettings.TransientAssetDeleted";
+
+        /// <summary>
+        /// The asset <see cref="LoadOrDefault"/> created in batch mode because the project had none,
+        /// or an empty string. The end of the test run deletes it.
+        /// </summary>
+        internal static string TransientAssetPath
+        {
+            get => SessionState.GetString(k_TransientAssetPathKey, string.Empty);
+            set => SessionState.SetString(k_TransientAssetPathKey, value ?? string.Empty);
+        }
+
+        /// <summary>
+        /// Whether the end of a test run deleted the transient asset. Until the next run begins,
+        /// <see cref="LoadOrDefault"/> keeps new default settings in memory.
+        /// </summary>
+        internal static bool TransientAssetDeleted
+        {
+            get => SessionState.GetBool(k_TransientAssetDeletedKey, false);
+            set => SessionState.SetBool(k_TransientAssetDeletedKey, value);
+        }
+
+        /// <summary>
+        /// Lets <see cref="LoadOrDefault"/> create the transient asset again for a new test run.
+        /// </summary>
+        internal static void BeginTestRun()
+        {
+            if (!TransientAssetDeleted)
+                return;
+
+            TransientAssetDeleted = false;
+            s_Instance = null;
+        }
+#endif
 
         /// <summary>
         /// Create a new GraphicsTestBuildSettings.
@@ -425,6 +482,13 @@ namespace UnityEngine.TestTools.Graphics
         /// </returns>
         public static GraphicsTestBuildSettings Create()
         {
+            var newSettings = CreateUnsaved();
+            newSettings.Save();
+            return newSettings;
+        }
+
+        static GraphicsTestBuildSettings CreateUnsaved()
+        {
             var newSettings = CreateInstance<GraphicsTestBuildSettings>();
 
             newSettings.name = Path.GetFileNameWithoutExtension(newSettings.SavePath);
@@ -433,7 +497,6 @@ namespace UnityEngine.TestTools.Graphics
                 SystemInfo.processorCount / 2
             );
 
-            newSettings.Save();
             return newSettings;
         }
 

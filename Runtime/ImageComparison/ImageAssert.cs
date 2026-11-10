@@ -6,6 +6,7 @@ using System.Text;
 using NUnit.Framework;
 using Unity.Collections;
 using Unity.Jobs;
+using Unity.Profiling;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Networking.PlayerConnection;
 using UnityEngine.Profiling;
@@ -269,7 +270,11 @@ namespace UnityEngine.TestTools.Graphics
         /// </summary>
         /// <param name="expected">What the image is supposed to look like.</param>
         /// <param name="actual">What the image actually looks like.</param>
-        /// <param name="settings">Optional settings that control how the comparison is performed. Can be null, in which case the images are required to be exactly identical.</param>
+        /// <param name="settings">
+        /// Optional settings that control how the comparison is performed. Can be null, in which case the
+        /// images are required to be exactly identical. Its
+        /// <see cref="ImageComparisonSettings.ComparisonAlgorithm"/> must be left at the default.
+        /// </param>
         /// <param name="expectedImagePathLog"> The log message to display if the test fails. </param>
         /// <param name="saveFailedImage"> If true, the actual image will be saved if the test fails. </param>
         /// <param name="saveFailedImageToDisk"> If true, the actual image will be saved to disk if the test fails. </param>
@@ -294,6 +299,17 @@ namespace UnityEngine.TestTools.Graphics
                 throw new ArgumentException(
                     $"Actual image is using an invalid format: {actual.format}. Expected format should be RGBAHalf or RGBAFloat."
                 );
+            }
+
+            // This comparison has its own statistics for linear HDR images, so any selector but the
+            // default must fail rather than be ignored.
+            if (settings != null && settings.ComparisonAlgorithm != ComparisonAlgorithm.LegacyColorDifference)
+            {
+                throw new ArgumentException(
+                    "AreEqualLinearHDR compares with its own statistics and cannot use "
+                        + $"ComparisonAlgorithm.{settings.ComparisonAlgorithm}. "
+                        + "Leave ComparisonAlgorithm at LegacyColorDifference.",
+                    nameof(settings));
             }
 
             var options = new LegacyImageExportOptions
@@ -526,6 +542,29 @@ namespace UnityEngine.TestTools.Graphics
         }
 
         /// <summary>
+        /// The statistics an <see cref="ImageComparisonResults"/> carries.
+        /// <see cref="ImageComparisonResults.Evaluated"/> uses them to report which statistics were evaluated
+        /// against their thresholds; only those decide <see cref="ImageComparisonResults.Success"/>.
+        /// </summary>
+        [Flags]
+        public enum ComparisonStatistics
+        {
+            /// <summary>No statistics.</summary>
+            None = 0,
+
+            /// <summary>The average deltaE over the whole image.</summary>
+            AverageDeltaE = 1 << 0,
+
+            /// <summary>The ratio of bad pixels to all compared pixels.</summary>
+            BadPixelsCount = 1 << 1,
+
+            // AverageDeltaE and BadPixelsCount have the values of their ImageComparisonSettings.ImageTests
+            // counterparts; 1 << 2 is left free because it is RMSE's bit there.
+            /// <summary>The highest average deltaE within any single tile.</summary>
+            MaxTileDeltaE = 1 << 3,
+        }
+
+        /// <summary>
         /// Represents the results from an image comparison operation.
         /// </summary>
         public struct ImageComparisonResults : IEquatable<ImageComparisonResults>
@@ -536,24 +575,54 @@ namespace UnityEngine.TestTools.Graphics
             public bool Success { get; init; }
 
             /// <summary>
+            /// The statistics this comparison evaluated against their thresholds. A statistic absent
+            /// from this set took no part in <see cref="Success"/>: its within-threshold flag carries
+            /// no information, and its value may not have been computed.
+            /// </summary>
+            public ComparisonStatistics Evaluated { get; init; }
+
+            // AverageDeltaE, BadPixelsCount and their two within-threshold flags are settable because callers of the
+            // released API may assign them. The rest are set once, at construction, so the tile values and flags
+            // cannot later be changed to disagree with Success.
+            /// <summary>
             /// The average delta E value from the image comparison.
             /// </summary>
             public float AverageDeltaE { get; set; }
 
             /// <summary>
-            /// The number of bad pixels found during the image comparison.
+            /// The ratio of bad pixels to all compared pixels.
             /// </summary>
             public float BadPixelsCount { get; set; }
 
             /// <summary>
-            /// Gets or sets whether the average deltaE is within threshold
+            /// Gets or sets whether the average deltaE is within threshold. Only meaningful when
+            /// <see cref="Evaluated"/> includes <see cref="ComparisonStatistics.AverageDeltaE"/>.
             /// </summary>
             public bool AverageDeltaEWithinThreshold { get; set; }
 
             /// <summary>
-            /// Gets or sets whether the bad pixel ratio is within threshold
+            /// Gets or sets whether the bad pixel ratio is within threshold. Only meaningful when
+            /// <see cref="Evaluated"/> includes <see cref="ComparisonStatistics.BadPixelsCount"/>.
             /// </summary>
             public bool BadPixelsCountWithinThreshold { get; set; }
+
+            /// <summary>
+            /// The highest average deltaE found in any single tile. Zero when no tile was scored.
+            /// </summary>
+            public float MaxTileDeltaE { get; init; }
+
+            /// <summary>
+            /// The tile that produced <see cref="MaxTileDeltaE"/>, as an x-y tile coordinate with
+            /// the origin at the bottom-left tile. When several tiles share the highest score, this is
+            /// the one in the lowest row, then the lowest column. <c>(-1, -1)</c> when no tile was scored.
+            /// </summary>
+            public Vector2Int WorstTile { get; init; }
+
+            /// <summary>
+            /// Indicates whether the highest tile deltaE is within threshold. Only meaningful when
+            /// <see cref="Evaluated"/> includes <see cref="ComparisonStatistics.MaxTileDeltaE"/>.
+            /// </summary>
+            public bool MaxTileDeltaEWithinThreshold { get; init; }
 
             /// <summary>
             /// Compares this instance with another instance of <see cref="ImageComparisonResults"/>.
@@ -751,9 +820,8 @@ namespace UnityEngine.TestTools.Graphics
                 settings = new ImageComparisonSettings();
             }
 
-            var algorithm = new LegacyColorDifferenceAlgorithm(settings);
-
-            var compareResult = (LegacyColorDifferenceAggregate)algorithm.Compare(expected, actual);
+            var algorithm = CreateAlgorithm(settings);
+            var compareResult = (IColorDifferenceResult)algorithm.Compare(expected, actual);
             result = compareResult.ImageComparisonResults;
 
             ComparisonResultReporterProvider.Instance.Report(
@@ -777,6 +845,21 @@ namespace UnityEngine.TestTools.Graphics
                     $"Expected: {Environment.NewLine}{algorithm.Description}{Environment.NewLine}Actual:{Environment.NewLine}{compareResult}"
                 );
             }
+        }
+
+        // The one place settings turn into an algorithm.
+        static TextureComparisonAlgorithm CreateAlgorithm(ImageComparisonSettings settings)
+        {
+            return settings.ComparisonAlgorithm switch
+            {
+                ComparisonAlgorithm.LegacyColorDifference => new LegacyColorDifferenceAlgorithm(settings),
+                ComparisonAlgorithm.TiledDeltaE => new TiledDeltaEAlgorithm(settings),
+                _ => throw new ArgumentOutOfRangeException(
+                    nameof(settings),
+                    settings.ComparisonAlgorithm,
+                    "ImageAssert.AreEqual has no algorithm for this ComparisonAlgorithm value."
+                ),
+            };
         }
 
         static string BuildGCAllocFailureMessage(long allocationCount, string captureInfo = null)
@@ -824,9 +907,8 @@ namespace UnityEngine.TestTools.Graphics
                     : SystemInfo.GetGraphicsFormat(DefaultFormat.LDR);
             var desc = new RenderTextureDescriptor(width, height, defaultFormat, k_RenderTextureDepthBits);
 
-            var gcAllocRecorder = Recorder.Get("GC.Alloc");
-            gcAllocRecorder.FilterToCurrentThread();
-            gcAllocRecorder.enabled = false;
+            using var gcAllocRecorder = new ProfilerRecorder("GC.Alloc", 1,
+                ProfilerRecorderOptions.CollectOnlyOnCurrentThread | ProfilerRecorderOptions.SumAllSamplesInFrame);
 
             var rt = RenderTexture.GetTemporary(desc);
             try
@@ -839,13 +921,14 @@ namespace UnityEngine.TestTools.Graphics
 
                 Profiler.BeginSample("GraphicTests_GC_Alloc_Check");
                 {
-                    gcAllocRecorder.enabled = true;
+                    gcAllocRecorder.Reset();
+                    gcAllocRecorder.Start();
                     camera.Render();
-                    gcAllocRecorder.enabled = false;
+                    gcAllocRecorder.Stop();
                 }
                 Profiler.EndSample();
 
-                var allocationCountOfRenderPipeline = gcAllocRecorder.sampleBlockCount - gcAllocThreshold;
+                var allocationCountOfRenderPipeline = GetAllocCount(gcAllocRecorder) - gcAllocThreshold;
 
                 Assert.That(
                     allocationCountOfRenderPipeline,
@@ -860,6 +943,9 @@ namespace UnityEngine.TestTools.Graphics
                 RenderTexture.ReleaseTemporary(rt);
             }
         }
+
+        static int GetAllocCount(ProfilerRecorder recorder) =>
+            recorder.Count > 0 ? (int)recorder.GetSample(0).Count : 0;
 
         // Number of profiler-on re-runs used to try to reproduce (and capture the callstack of)
         // an allocation the profiler-off measurement already tripped on.
@@ -884,9 +970,8 @@ namespace UnityEngine.TestTools.Graphics
                     : SystemInfo.GetGraphicsFormat(DefaultFormat.LDR);
             var desc = new RenderTextureDescriptor(width, height, defaultFormat, k_RenderTextureDepthBits);
 
-            var gcAllocRecorder = Recorder.Get("GC.Alloc");
-            gcAllocRecorder.FilterToCurrentThread();
-            gcAllocRecorder.enabled = false;
+            using var gcAllocRecorder = new ProfilerRecorder("GC.Alloc", 1,
+                ProfilerRecorderOptions.CollectOnlyOnCurrentThread | ProfilerRecorderOptions.SumAllSamplesInFrame);
 
             var rt = RenderTexture.GetTemporary(desc);
             var profilerStarted = false;
@@ -902,16 +987,17 @@ namespace UnityEngine.TestTools.Graphics
                 Profiler.BeginSample("GraphicTests_GC_Alloc_Check");
                 try
                 {
-                    gcAllocRecorder.enabled = true;
+                    gcAllocRecorder.Reset();
+                    gcAllocRecorder.Start();
                     camera.Render();
-                    gcAllocRecorder.enabled = false;
+                    gcAllocRecorder.Stop();
                 }
                 finally
                 {
                     Profiler.EndSample();
                 }
 
-                var allocationCount = gcAllocRecorder.sampleBlockCount;
+                var allocationCount = GetAllocCount(gcAllocRecorder);
                 if (allocationCount <= 0)
                     yield break;
 
@@ -938,16 +1024,17 @@ namespace UnityEngine.TestTools.Graphics
                     Profiler.BeginSample("GraphicTests_GC_Alloc_Check");
                     try
                     {
-                        gcAllocRecorder.enabled = true;
+                        gcAllocRecorder.Reset();
+                        gcAllocRecorder.Start();
                         camera.Render();
-                        gcAllocRecorder.enabled = false;
+                        gcAllocRecorder.Stop();
                     }
                     finally
                     {
                         Profiler.EndSample();
                     }
 
-                    captured = gcAllocRecorder.sampleBlockCount > 0;
+                    captured = GetAllocCount(gcAllocRecorder) > 0;
 
                     Profiler.enabled = false;
                     Profiler.enableAllocationCallstacks = false;
@@ -984,7 +1071,7 @@ namespace UnityEngine.TestTools.Graphics
                     Profiler.enableBinaryLog = false;
                     Profiler.logFile = "";
                 }
-                gcAllocRecorder.enabled = false;
+                gcAllocRecorder.Stop();
                 camera.targetTexture = null;
                 RenderTexture.ReleaseTemporary(rt);
             }

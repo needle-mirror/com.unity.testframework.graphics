@@ -113,8 +113,8 @@ namespace UnityEngine.TestTools.Graphics.Platforms
             foreach (var s in split)
             {
                 var type = Type.GetType(s);
-                // https://jira.unity3d.com/browse/UUM-153650
-                // HACK for CoreCLR compatibility - this type moved between assemblies in the BCL
+                // HACK for CoreCLR compatibility: System.Runtime.InteropServices.Architecture moved between
+                // assemblies in the BCL, so the assembly-qualified name stored in the schema no longer resolves.
                 if ((type == null) && s.StartsWith("System.Runtime.InteropServices.Architecture,"))
                     type = typeof(Architecture);
 

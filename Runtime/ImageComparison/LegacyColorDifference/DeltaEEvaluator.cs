@@ -15,7 +15,10 @@ namespace UnityEngine.TestTools.Graphics.LegacyColorDifference
         {
             TestHook?.Invoke();
 
-            reportCard.DeltaE = JabDeltaE(RgBtoJab(expected), RgBtoJab(actual));
+            reportCard.DeltaE = JabDeltaE(
+                RgBtoJab(expected, evaluationGuide.DeltaEFormula),
+                RgBtoJab(actual, evaluationGuide.DeltaEFormula),
+                evaluationGuide.DeltaEFormula);
             reportCard.DeltaEOverThreshold = Mathf.Max(0f, reportCard.DeltaE - evaluationGuide.DeltaEThreshold);
             if (evaluationGuide.EnabledModes.IsSet(PixelEvaluationModes.CountBadDeltaE))
             {
@@ -25,22 +28,44 @@ namespace UnityEngine.TestTools.Graphics.LegacyColorDifference
             return reportCard;
         }
 
-        static float JabDeltaE(Vector3 v1, Vector3 v2)
+        static float JabDeltaE(Vector3 v1, Vector3 v2, DeltaEFormula formula)
         {
             var c1 = Mathf.Sqrt(v1.y * v1.y + v1.z * v1.z);
             var c2 = Mathf.Sqrt(v2.y * v2.y + v2.z * v2.z);
 
-            var h1 = Mathf.Atan(v1.z / v1.y);
-            var h2 = Mathf.Atan(v2.z / v2.y);
+            var h1 = Hue(v1, formula);
+            var h2 = Hue(v2, formula);
 
             var deltaH = 2f * Mathf.Sqrt(c1 * c2) * Mathf.Sin((h1 - h2) / 2f);
             var deltaE = Mathf.Sqrt(Mathf.Pow(v1.x - v2.x, 2f) + Mathf.Pow(c1 - c2, 2f) + deltaH * deltaH);
             return deltaE;
         }
 
+        // Original keeps the half-circle angle reference images were made with; see DeltaEFormula.
+        static float Hue(Vector3 jab, DeltaEFormula formula)
+        {
+            return formula == DeltaEFormula.Original ? Mathf.Atan(jab.z / jab.y) : Mathf.Atan2(jab.z, jab.y);
+        }
+
+        // The first coefficient of the LMS matrix. Original keeps the value reference images were made with;
+        // see DeltaEFormula.
+        static float LmsLFromX(DeltaEFormula formula)
+        {
+            return formula == DeltaEFormula.Original ? 0.41478372f : 0.41478972f;
+        }
+
+        // The linear XYZ to LMS step of RgBtoJab, before the PQ transfer function.
+        internal static Vector3 LinearLms(float x2, float y2, float z, DeltaEFormula formula)
+        {
+            var l = LmsLFromX(formula) * x2 + 0.579999f * y2 + 0.0146480f * z;
+            var m = -0.2015100f * x2 + 1.120649f * y2 + 0.0531008f * z;
+            var s = -0.0166008f * x2 + 0.264800f * y2 + 0.6684799f * z;
+            return new Vector3(l, m, s);
+        }
+
         // sRGB to JzAzBz
         // https://www.osapublishing.org/oe/fulltext.cfm?uri=oe-25-13-15131&id=368272
-        static Vector3 RgBtoJab(Color color)
+        static Vector3 RgBtoJab(Color color, DeltaEFormula formula)
         {
             var xyz = RgBtoXYZ(color.linear);
 
@@ -57,12 +82,10 @@ namespace UnityEngine.TestTools.Graphics.LegacyColorDifference
             var x2 = kB * xyz.x - (kB - 1f) * xyz.z;
             var y2 = kG * xyz.y - (kG - 1f) * xyz.x;
 
-            var l = 0.41478372f * x2 + 0.579999f * y2 + 0.0146480f * xyz.z;
-            var m = -0.2015100f * x2 + 1.120649f * y2 + 0.0531008f * xyz.z;
-            var s = -0.0166008f * x2 + 0.264800f * y2 + 0.6684799f * xyz.z;
-            l = Mathf.Pow(l / 10000f, kN);
-            m = Mathf.Pow(m / 10000f, kN);
-            s = Mathf.Pow(s / 10000f, kN);
+            var linearLms = LinearLms(x2, y2, xyz.z, formula);
+            var l = Mathf.Pow(linearLms.x / 10000f, kN);
+            var m = Mathf.Pow(linearLms.y / 10000f, kN);
+            var s = Mathf.Pow(linearLms.z / 10000f, kN);
 
             // Can we switch to unity.mathematics yet?
             var lms = new Vector3(l, m, s);

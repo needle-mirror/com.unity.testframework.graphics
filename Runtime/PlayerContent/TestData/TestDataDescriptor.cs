@@ -58,17 +58,18 @@ namespace UnityEngine.TestTools.Graphics
                     var directory = Path.GetDirectoryName(pattern);
                     var searchPattern = Path.GetFileName(pattern);
 
-                    if (!Directory.Exists(directory))
+                    var physicalDirectory = ToPhysicalPath(directory);
+                    if (!Directory.Exists(physicalDirectory))
                         continue;
 
-                    foreach (var file in Directory.GetFiles(directory, searchPattern, SearchOption.TopDirectoryOnly))
+                    foreach (var file in Directory.GetFiles(physicalDirectory, searchPattern, SearchOption.TopDirectoryOnly))
                     {
-                        var assetPath = file.Replace(Path.DirectorySeparatorChar, '/');
+                        var assetPath = Path.Combine(directory, Path.GetFileName(file)).Replace(Path.DirectorySeparatorChar, '/');
                         if (!assetPath.EndsWith(".meta", StringComparison.OrdinalIgnoreCase))
                             result.Add(assetPath);
                     }
                 }
-                else if (File.Exists(pattern))
+                else if (File.Exists(ToPhysicalPath(pattern)))
                 {
                     result.Add(pattern.Replace(Path.DirectorySeparatorChar, '/'));
                 }
@@ -83,5 +84,15 @@ namespace UnityEngine.TestTools.Graphics
 
         /// <inheritdoc/>
         public virtual string GetAddressableName(string assetPath) => assetPath;
+
+        // System.IO cannot see "Packages/..." asset paths of packages that live outside the project
+        static string ToPhysicalPath(string assetPath)
+        {
+#if UNITY_EDITOR
+            return string.IsNullOrEmpty(assetPath) ? assetPath : UnityEditor.FileUtil.GetPhysicalPath(assetPath);
+#else
+            return assetPath;
+#endif
+        }
     }
 }
